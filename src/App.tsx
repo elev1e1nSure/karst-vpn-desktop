@@ -920,7 +920,21 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
   onBack: () => void; onClear: () => void; onCopy: () => void;
 }) {
   return (
-    <div className="logs-screen" style={{ ...themeVars(theme), background: theme.appBg, color: theme.ink }}>
+    <div
+      style={{
+        width: '100%',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        background: theme.appBg,
+        ...themeVars(theme),
+        color: theme.ink,
+        boxSizing: 'border-box',
+        padding: '20px 22px 24px',
+        overflow: 'hidden',
+        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+      }}
+    >
       <div className="logs-header">
         <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
           <button type="button" className="log-icon-button" onClick={onBack} aria-label="Назад" title="Назад">
@@ -1251,42 +1265,30 @@ export function App() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  if (appScreen === 'logs') {
-    return (
-      <div className={screenClass}>
-        <LogsScreen
-          theme={theme}
-          accent={ACCENT}
-          logs={logs}
-          logsLoading={logsLoading}
-          logsError={logsError}
-          onBack={onBackToMain}
-          onClear={onClearLogs}
-          onCopy={() => void onCopyLogs()}
-        />
-      </div>
-    );
-  }
 
   const dragHandle = (
     <div style={{ width: 36, height: 4, borderRadius: 2, background: theme.border, margin: '6px auto 10px' }} />
   );
 
   return (
-    <div
-      className={screenClass}
-      style={{
-        width: '100%', height: '100%',
-        display: 'flex', flexDirection: 'column',
-        boxSizing: 'border-box',
-        padding: '8px 28px 36px',
-        background: theme.appBg,
-        position: 'relative',
-        overflow: 'hidden',
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        ...themeVars(theme),
-      }}
-    >
+    /* Root: fills the entire window, provides the theme background */
+    <div style={{ width: '100%', height: '100%', background: theme.appBg, position: 'relative', overflow: 'hidden', ...themeVars(theme) }}>
+
+      {/* ── Main screen ───────────────────────────────────────────── */}
+      <div
+        className={appScreen === 'main' && screenDir === 'back' ? 'route-enter-from-left' : appScreen === 'main' ? '' : 'route-exit-to-left'}
+        style={{
+          width: '100%', height: '100%',
+          display: 'flex', flexDirection: 'column',
+          boxSizing: 'border-box',
+          padding: '8px 28px 36px',
+          background: theme.appBg,
+          position: 'absolute', top: 0, left: 0,
+          overflow: 'hidden',
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+          pointerEvents: appScreen !== 'main' ? 'none' : undefined,
+        }}
+      >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: 18, paddingBottom: 0 }}>
         <Pressable onClick={onOpenSettings} pressedScale={0.92} className="settings-btn" style={{
@@ -1411,6 +1413,25 @@ export function App() {
             />
           </div>
         </>
+      )}
+      </div>{/* end main screen */}
+
+      {/* ── Logs screen ─────────────────────────────────────────────────── */}
+      {appScreen === 'logs' && (
+        <div
+          className={screenDir === 'forward' ? 'route-enter-from-right' : 'route-enter-from-left'}
+        >
+          <LogsScreen
+            theme={theme}
+            accent={ACCENT}
+            logs={logs}
+            logsLoading={logsLoading}
+            logsError={logsError}
+            onBack={onBackToMain}
+            onClear={onClearLogs}
+            onCopy={() => void onCopyLogs()}
+          />
+        </div>
       )}
     </div>
   );
