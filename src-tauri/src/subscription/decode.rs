@@ -3,6 +3,7 @@ use base64::Engine;
 
 pub fn decode_subscription(input: &str) -> String {
     let trimmed = input.trim();
+    // Plain subscriptions already contain URI schemes, while base64 blobs do not.
     if trimmed.contains("://") {
         return trimmed.to_string();
     }

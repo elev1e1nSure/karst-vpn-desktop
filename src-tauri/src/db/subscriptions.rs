@@ -175,6 +175,7 @@ fn map_subscription(row: &Row<'_>) -> rusqlite::Result<SubscriptionRecord> {
 }
 
 fn parse_datetime(value: String) -> DateTime<Utc> {
+    // A corrupt timestamp should not make the whole local store unreadable.
     DateTime::parse_from_rfc3339(&value)
         .map(|datetime| datetime.with_timezone(&Utc))
         .unwrap_or_else(|_| Utc::now())

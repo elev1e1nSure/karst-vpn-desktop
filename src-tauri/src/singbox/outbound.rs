@@ -9,6 +9,7 @@ pub fn vless_to_outbound(link: &VlessLink) -> Value {
     outbound.insert("server".to_string(), json!(link.host));
     outbound.insert("server_port".to_string(), json!(link.port));
     outbound.insert("uuid".to_string(), json!(link.id));
+    // XUDP preserves VLESS UDP behavior for Xray-compatible servers.
     outbound.insert("packet_encoding".to_string(), json!("xudp"));
 
     if let Some(flow) = &link.flow {
