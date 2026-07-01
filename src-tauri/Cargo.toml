@@ -1,0 +1,16 @@
+[package]
+name = "tauri_vite_react_ts_port"
+version = "0.1.0"
+description = "Tauri port of the supplied frontend"
+authors = ["Generated"]
+edition = "2021"
+
+[lib]
+name = "tauri_vite_react_ts_port_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="assets/dc-runtime.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics="">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<style>/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-01-f0052c1c.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-02-92355461.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-03-32b1c158.woff2") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-04-b57f3394.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-05-d2fa574d.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-06-f6dad664.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-07-4393370f.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-01-f0052c1c.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-02-92355461.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-03-32b1c158.woff2") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-04-b57f3394.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-05-d2fa574d.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-06-f6dad664.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-07-4393370f.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/inter-01-f0052c1c.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/inter-02-92355461.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/inter-03-32b1c158.woff2") format('woff2');
+  unicode-range: U+1F00-1FFF;
+}
+/* greek */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/inter-04-b57f3394.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/inter-05-d2fa574d.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/inter-06-f6dad664.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("assets/fonts/inter-07-4393370f.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-08-74255331.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-09-0fa04dbb.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-10-0a890297.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-11-4b25ebc7.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-12-bae301c0.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("assets/fonts/inter-13-449a347c.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* cyrillic-ext */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-08-74255331.woff2") format('woff2');
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;
+}
+/* cyrillic */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-09-0fa04dbb.woff2") format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+}
+/* greek */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-10-0a890297.woff2") format('woff2');
+  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;
+}
+/* vietnamese */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-11-4b25ebc7.woff2") format('woff2');
+  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;
+}
+/* latin-ext */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-12-bae301c0.woff2") format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+/* latin */
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("assets/fonts/inter-13-449a347c.woff2") format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+</style>
+<style>
+  @keyframes pulseRing {
+    0% { transform: scale(1); opacity: 0; }
+    50% { transform: scale(1.16); opacity: 0.4; }
+    100% { transform: scale(1.32); opacity: 0; }
+  }
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  @keyframes buttonConnectPulse {
+    0% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+  }
+  @keyframes buttonDisconnectPulse {
+    0% { transform: scale(1); }
+    40% { transform: scale(0.92); }
+    100% { transform: scale(1); }
+  }
+  @keyframes fadeText {
+    0% { opacity: 0; filter: blur(3px); transform: translateY(5px) scale(0.985); }
+    60% { opacity: 1; filter: blur(0); }
+    100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+  }
+  @keyframes menuSlideUp {
+    0% { transform: translateY(100%); }
+    100% { transform: translateY(0); }
+  }
+  @keyframes menuSlideDown {
+    0% { transform: translateY(0); }
+    100% { transform: translateY(100%); }
+  }
+  @keyframes backdropIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes backdropOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes panelExpand {
+    0% { opacity: 0; transform: scaleY(0.88) translateY(-8px); }
+    100% { opacity: 1; transform: scaleY(1) translateY(0); }
+  }
+  @keyframes panelCollapse {
+    0% { opacity: 1; transform: scaleY(1) translateY(0); }
+    100% { opacity: 0; transform: scaleY(0.88) translateY(-8px); }
+  }
+</style>
+</helmet>
+<div style="width:100%;min-height:100%;display:flex;align-items:center;justify-content:center;background:{{ theme.pageBg }};padding:48px 24px;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <x-import component-from-global-scope="AndroidDevice" from="components/android-frame.jsx#/android-frame.jsx" hint-size="412px,892px">
+
+    <div style="height:100%;display:flex;flex-direction:column;box-sizing:border-box;padding:8px 28px 36px;background:{{ theme.appBg }};position:relative;overflow:hidden">
+
+      <!-- header -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 4px 0">
+        <div style="display:flex;align-items:center;gap:9px">
+          
+          
+        </div>
+        <div onclick="{{ onOpenSettings }}" style="width:34px;height:34px;border-radius:50%;background:{{ theme.cardBg }};display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0" style-active="transform:scale(0.92);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <path d="M12 15.5C13.933 15.5 15.5 13.933 15.5 12C15.5 10.067 13.933 8.5 12 8.5C10.067 8.5 8.5 10.067 8.5 12C8.5 13.933 10.067 15.5 12 15.5Z" stroke="{{ theme.mutedInk }}" stroke-width="1.8"></path>
+            <path d="M19.4 13.5C19.46 13.01 19.5 12.51 19.5 12C19.5 11.49 19.46 10.99 19.4 10.5L21.34 8.97C21.53 8.82 21.58 8.55 21.46 8.34L19.74 5.36C19.62 5.15 19.36 5.07 19.14 5.15L16.87 6.06C16.18 5.53 15.42 5.11 14.6 4.82L14.25 2.42C14.21 2.18 14.01 2 13.77 2H10.33C10.09 2 9.89 2.18 9.85 2.42L9.5 4.82C8.68 5.11 7.92 5.54 7.23 6.06L4.96 5.15C4.74 5.07 4.48 5.15 4.36 5.36L2.64 8.34C2.52 8.55 2.57 8.82 2.76 8.97L4.7 10.5C4.64 10.99 4.6 11.5 4.6 12C4.6 12.5 4.64 13.01 4.7 13.5L2.76 15.03C2.57 15.18 2.52 15.45 2.64 15.66L4.36 18.64C4.48 18.85 4.74 18.93 4.96 18.85L7.23 17.94C7.92 18.47 8.68 18.89 9.5 19.18L9.85 21.58C9.89 21.82 10.09 22 10.33 22H13.77C14.01 22 14.21 21.82 14.25 21.58L14.6 19.18C15.42 18.89 16.18 18.46 16.87 17.94L19.14 18.85C19.36 18.93 19.62 18.85 19.74 18.64L21.46 15.66C21.58 15.45 21.53 15.18 21.34 15.03L19.4 13.5Z" stroke="{{ theme.mutedInk }}" stroke-width="1.5" stroke-linejoin="round"></path>
+          </svg>
+        </div>
+      </div>
+
+      <!-- center stage -->
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px">
+
+        <div style="position:relative;width:208px;height:208px;display:flex;align-items:center;justify-content:center">
+
+          <button onclick="{{ onTapButton }}" style="{{ buttonStyle }}" style-active="{{ buttonStyleActive }}" aria-label="Подключить VPN">
+            <sc-if value="{{ isConnecting }}" hint-placeholder-val="{{ false }}">
+              <div style="width:30px;height:30px;border-radius:50%;border:3px solid rgba(255,255,255,0.35);border-top-color:#fff;animation:spin 0.85s linear infinite"></div>
+            </sc-if>
+            <sc-if value="{{ !isConnecting }}" hint-placeholder-val="{{ true }}">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                <path d="M12 3V12" stroke="{{ iconColor }}" stroke-width="{{ mood.iconStroke }}" stroke-linecap="round"></path>
+                <path d="M6.5 6.5C5 8.1 4 10.2 4 12.5C4 17.2 7.8 21 12.5 21C17.2 21 21 17.2 21 12.5C21 10.1 19.9 7.9 18.3 6.4" stroke="{{ iconColor }}" stroke-width="{{ mood.iconStroke }}" stroke-linecap="round" fill="none" transform="translate(-1,0)"></path>
+              </svg>
+            </sc-if>
+          </button>
+        </div>
+
+        <div style="display:flex;flex-direction:column;align-items:center;gap:6px;min-height:78px">
+          <sc-if value="{{ isOff }}" hint-placeholder-val="{{ true }}">
+            <div style="font:500 24px/1.15 'Source Serif 4',serif;color:{{ theme.ink }}">{{ statusLabel }}</div>
+          </sc-if>
+          <sc-if value="{{ isConnecting }}" hint-placeholder-val="{{ false }}">
+            <div style="font:500 24px/1.15 'Source Serif 4',serif;color:{{ theme.ink }}">{{ statusLabel }}</div>
+          </sc-if>
+          <sc-if value="{{ isConnected }}" hint-placeholder-val="{{ false }}">
+            <div style="font:500 24px/1.15 'Source Serif 4',serif;color:{{ theme.ink }}">{{ statusLabel }}</div>
+          </sc-if>
+          <sc-if value="{{ isOff }}" hint-placeholder-val="{{ true }}">
+            <div style="font:400 14px/1.4 'Inter',sans-serif;color:{{ theme.mutedInk }};max-width:240px;text-align:center">{{ subLabel }}</div>
+          </sc-if>
+          <sc-if value="{{ isConnecting }}" hint-placeholder-val="{{ false }}">
+            <div style="font:400 14px/1.4 'Inter',sans-serif;color:{{ theme.mutedInk }};max-width:240px;text-align:center">{{ subLabel }}</div>
+          </sc-if>
+          <sc-if value="{{ isConnected }}" hint-placeholder-val="{{ false }}">
+            <div style="font:500 14px/1 'Inter',sans-serif;color:{{ theme.mutedInk }};letter-spacing:0.3px;font-variant-numeric:tabular-nums">{{ elapsedLabel }}</div>
+          </sc-if>
+        </div>
+      </div>
+
+      <!-- location chip -->
+      <div onclick="{{ onOpenServerMenu }}" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:{{ mood.chipRadius }};background:{{ theme.cardBg }};border:1px solid {{ theme.border }};cursor:pointer" style-active="transform:scale(0.985);">
+        <div style="width:34px;height:34px;border-radius:10px;background:{{ theme.pageBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <div style="width:14px;height:14px;border-radius:50%;border:2px solid {{ theme.mutedInk }}"></div>
+        </div>
+        <div style="flex:1;min-width:0">
+          <div style="font:500 14px/1.3 'Inter',sans-serif;color:{{ theme.ink }}">{{ selectedServer.name }}</div>
+          <div style="font:400 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }}">{{ selectedServer.tag }}</div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style="flex-shrink:0;opacity:0.5">
+          <path d="M9 6L15 12L9 18" stroke="{{ theme.mutedInk }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+        </svg>
+      </div>
+
+      <!-- server menu overlay -->
+      <sc-if value="{{ menuVisible }}" hint-placeholder-val="{{ false }}">
+        <div onclick="{{ onCloseServerMenu }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.45);animation:{{ backdropAnim }};z-index:5"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;max-height:78%;display:flex;flex-direction:column;background:{{ theme.appBg }};border-radius:22px 22px 0 0;box-shadow:0 -18px 40px -16px rgba(0,0,0,0.4);padding:10px 22px 28px;box-sizing:border-box;z-index:6;animation:{{ menuAnim }}">
+          <div style="width:36px;height:4px;border-radius:2px;background:{{ theme.border }};margin:6px auto 18px"></div>
+          <div style="font:500 17px/1.2 'Source Serif 4',serif;color:{{ theme.ink }};margin-bottom:14px">Выбор сервера</div>
+          <div style="display:flex;flex-direction:column;gap:4px;overflow:auto">
+            <sc-for list="{{ servers }}" as="srv" hint-placeholder-count="5">
+              <div onclick="{{ srv.onSelect }}" style="display:flex;align-items:center;gap:14px;padding:12px 10px;border-radius:14px;cursor:pointer" style-hover="background:{{ theme.cardBg }};">
+                <div style="width:8px;height:8px;border-radius:50%;background:{{ srv.dotColor }};flex-shrink:0"></div>
+                <div style="flex:1;min-width:0">
+                  <div style="font:500 14.5px/1.3 'Inter',sans-serif;color:{{ theme.ink }}">{{ srv.name }}</div>
+                  <div style="font:400 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }}">{{ srv.tag }}</div>
+                </div>
+                <sc-if value="{{ srv.isCustom }}" hint-placeholder-val="{{ false }}">
+                  <span style="font:500 10px/1 'Inter',sans-serif;color:{{ accent }};background:color-mix(in oklch, {{ accent }} 16%, transparent);padding:3px 7px;border-radius:6px;flex-shrink:0">VLESS</span>
+                </sc-if>
+                <sc-if value="{{ srv.isSelected }}" hint-placeholder-val="{{ false }}">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="flex-shrink:0">
+                    <path d="M5 13L9.5 17.5L19 7" stroke="{{ accent }}" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                </sc-if>
+                <sc-if value="{{ srv.isCustom }}" hint-placeholder-val="{{ false }}">
+                  <div onclick="{{ srv.onRemove }}" style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                      <path d="M5 5L19 19M19 5L5 19" stroke="{{ theme.mutedInk }}" stroke-width="2" stroke-linecap="round"></path>
+                    </svg>
+                  </div>
+                </sc-if>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:6px">
+            <sc-if value="{{ showAddServerButton }}" hint-placeholder-val="{{ true }}">
+              <div onclick="{{ onOpenAddServer }}" style="display:flex;align-items:center;gap:10px;padding:13px 10px;border-radius:14px;border:1.5px dashed {{ theme.border }};cursor:pointer">
+                <div style="width:22px;height:22px;border-radius:50%;background:{{ theme.cardBg }};display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <span style="font:400 15px/1 'Inter',sans-serif;color:{{ theme.mutedInk }}">+</span>
+                </div>
+                <span style="font:500 14px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }}">Добавить сервер по VLESS-ссылке</span>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ showAddServerForm }}" hint-placeholder-val="{{ false }}">
+              <div style="display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:14px;background:{{ theme.cardBg }}">
+                <span style="font:500 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }};letter-spacing:0.2px">VLESS-ссылка</span>
+                <input value="{{ addServerValue }}" onchange="{{ onChangeAddServerValue }}" placeholder="vless://uuid@host:port?...#Имя" style="font:400 13px/1.4 'Inter',ui-monospace,monospace;color:{{ theme.ink }};background:{{ theme.pageBg }};border:1px solid {{ theme.border }};border-radius:10px;padding:10px 12px;outline:none;width:100%;box-sizing:border-box">
+                <sc-if value="{{ addServerError }}" hint-placeholder-val="{{ false }}">
+                  <span style="font:400 12px/1.3 'Inter',sans-serif;color:#c14444">{{ addServerError }}</span>
+                </sc-if>
+                <div style="display:flex;gap:8px;margin-top:4px">
+                  <div onclick="{{ onCancelAddServer }}" style="flex:1;text-align:center;padding:10px;border-radius:10px;border:1px solid {{ theme.border }};font:500 13px/1 'Inter',sans-serif;color:{{ theme.mutedInk }};cursor:pointer">Отмена</div>
+                  <div onclick="{{ onSubmitAddServer }}" style="flex:1;text-align:center;padding:10px;border-radius:10px;background:{{ accent }};font:500 13px/1 'Inter',sans-serif;color:#fff;cursor:pointer">Добавить</div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- settings overlay -->
+      <sc-if value="{{ settingsVisible }}" hint-placeholder-val="{{ false }}">
+        <div onclick="{{ onCloseSettings }}" style="position:absolute;inset:0;background:rgba(0,0,0,0.45);animation:{{ settingsBackdropAnim }};z-index:5"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;max-height:84%;display:flex;flex-direction:column;background:{{ theme.appBg }};border-radius:22px 22px 0 0;box-shadow:0 -18px 40px -16px rgba(0,0,0,0.4);padding:10px 22px 28px;box-sizing:border-box;z-index:6;animation:{{ settingsAnim }};gap:4px;overflow:auto">
+          <div style="width:36px;height:4px;border-radius:2px;background:{{ theme.border }};margin:6px auto 18px"></div>
+          <div style="font:500 17px/1.2 'Source Serif 4',serif;color:{{ theme.ink }};margin-bottom:16px">Настройки</div>
+
+          <!-- protocol selector -->
+          <div style="margin-bottom:18px">
+            <div style="font:500 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }};letter-spacing:0.3px;margin-bottom:10px">Протокол</div>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ protocols }}" as="proto" hint-placeholder-count="3">
+                <div onclick="{{ proto.onSelect }}" style="flex:1;text-align:center;padding:10px 6px;border-radius:11px;cursor:pointer;background:{{ proto.bg }};border:1px solid {{ proto.border }}">
+                  <span style="font:500 13px/1 'Inter',sans-serif;color:{{ proto.text }}">{{ proto.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <!-- toggle rows -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 2px;border-top:1px solid {{ theme.border }}">
+            <div>
+              <div style="font:500 14.5px/1.3 'Inter',sans-serif;color:{{ theme.ink }}">Тёмная тема</div>
+              <div style="font:400 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }}">Спокойнее для глаз вечером</div>
+            </div>
+            <div onclick="{{ onToggleDarkMode }}" style="width:46px;height:28px;border-radius:14px;background:{{ darkModeTrack }};position:relative;cursor:pointer;flex-shrink:0">
+              <div style="position:absolute;top:3px;left:{{ darkModeKnob }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:left 0.22s cubic-bezier(0.4,0,0.2,1)"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 2px;border-top:1px solid {{ theme.border }}">
+            <div>
+              <div style="font:500 14.5px/1.3 'Inter',sans-serif;color:{{ theme.ink }}">Kill switch</div>
+              <div style="font:400 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }}">Блокировать трафик при разрыве</div>
+            </div>
+            <div onclick="{{ onToggleKillSwitch }}" style="width:46px;height:28px;border-radius:14px;background:{{ killSwitchTrack }};position:relative;cursor:pointer;flex-shrink:0">
+              <div style="position:absolute;top:3px;left:{{ killSwitchKnob }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:left 0.22s cubic-bezier(0.4,0,0.2,1)"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 2px;border-top:1px solid {{ theme.border }}">
+            <div>
+              <div style="font:500 14.5px/1.3 'Inter',sans-serif;color:{{ theme.ink }}">Автоподключение</div>
+              <div style="font:400 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }}">Включать VPN при запуске</div>
+            </div>
+            <div onclick="{{ onToggleAutoConnect }}" style="width:46px;height:28px;border-radius:14px;background:{{ autoConnectTrack }};position:relative;cursor:pointer;flex-shrink:0">
+              <div style="position:absolute;top:3px;left:{{ autoConnectKnob }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:left 0.22s cubic-bezier(0.4,0,0.2,1)"></div>
+            </div>
+          </div>
+
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 2px;border-top:1px solid {{ theme.border }}">
+            <div>
+              <div style="font:500 14.5px/1.3 'Inter',sans-serif;color:{{ theme.ink }}">Уведомления</div>
+              <div style="font:400 12px/1.3 'Inter',sans-serif;color:{{ theme.mutedInk }}">О статусе подключения</div>
+            </div>
+            <div onclick="{{ onToggleNotifications }}" style="width:46px;height:28px;border-radius:14px;background:{{ notificationsTrack }};position:relative;cursor:pointer;flex-shrink:0">
+              <div style="position:absolute;top:3px;left:{{ notificationsKnob }};width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.3);transition:left 0.22s cubic-bezier(0.4,0,0.2,1)"></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+    </div>
+  </x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;darkMode&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Внешний вид&quot;},&quot;accentColor&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#5B8A72&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;#CC785C&quot;,&quot;#5B8A72&quot;,&quot;#6B7FD7&quot;,&quot;#C2703D&quot;],&quot;section&quot;:&quot;Внешний вид&quot;},&quot;mood&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;focused&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;options&quot;:[&quot;calm&quot;,&quot;focused&quot;,&quot;urgent&quot;],&quot;section&quot;:&quot;Характер&quot;}}">
+class Component extends DCLogic {
+  state = {
+    phase: 'off', elapsed: 0, showBurst: false, showFadeOut: false,
+    menuVisible: false, menuClosing: false, selectedServerId: 'frankfurt',
+    customServers: [], addServerOpen: false, addServerClosing: false, addServerValue: '', addServerError: '',
+    settingsVisible: false, settingsClosing: false,
+    darkModeOn: null, killSwitch: true, autoConnect: false, notifications: true, protocol: 'vless',
+  };
+
+  protocolList = [
+    { id: 'vless', label: 'VLESS' },
+    { id: 'wireguard', label: 'WireGuard' },
+    { id: 'shadowsocks', label: 'Shadowsocks' },
+  ];
+
+  servers = [
+    { id: 'frankfurt', name: 'Франкфурт, Германия', tag: 'Самый быстрый сервер' },
+    { id: 'amsterdam', name: 'Амстердам, Нидерланды', tag: '12 мс' },
+    { id: 'stockholm', name: 'Стокгольм, Швеция', tag: '24 мс' },
+    { id: 'zurich', name: 'Цюрих, Швейцария', tag: '31 мс' },
+    { id: 'lisbon', name: 'Лиссабон, Португалия', tag: '47 мс' },
+  ];
+
+  componentWillUnmount() {
+    if (this._timer) clearInterval(this._timer);
+    if (this._connectTimeout) clearTimeout(this._connectTimeout);
+    if (this._burstTimeout) clearTimeout(this._burstTimeout);
+    if (this._fadeOutTimeout) clearTimeout(this._fadeOutTimeout);
+    if (this._menuCloseTimeout) clearTimeout(this._menuCloseTimeout);
+    if (this._settingsCloseTimeout) clearTimeout(this._settingsCloseTimeout);
+    if (this._addServerCloseTimeout) clearTimeout(this._addServerCloseTimeout);
+  }
+
+  onOpenServerMenu = () => {
+    if (this.state.menuVisible) return;
+    this.setState({ menuVisible: true, menuClosing: false });
+  };
+
+  onCloseServerMenu = () => {
+    if (!this.state.menuVisible || this.state.menuClosing) return;
+    this.setState({ menuClosing: true });
+    this._menuCloseTimeout = setTimeout(() => {
+      this.setState({ menuVisible: false, menuClosing: false });
+    }, 320);
+  };
+
+  onSelectServer = (id) => {
+    this.setState({ selectedServerId: id });
+    this.onCloseServerMenu();
+  };
+
+  onOpenAddServer = () => this.setState({ addServerOpen: true, addServerError: '' });
+
+  closeAddServerForm = () => {
+    this.setState({ addServerOpen: false, addServerValue: '', addServerError: '' });
+  };
+
+  onCancelAddServer = () => this.closeAddServerForm();
+  onChangeAddServerValue = (e) => this.setState({ addServerValue: e.target.value, addServerError: '' });
+
+  parseVless(raw) {
+    const str = (raw || '').trim();
+    if (!str.toLowerCase().startsWith('vless://')) return null;
+    const m = str.match(/^vless:\/\/([^@]+)@([^:/?#]+):(\d+)/i);
+    if (!m) return null;
+    const host = m[2];
+    const port = m[3];
+    let remark = '';
+    const hashIdx = str.indexOf('#');
+    if (hashIdx !== -1) {
+      try { remark = decodeURIComponent(str.slice(hashIdx + 1)); } catch (e) { remark = str.slice(hashIdx + 1); }
+    }
+    return { host, port, name: remark || host };
+  }
+
+  onSubmitAddServer = () => {
+    const parsed = this.parseVless(this.state.addServerValue);
+    if (!parsed) {
+      this.setState({ addServerError: 'Не похоже на vless:// ссылку — проверь формат' });
+      return;
+    }
+    const id = 'custom-' + Date.now();
+    const newServer = { id, name: parsed.name, tag: `VLESS · ${parsed.host}:${parsed.port}`, isCustom: true };
+    this.setState(s => ({
+      customServers: [...s.customServers, newServer],
+      selectedServerId: id,
+    }));
+    this.closeAddServerForm();
+  };
+
+  onOpenSettings = () => {
+    if (this.state.settingsVisible) return;
+    this.setState({ settingsVisible: true, settingsClosing: false });
+  };
+
+  onCloseSettings = () => {
+    if (!this.state.settingsVisible || this.state.settingsClosing) return;
+    this.setState({ settingsClosing: true });
+    this._settingsCloseTimeout = setTimeout(() => {
+      this.setState({ settingsVisible: false, settingsClosing: false });
+    }, 320);
+  };
+
+  onToggleDarkMode = () => this.setState(s => ({ darkModeOn: !(s.darkModeOn ?? (this.props.darkMode ?? true)) }));
+  onToggleKillSwitch = () => this.setState(s => ({ killSwitch: !s.killSwitch }));
+  onToggleAutoConnect = () => this.setState(s => ({ autoConnect: !s.autoConnect }));
+  onToggleNotifications = () => this.setState(s => ({ notifications: !s.notifications }));
+  onSelectProtocol = (id) => this.setState({ protocol: id });
+
+  onRemoveServer = (id, e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    this.setState(s => ({
+      customServers: s.customServers.filter(srv => srv.id !== id),
+      selectedServerId: s.selectedServerId === id ? 'frankfurt' : s.selectedServerId,
+    }));
+  };
+
+  onTapButton = () => {
+    const { phase } = this.state;
+    if (phase === 'off') {
+      this.setState({ phase: 'connecting' });
+      this._connectTimeout = setTimeout(() => {
+        this.setState({ phase: 'on', elapsed: 0, showBurst: true });
+        this._timer = setInterval(() => {
+          this.setState(s => ({ elapsed: s.elapsed + 1 }));
+        }, 1000);
+        this._burstTimeout = setTimeout(() => this.setState({ showBurst: false }), 600);
+      }, 1300);
+    } else if (phase === 'on') {
+      if (this._timer) clearInterval(this._timer);
+      this.setState({ phase: 'off', elapsed: 0, showFadeOut: true });
+      this._fadeOutTimeout = setTimeout(() => this.setState({ showFadeOut: false }), 400);
+    }
+    // taps ignored while connecting
+  };
+
+  formatElapsed(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const sec = (s % 60).toString().padStart(2, '0');
+    return `${m}:${sec}`;
+  }
+
+  renderVals() {
+    const {
+      phase, elapsed, showBurst, showFadeOut, menuVisible, menuClosing, selectedServerId, customServers, addServerOpen, addServerClosing, addServerValue, addServerError,
+      settingsVisible, settingsClosing, darkModeOn, killSwitch, autoConnect, notifications, protocol,
+    } = this.state;
+    const isConnecting = phase === 'connecting';
+    const isConnected = phase === 'on';
+
+    const dark = darkModeOn ?? (this.props.darkMode ?? true);
+    const accent = this.props.accentColor ?? '#CC785C';
+    const moodKey = this.props.mood ?? 'calm';
+
+    const theme = dark
+      ? {
+          pageBg: '#1b1a18',
+          appBg: '#211f1c',
+          cardBg: '#28251f',
+          ink: 'oklch(94% 0.01 75)',
+          mutedInk: 'oklch(64% 0.015 60)',
+          border: '#34302a',
+          buttonOffBg: '#28251f',
+          buttonOffBorder: '#3a352d',
+          buttonOffIcon: 'oklch(70% 0.012 60)',
+          pillOffBg: '#28251f',
+          pillOffDot: 'oklch(60% 0.012 60)',
+          pillOffText: 'oklch(68% 0.012 60)',
+        }
+      : {
+          pageBg: 'oklch(91% 0.012 75)',
+          appBg: 'oklch(95% 0.012 75)',
+          cardBg: 'oklch(98% 0.006 75)',
+          ink: 'oklch(22% 0.02 50)',
+          mutedInk: 'oklch(50% 0.015 50)',
+          border: 'oklch(89% 0.01 75)',
+          buttonOffBg: 'oklch(98% 0.006 75)',
+          buttonOffBorder: 'oklch(86% 0.01 75)',
+          buttonOffIcon: 'oklch(45% 0.02 50)',
+          pillOffBg: 'oklch(91% 0.012 75)',
+          pillOffDot: 'oklch(55% 0.015 50)',
+          pillOffText: 'oklch(45% 0.015 50)',
+        };
+
+    const moodMap = {
+      calm: { ringDuration: '2.3s', iconStroke: '1.9', chipRadius: '16px', subOff: 'Нажми на кнопку, чтобы защититься', subConnecting: 'Устанавливаем безопасное соединение' },
+      focused: { ringDuration: '1.7s', iconStroke: '2.2', chipRadius: '14px', subOff: 'Готов к подключению', subConnecting: 'Настраиваем туннель' },
+      urgent: { ringDuration: '1s', iconStroke: '2.6', chipRadius: '10px', subOff: 'Защита выключена — нажми сейчас', subConnecting: 'Срочно шифруем соединение' },
+    };
+    const mood = moodMap[moodKey] || moodMap.calm;
+
+    let buttonBg, buttonShadow, iconColor, border;
+    const offShadowDark = dark ? '0,0,0' : '0,0,0';
+    if (isConnected) {
+      buttonBg = accent;
+      buttonShadow = `0 0 0 8px color-mix(in oklch, ${accent} 16%, transparent), 0 16px 32px -10px color-mix(in oklch, ${accent} 55%, transparent)`;
+      iconColor = '#fff';
+      border = 'none';
+    } else if (isConnecting) {
+      buttonBg = theme.buttonOffBg;
+      buttonShadow = `0 0 0 0px transparent, 0 16px 32px -10px rgba(${offShadowDark},0.25)`;
+      iconColor = accent;
+      border = `1.5px solid ${accent}`;
+    } else {
+      buttonBg = theme.buttonOffBg;
+      buttonShadow = `0 0 0 0px transparent, 0 16px 32px -10px rgba(${offShadowDark},0.3)`;
+      iconColor = theme.buttonOffIcon;
+      border = `1.5px solid ${theme.buttonOffBorder}`;
+    }
+
+    const buttonAnim = showBurst ? 'buttonConnectPulse 0.4s cubic-bezier(0.4,0,0.2,1) both' : showFadeOut ? 'buttonDisconnectPulse 0.4s cubic-bezier(0.4,0,0.2,1) both' : 'none';
+    const buttonStyle = `width:152px;height:152px;border-radius:50%;background:${buttonBg};border:${border};box-shadow:${buttonShadow};display:flex;align-items:center;justify-content:center;cursor:${isConnecting ? 'default' : 'pointer'};outline:none;-webkit-tap-highlight-color:transparent;animation:${buttonAnim};transition:border-color 0.4s cubic-bezier(0.4,0,0.2,1), box-shadow 0.4s cubic-bezier(0.4,0,0.2,1);`;
+    const buttonStyleActive = `transform:scale(0.97);`;
+
+    const statusLabel = isConnected ? 'Подключено' : isConnecting ? 'Подключаемся…' : 'Не подключено';
+    const subLabel = isConnecting ? mood.subConnecting : mood.subOff;
+
+    const pill = isConnected
+      ? { bg: `color-mix(in oklch, ${accent} 16%, transparent)`, dot: accent, text: accent, label: 'Защищено' }
+      : isConnecting
+      ? { bg: theme.pillOffBg, dot: theme.pillOffDot, text: theme.pillOffText, label: 'Подключение' }
+      : { bg: theme.pillOffBg, dot: theme.pillOffDot, text: theme.pillOffText, label: 'Не защищено' };
+
+    const allServers = [...this.servers, ...customServers];
+    const selectedServer = allServers.find(s => s.id === selectedServerId) || this.servers[0];
+    const servers = allServers.map(s => ({
+      ...s,
+      isSelected: s.id === selectedServerId,
+      dotColor: s.id === selectedServerId ? accent : theme.border,
+      onSelect: () => this.onSelectServer(s.id),
+      onRemove: (e) => this.onRemoveServer(s.id, e),
+    }));
+    const menuAnim = `${menuClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.38s cubic-bezier(0.4,0,0.2,1) both`;
+    const backdropAnim = `${menuClosing ? 'backdropOut' : 'backdropIn'} 0.32s cubic-bezier(0.4,0,0.2,1) both`;
+    const settingsAnim = `${settingsClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.38s cubic-bezier(0.4,0,0.2,1) both`;
+    const settingsBackdropAnim = `${settingsClosing ? 'backdropOut' : 'backdropIn'} 0.32s cubic-bezier(0.4,0,0.2,1) both`;
+
+    const switchTrack = (on) => on ? `color-mix(in oklch, ${accent} 70%, transparent)` : theme.border;
+    const switchKnob = (on) => on ? '21px' : '3px';
+
+    const showAddServerForm = addServerOpen;
+    const showAddServerButton = !addServerOpen;
+
+    const protocols = this.protocolList.map(p => {
+      const isSelected = p.id === protocol;
+      return {
+        ...p,
+        bg: isSelected ? `color-mix(in oklch, ${accent} 16%, transparent)` : theme.cardBg,
+        border: isSelected ? accent : theme.border,
+        text: isSelected ? accent : theme.mutedInk,
+        onSelect: () => this.onSelectProtocol(p.id),
+      };
+    });
+
+    return {
+      isOff: phase === 'off',
+      isConnecting,
+      isConnected,
+      showRing: isConnected,
+      showBurst,
+      showFadeOut,
+      statusLabel,
+      subLabel,
+      elapsedLabel: this.formatElapsed(elapsed),
+      buttonStyle,
+      buttonStyleActive,
+      iconColor,
+      pill,
+      theme,
+      mood,
+      accent,
+      onTapButton: this.onTapButton,
+      menuVisible,
+      menuClosing,
+      menuAnim,
+      backdropAnim,
+      selectedServer,
+      servers,
+      onOpenServerMenu: this.onOpenServerMenu,
+      onCloseServerMenu: this.onCloseServerMenu,
+      addServerOpen,
+      addServerValue,
+      addServerError,
+      showAddServerForm,
+      showAddServerButton,
+      onOpenAddServer: this.onOpenAddServer,
+      onCancelAddServer: this.onCancelAddServer,
+      onChangeAddServerValue: this.onChangeAddServerValue,
+      onSubmitAddServer: this.onSubmitAddServer,
+      settingsVisible,
+      settingsAnim,
+      settingsBackdropAnim,
+      onOpenSettings: this.onOpenSettings,
+      onCloseSettings: this.onCloseSettings,
+      protocols,
+      darkModeTrack: switchTrack(dark),
+      darkModeKnob: switchKnob(dark),
+      onToggleDarkMode: this.onToggleDarkMode,
+      killSwitchTrack: switchTrack(killSwitch),
+      killSwitchKnob: switchKnob(killSwitch),
+      onToggleKillSwitch: this.onToggleKillSwitch,
+      autoConnectTrack: switchTrack(autoConnect),
+      autoConnectKnob: switchKnob(autoConnect),
+      onToggleAutoConnect: this.onToggleAutoConnect,
+      notificationsTrack: switchTrack(notifications),
+      notificationsKnob: switchKnob(notifications),
+      onToggleNotifications: this.onToggleNotifications,
+    };
+  }
+}
+
+</script>
+
+
+</body></html>
