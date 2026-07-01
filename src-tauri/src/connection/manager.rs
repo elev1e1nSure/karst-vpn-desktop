@@ -55,6 +55,22 @@ impl ConnectionManager {
             server_id: server_id.clone(),
         })?;
 
+        match self.connect_inner(app, pool, server_id).await {
+            Ok(status) => Ok(status),
+            Err(error) => {
+                let _ = self.stop_current_process();
+                let _ = self.set_status(ConnectionStatus::Disconnected);
+                Err(error)
+            }
+        }
+    }
+
+    async fn connect_inner(
+        &self,
+        app: &AppHandle,
+        pool: DbPool,
+        server_id: String,
+    ) -> AppResult<ConnectionStatus> {
         let server = {
             let guard = pool
                 .lock()
@@ -64,12 +80,7 @@ impl ConnectionManager {
         let link = parse_vless_uri(&server.vless_uri)
             .map_err(|error| AppError::Vless(error.to_string()))?;
 
-        if let Err(error) = tcp_check(&link.host, link.port, Duration::from_secs(5)).await {
-            let _ = self.set_status(ConnectionStatus::Error {
-                message: error.to_string(),
-            });
-            return Err(error);
-        }
+        tcp_check(&link.host, link.port, Duration::from_secs(5)).await?;
 
         self.stop_current_process()?;
 
@@ -80,15 +91,7 @@ impl ConnectionManager {
         let tun_options = TunOptions::new(app_data_dir.join("sing-box-cache.db"));
         let outbound = vless_to_outbound(&link);
         let config = build_config(outbound, &tun_options);
-        let process = match SingboxProcess::spawn(app, &config, &app_data_dir).await {
-            Ok(process) => process,
-            Err(error) => {
-                let _ = self.set_status(ConnectionStatus::Error {
-                    message: error.to_string(),
-                });
-                return Err(error);
-            }
-        };
+        let process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
 
         let status = ConnectionStatus::Connected {
             server_id,
