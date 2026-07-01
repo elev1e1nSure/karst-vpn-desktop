@@ -805,21 +805,31 @@ function SettingsSheet({ theme, accent, darkModeOn, routingMode, autoRefreshMode
 
   useEffect(() => { setHoursText(autoRefreshHours.toString()); }, [autoRefreshHours]);
 
+  const Divider = () => <div style={{ height: 1, background: theme.border, margin: '0 -8px' }} />;
+
   return (
     <div style={{ overflow: 'auto' }}>
       <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, marginBottom: 16 }}>Настройки</div>
 
+      <Divider />
       <SettingsActionRow theme={theme} title="Логи" subtitle="Открыть журнал sing-box" onClick={onOpenLogs} />
+      <Divider />
       <ToggleRow theme={theme} accent={accent} title="Тёмная тема" subtitle="Спокойнее для глаз вечером" checked={darkModeOn} onToggle={onToggleDarkMode} />
 
       <SettingsSectionTitle theme={theme} title="Маршрутизация" />
+      <Divider />
       <SettingsChoiceRow theme={theme} accent={accent} title="Полный VPN" subtitle="Весь трафик через выбранный сервер" selected={routingMode === 'Full'} onClick={() => onSetRoutingMode('Full')} />
+      <Divider />
       <SettingsChoiceRow theme={theme} accent={accent} title="Обход локалки" subtitle="Локальные сети и private IP идут напрямую" selected={routingMode === 'BypassLocal'} onClick={() => onSetRoutingMode('BypassLocal')} />
+      <Divider />
       <SettingsChoiceRow theme={theme} accent={accent} title="Обход RU" subtitle="RU-домены и локальные сети идут напрямую" selected={routingMode === 'BypassRu'} onClick={() => onSetRoutingMode('BypassRu')} />
 
       <SettingsSectionTitle theme={theme} title="Обновление подписок" />
+      <Divider />
       <SettingsChoiceRow theme={theme} accent={accent} title="Авто" subtitle="По Profile-Update-Interval, иначе раз в 24 часа" selected={autoRefreshMode === 'Auto'} onClick={() => onSetAutoRefreshMode('Auto')} />
+      <Divider />
       <SettingsChoiceRow theme={theme} accent={accent} title="Выкл" subtitle="Обновлять только вручную" selected={autoRefreshMode === 'Off'} onClick={() => onSetAutoRefreshMode('Off')} />
+      <Divider />
       <SettingsChoiceRow theme={theme} accent={accent} title="Каждые N часов" subtitle="Фиксированный интервал для всех подписок" selected={autoRefreshMode === 'EveryHours'} onClick={() => onSetAutoRefreshMode('EveryHours')} />
 
       <div className={`hours-input-wrapper${autoRefreshMode === 'EveryHours' ? ' visible' : ''}`} style={{ marginTop: 8 }}>
@@ -857,7 +867,6 @@ function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }
 }) {
   return (
     <div className="settings-choice-row" onClick={onClick}>
-      <div style={{ height: 1, background: theme.border }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
@@ -881,7 +890,6 @@ function SettingsActionRow({ theme, title, subtitle, onClick }: {
 }) {
   return (
     <div className="settings-row" onClick={onClick}>
-      <div style={{ height: 1, background: theme.border }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
@@ -900,7 +908,6 @@ function ToggleRow({ theme, accent, title, subtitle, checked, onToggle }: {
 }) {
   return (
     <div className="settings-row" onClick={onToggle}>
-      <div style={{ height: 1, background: theme.border }} />
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
