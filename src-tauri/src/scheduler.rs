@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use tauri::async_runtime::JoinHandle;
 use tokio::sync::watch;
 
+use crate::db::lock_pool;
 use crate::db::settings::{
     self, AUTO_REFRESH_AUTO, AUTO_REFRESH_EVERY_HOURS, AUTO_REFRESH_OFF,
 };
@@ -83,9 +84,7 @@ async fn run_scheduler(
 }
 
 fn next_delay(pool: &DbPool) -> AppResult<Option<Duration>> {
-    let guard = pool
-        .lock()
-        .map_err(|_| AppError::Database(rusqlite::Error::InvalidQuery))?;
+    let guard = lock_pool(pool)?;
     let mode = settings::get_auto_refresh_mode(&guard)?;
 
     match mode.as_str() {

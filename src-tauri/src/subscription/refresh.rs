@@ -2,8 +2,8 @@ use uuid::Uuid;
 
 use crate::db::servers::{self, NewServer};
 use crate::db::subscriptions::{self, SubscriptionRecord};
-use crate::db::DbPool;
-use crate::error::{AppError, AppResult};
+use crate::db::{lock_pool, DbPool};
+use crate::error::AppResult;
 use crate::subscription::decode::decode_subscription;
 use crate::subscription::fetch::fetch_subscription;
 use crate::vless::model::VlessLink;
@@ -125,11 +125,4 @@ fn server_from_link(subscription_id: &str, link: &VlessLink) -> NewServer {
         transport: link.transport.label().to_string(),
         flow: link.flow.as_ref().map(|flow| flow.label().to_string()),
     }
-}
-
-fn lock_pool(
-    pool: &DbPool,
-) -> AppResult<std::sync::MutexGuard<'_, rusqlite::Connection>> {
-    pool.lock()
-        .map_err(|_| AppError::Database(rusqlite::Error::InvalidQuery))
 }

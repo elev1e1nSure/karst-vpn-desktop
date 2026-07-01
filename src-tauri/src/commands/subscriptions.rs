@@ -1,15 +1,16 @@
 use tauri::State;
 use uuid::Uuid;
 
+use crate::db;
 use crate::db::subscriptions::{self, NewSubscription};
 use crate::db::DbPool;
 use crate::dto::{ImportSummaryDto, SubscriptionDto};
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::subscription::refresh::{refresh, refresh_all};
 
 #[tauri::command]
 pub fn list_subscriptions(pool: State<'_, DbPool>) -> AppResult<Vec<SubscriptionDto>> {
-    let guard = lock_pool(&pool)?;
+    let guard = db::lock_pool(pool.inner())?;
     subscriptions::list_subscriptions(&guard)
         .map(|records| records.into_iter().map(SubscriptionDto::from).collect())
 }
@@ -28,7 +29,7 @@ pub async fn add_subscription(
         name: name.unwrap_or_else(|| "Subscription".to_string()),
     };
     {
-        let guard = lock_pool(&pool)?;
+        let guard = db::lock_pool(pool.inner())?;
         subscriptions::insert_subscription(&guard, &subscription)?;
     }
 
@@ -64,14 +65,6 @@ pub async fn refresh_all_subscriptions(
 
 #[tauri::command]
 pub fn delete_subscription(pool: State<'_, DbPool>, subscription_id: String) -> AppResult<bool> {
-    let guard = lock_pool(&pool)?;
+    let guard = db::lock_pool(pool.inner())?;
     subscriptions::delete_subscription(&guard, &subscription_id)
-}
-
-fn lock_pool<'a>(
-    pool: &'a State<'_, DbPool>,
-) -> AppResult<std::sync::MutexGuard<'a, rusqlite::Connection>> {
-    pool.inner()
-        .lock()
-        .map_err(|_| AppError::Database(rusqlite::Error::InvalidQuery))
 }

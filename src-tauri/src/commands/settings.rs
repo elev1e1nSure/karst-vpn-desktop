@@ -1,14 +1,15 @@
 use tauri::State;
 
+use crate::db;
 use crate::db::settings;
 use crate::db::DbPool;
 use crate::dto::SettingsDto;
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::scheduler::ScheduleHandle;
 
 #[tauri::command]
 pub fn get_settings(pool: State<'_, DbPool>) -> AppResult<SettingsDto> {
-    let guard = lock_pool(&pool)?;
+    let guard = db::lock_pool(pool.inner())?;
     Ok(SettingsDto {
         auto_refresh_mode: settings::get_auto_refresh_mode(&guard)?,
         auto_refresh_hours: settings::get_auto_refresh_hours(&guard)?,
@@ -23,7 +24,7 @@ pub fn set_auto_refresh_settings(
     hours: Option<u64>,
 ) -> AppResult<SettingsDto> {
     {
-        let guard = lock_pool(&pool)?;
+        let guard = db::lock_pool(pool.inner())?;
         settings::set_auto_refresh_mode(&guard, &mode)?;
         if let Some(hours) = hours {
             settings::set_auto_refresh_hours(&guard, hours)?;
@@ -31,12 +32,4 @@ pub fn set_auto_refresh_settings(
     }
     schedule.notify_settings_changed();
     get_settings(pool)
-}
-
-fn lock_pool<'a>(
-    pool: &'a State<'_, DbPool>,
-) -> AppResult<std::sync::MutexGuard<'a, rusqlite::Connection>> {
-    pool.inner()
-        .lock()
-        .map_err(|_| AppError::Database(rusqlite::Error::InvalidQuery))
 }

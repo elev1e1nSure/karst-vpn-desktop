@@ -1,6 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 
+use crate::db;
 use crate::db::servers::{self, NewServer};
 use crate::db::DbPool;
 use crate::dto::ServerDto;
@@ -9,7 +10,7 @@ use crate::vless::parser::parse_vless_uri;
 
 #[tauri::command]
 pub fn list_servers(pool: State<'_, DbPool>) -> AppResult<Vec<ServerDto>> {
-    let guard = lock_pool(&pool)?;
+    let guard = db::lock_pool(pool.inner())?;
     servers::list_servers(&guard).map(|records| records.into_iter().map(ServerDto::from).collect())
 }
 
@@ -36,20 +37,12 @@ pub fn add_manual_link(
         flow: link.flow.as_ref().map(|flow| flow.label().to_string()),
     };
 
-    let guard = lock_pool(&pool)?;
+    let guard = db::lock_pool(pool.inner())?;
     servers::insert_server(&guard, &server).map(ServerDto::from)
 }
 
 #[tauri::command]
 pub fn delete_server(pool: State<'_, DbPool>, server_id: String) -> AppResult<bool> {
-    let guard = lock_pool(&pool)?;
+    let guard = db::lock_pool(pool.inner())?;
     servers::delete_server(&guard, &server_id)
-}
-
-fn lock_pool<'a>(
-    pool: &'a State<'_, DbPool>,
-) -> AppResult<std::sync::MutexGuard<'a, rusqlite::Connection>> {
-    pool.inner()
-        .lock()
-        .map_err(|_| AppError::Database(rusqlite::Error::InvalidQuery))
 }

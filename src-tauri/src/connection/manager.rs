@@ -4,7 +4,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::db::servers;
+use crate::db::{lock_pool, servers};
 use crate::db::DbPool;
 use crate::error::{AppError, AppResult};
 use crate::healthcheck::tcp_check;
@@ -72,9 +72,7 @@ impl ConnectionManager {
         server_id: String,
     ) -> AppResult<ConnectionStatus> {
         let server = {
-            let guard = pool
-                .lock()
-                .map_err(|_| AppError::Database(rusqlite::Error::InvalidQuery))?;
+            let guard = lock_pool(&pool)?;
             servers::get_server(&guard, &server_id)?
         };
         let link = parse_vless_uri(&server.vless_uri)
