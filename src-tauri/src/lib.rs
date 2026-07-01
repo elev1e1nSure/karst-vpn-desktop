@@ -1,5 +1,7 @@
 pub mod connection;
+pub mod commands;
 pub mod db;
+pub mod dto;
 pub mod error;
 pub mod healthcheck;
 pub mod scheduler;
