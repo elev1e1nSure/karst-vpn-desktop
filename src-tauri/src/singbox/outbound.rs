@@ -63,15 +63,15 @@ fn tls_config(security: &Security) -> Option<Value> {
             let mut tls = Map::new();
             tls.insert("enabled".to_string(), json!(true));
             insert_optional(&mut tls, "server_name", server_name);
-            if let Some(fingerprint) = fingerprint {
-                tls.insert(
-                    "utls".to_string(),
-                    json!({
-                        "enabled": true,
-                        "fingerprint": fingerprint,
-                    }),
-                );
-            }
+            let fingerprint = fingerprint.as_deref().unwrap_or("chrome");
+            // sing-box requires uTLS for REALITY clients; chrome matches Xray's common default.
+            tls.insert(
+                "utls".to_string(),
+                json!({
+                    "enabled": true,
+                    "fingerprint": fingerprint,
+                }),
+            );
             tls.insert(
                 "reality".to_string(),
                 json!({
