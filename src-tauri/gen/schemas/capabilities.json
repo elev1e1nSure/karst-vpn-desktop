@@ -1,1 +1,1 @@
-{"default":{"identifier":"default","description":"Default permissions","local":true,"windows":["main"],"permissions":["core:default","core:webview:allow-internal-toggle-devtools"]}}
+{"default":{"identifier":"default","description":"Default permissions","local":true,"windows":["main"],"permissions":["core:default","core:webview:allow-internal-toggle-devtools",{"identifier":"shell:allow-execute","allow":[{"args":true,"name":"binaries/sing-box","sidecar":true}]}]}}

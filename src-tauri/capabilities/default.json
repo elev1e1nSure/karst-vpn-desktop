@@ -5,6 +5,16 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "core:webview:allow-internal-toggle-devtools"
+    "core:webview:allow-internal-toggle-devtools",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/sing-box",
+          "sidecar": true,
+          "args": true
+        }
+      ]
+    }
   ]
 }
