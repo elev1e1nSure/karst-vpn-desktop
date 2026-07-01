@@ -59,7 +59,7 @@ pub fn build_config(outbound: Value, tun: &TunOptions) -> Value {
                 "mtu": tun.mtu,
                 "stack": tun.stack,
                 "auto_route": true,
-                "strict_route": true,
+                "strict_route": false,
             }
         ],
         "outbounds": [
