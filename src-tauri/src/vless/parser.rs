@@ -21,13 +21,18 @@ pub fn parse_vless_uri(input: &str) -> Result<VlessLink, ParseError> {
     }
     Uuid::parse_str(id).map_err(|_| ParseError::InvalidUuid)?;
 
-    let host = url.host_str().ok_or(ParseError::MissingHost)?.to_string();
+    let host = url
+        .host_str()
+        .ok_or(ParseError::MissingHost)?
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_string();
     let port = url.port().ok_or(ParseError::MissingPort)?;
     if port == 0 {
         return Err(ParseError::InvalidPort);
     }
 
-    let query: HashMap<String, String> = url.query_pairs().into_owned().collect();
+    let query = parse_query(url.query().unwrap_or(""));
     let transport = parse_transport(&query)?;
     let security = parse_security(&query)?;
     let flow = parse_flow(query.get("flow"))?;
@@ -107,7 +112,6 @@ fn parse_security(query: &HashMap<String, String>) -> Result<Security, ParseErro
                 server_name: first_non_empty(query, &["sni", "peer"]),
                 public_key,
                 short_id: first_non_empty(query, &["sid"]),
-                spider_x: first_non_empty(query, &["spx"]),
                 fingerprint: first_non_empty(query, &["fp"]),
             })
         }
@@ -151,6 +155,17 @@ fn first_non_empty(query: &HashMap<String, String>, keys: &[&str]) -> Option<Str
         .filter_map(|key| query.get(*key))
         .find(|value| !value.is_empty())
         .cloned()
+}
+
+fn parse_query(query: &str) -> HashMap<String, String> {
+    let mut values = HashMap::new();
+
+    for pair in query.split('&').filter(|pair| !pair.is_empty()) {
+        let (key, value) = pair.split_once('=').unwrap_or((pair, ""));
+        values.insert(percent_decode(key), percent_decode(value));
+    }
+
+    values
 }
 
 fn percent_decode(value: &str) -> String {

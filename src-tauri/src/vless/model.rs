@@ -26,7 +26,6 @@ pub enum Security {
         server_name: Option<String>,
         public_key: String,
         short_id: Option<String>,
-        spider_x: Option<String>,
         fingerprint: Option<String>,
     },
 }
