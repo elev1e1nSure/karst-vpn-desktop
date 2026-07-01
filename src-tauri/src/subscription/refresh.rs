@@ -41,6 +41,21 @@ pub async fn refresh(
     let imported = batch.links.len();
     let failed = batch.failures.len();
 
+    if imported == 0 {
+        let error = if failed == 0 {
+            "subscription contained no VLESS links".to_string()
+        } else {
+            format!("subscription contained no valid VLESS links ({failed} parse failures)")
+        };
+        set_refresh_error(&pool, &sub_id, &error)?;
+        return Ok(ImportSummary {
+            subscription_id: sub_id,
+            imported,
+            failed,
+            error: Some(error),
+        });
+    }
+
     {
         let mut guard = lock_pool(&pool)?;
         let transaction = guard.transaction()?;
@@ -68,7 +83,20 @@ pub async fn refresh_all(pool: DbPool, client: reqwest::Client) -> AppResult<Vec
 
     let mut summaries = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions {
-        summaries.push(refresh(pool.clone(), client.clone(), subscription.id).await?);
+        let subscription_id = subscription.id;
+        match refresh(pool.clone(), client.clone(), subscription_id.clone()).await {
+            Ok(summary) => summaries.push(summary),
+            Err(error) => {
+                let message = error.to_string();
+                let _ = set_refresh_error(&pool, &subscription_id, &message);
+                summaries.push(ImportSummary {
+                    subscription_id,
+                    imported: 0,
+                    failed: 0,
+                    error: Some(message),
+                });
+            }
+        }
     }
     Ok(summaries)
 }
