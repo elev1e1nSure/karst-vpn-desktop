@@ -6,12 +6,20 @@ type Phase = 'off' | 'connecting' | 'on';
 
 type ServerDto = {
   id: string;
+  subscription_id?: string | null;
   name: string;
   host: string;
   port: number;
   security: string;
   transport: string;
   flow?: string | null;
+};
+
+type ImportSummaryDto = {
+  subscription_id: string;
+  imported: number;
+  failed: number;
+  error?: string | null;
 };
 
 type ConnectionStatusDto = {
@@ -221,16 +229,29 @@ export function App() {
   const onSubmitAddServer = async () => {
     const value = addServerValue.trim();
     if (!value) {
-      setAddServerError('Вставь vless:// ссылку');
+      setAddServerError('Вставь vless:// ссылку или https:// подписку');
       return;
     }
 
     setIsBusy(true);
     setAddServerError('');
     try {
-      const server = await invoke<ServerDto>('add_manual_link', { vlessUri: value });
-      setServers((prev) => [server, ...prev.filter((item) => item.id !== server.id)]);
-      setSelectedServerId(server.id);
+      if (value.toLowerCase().startsWith('https://')) {
+        const summary = await invoke<ImportSummaryDto>('add_subscription', { url: value, name: null });
+        if (summary.error) {
+          setAddServerError(summary.error);
+          return;
+        }
+
+        const serverList = await invoke<ServerDto[]>('list_servers');
+        setServers(serverList);
+        const importedServer = serverList.find((server) => server.subscription_id === summary.subscription_id);
+        setSelectedServerId(importedServer?.id ?? serverList[0]?.id ?? '');
+      } else {
+        const server = await invoke<ServerDto>('add_manual_link', { vlessUri: value });
+        setServers((prev) => [server, ...prev.filter((item) => item.id !== server.id)]);
+        setSelectedServerId(server.id);
+      }
       setAppError('');
       closeAddServerForm();
     } catch (error) {
@@ -605,7 +626,7 @@ export function App() {
               })}
               {servers.length === 0 && (
                 <div style={{ padding: '18px 10px', font: "400 13px/1.4 'Inter', sans-serif", color: theme.mutedInk }}>
-                  Список пуст. Добавь сервер по VLESS-ссылке ниже.
+                  Список пуст. Добавь сервер по VLESS-ссылке или HTTPS-подписке ниже.
                 </div>
               )}
             </div>
@@ -632,11 +653,11 @@ export function App() {
                 </div>
               ) : (
                 <div className="add-server-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '14px', borderRadius: '14px', background: theme.cardBg }}>
-                  <span style={{ font: "500 12px/1.3 'Inter', sans-serif", color: theme.mutedInk, letterSpacing: '0.2px' }}>VLESS-ссылка</span>
+                  <span style={{ font: "500 12px/1.3 'Inter', sans-serif", color: theme.mutedInk, letterSpacing: '0.2px' }}>VLESS-ссылка или HTTPS-подписка</span>
                   <input
                     value={addServerValue}
                     onChange={(e) => setAddServerValue(e.target.value)}
-                    placeholder="vless://uuid@host:port?...#Имя"
+                    placeholder="vless://... или https://.../sub/..."
                     style={{
                       font: "400 13px/1.4 'Inter', ui-monospace, monospace",
                       color: theme.ink,
