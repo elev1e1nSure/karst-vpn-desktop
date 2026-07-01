@@ -3,8 +3,8 @@ use std::time::Duration;
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
+use tauri::async_runtime::JoinHandle;
 use tokio::sync::watch;
-use tokio::task::JoinHandle;
 
 use crate::db::settings::{
     self, AUTO_REFRESH_AUTO, AUTO_REFRESH_EVERY_HOURS, AUTO_REFRESH_OFF,
@@ -44,7 +44,7 @@ impl Drop for ScheduleHandle {
 
 pub fn spawn(pool: DbPool, client: reqwest::Client) -> ScheduleHandle {
     let (sender, receiver) = watch::channel(());
-    let task = tokio::spawn(run_scheduler(pool, client, receiver));
+    let task = tauri::async_runtime::spawn(run_scheduler(pool, client, receiver));
 
     ScheduleHandle {
         sender,
