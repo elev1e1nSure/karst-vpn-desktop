@@ -4,8 +4,8 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::db::{lock_pool, servers};
 use crate::db::DbPool;
+use crate::db::{lock_pool, servers};
 use crate::error::{AppError, AppResult};
 use crate::healthcheck::tcp_check;
 use crate::singbox::config::{build_config, TunOptions};
@@ -16,9 +16,16 @@ use crate::vless::parser::parse_vless_uri;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConnectionStatus {
     Disconnected,
-    Connecting { server_id: String },
-    Connected { server_id: String, server_name: String },
-    Error { message: String },
+    Connecting {
+        server_id: String,
+    },
+    Connected {
+        server_id: String,
+        server_name: String,
+    },
+    Error {
+        message: String,
+    },
 }
 
 pub struct ConnectionManager {
@@ -58,7 +65,7 @@ impl ConnectionManager {
         match self.connect_inner(app, pool, server_id).await {
             Ok(status) => Ok(status),
             Err(error) => {
-                let _ = self.stop_current_process();
+                let _ = self.stop_current_process().await;
                 let _ = self.set_status(ConnectionStatus::Disconnected);
                 Err(error)
             }
@@ -80,7 +87,7 @@ impl ConnectionManager {
 
         tcp_check(&link.host, link.port, Duration::from_secs(5)).await?;
 
-        self.stop_current_process()?;
+        self.stop_current_process().await?;
 
         let app_data_dir = app
             .path()
@@ -103,19 +110,37 @@ impl ConnectionManager {
 
     pub async fn disconnect(&self) -> AppResult<ConnectionStatus> {
         let _operation = self.operation.lock().await;
-        self.stop_current_process()?;
+        self.stop_current_process().await?;
         self.set_status(ConnectionStatus::Disconnected)?;
         Ok(ConnectionStatus::Disconnected)
+    }
+
+    pub async fn shutdown(&self) -> AppResult<()> {
+        let _operation = self.operation.lock().await;
+        self.stop_current_process().await?;
+        self.set_status(ConnectionStatus::Disconnected)
+    }
+
+    pub fn shutdown_now(&self) -> AppResult<()> {
+        let process = {
+            let mut inner = self.lock_inner()?;
+            inner.status = ConnectionStatus::Disconnected;
+            inner.process.take()
+        };
+        if let Some(mut process) = process {
+            process.terminate_now()?;
+        }
+        Ok(())
     }
 
     pub fn status(&self) -> AppResult<ConnectionStatus> {
         Ok(self.lock_inner()?.status.clone())
     }
 
-    fn stop_current_process(&self) -> AppResult<()> {
-        let mut inner = self.lock_inner()?;
-        if let Some(mut process) = inner.process.take() {
-            process.stop()?;
+    async fn stop_current_process(&self) -> AppResult<()> {
+        let process = self.lock_inner()?.process.take();
+        if let Some(mut process) = process {
+            process.stop().await?;
         }
         Ok(())
     }

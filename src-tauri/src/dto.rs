@@ -1,5 +1,6 @@
 use serde::Serialize;
 
+use crate::app_log::LogEntry;
 use crate::connection::manager::ConnectionStatus;
 use crate::db::servers::ServerRecord;
 use crate::db::subscriptions::SubscriptionRecord;
@@ -56,6 +57,12 @@ pub struct ConnectionStatusDto {
     pub server_id: Option<String>,
     pub server_name: Option<String>,
     pub message: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct LogEntryDto {
+    pub source: String,
+    pub message: String,
 }
 
 impl From<ServerRecord> for ServerDto {
@@ -136,6 +143,15 @@ impl From<ConnectionStatus> for ConnectionStatusDto {
                 server_name: None,
                 message: Some(message),
             },
+        }
+    }
+}
+
+impl From<LogEntry> for LogEntryDto {
+    fn from(entry: LogEntry) -> Self {
+        Self {
+            source: entry.source,
+            message: entry.message,
         }
     }
 }

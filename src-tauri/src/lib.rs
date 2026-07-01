@@ -1,5 +1,6 @@
-pub mod connection;
+pub mod app_log;
 pub mod commands;
+pub mod connection;
 pub mod db;
 pub mod dto;
 pub mod error;
@@ -9,11 +10,14 @@ pub mod singbox;
 pub mod subscription;
 pub mod vless;
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
@@ -22,11 +26,14 @@ pub fn run() {
             let client = reqwest::Client::builder()
                 .user_agent("Karst VPN Desktop/0.1.0")
                 .build()?;
+            let logs = app_log::AppLog::new(app_data_dir.clone());
+            logs.info("application startup");
             let connection_manager = connection::manager::ConnectionManager::default();
             let schedule = scheduler::spawn(pool.clone(), client.clone());
 
             app.manage(pool);
             app.manage(client);
+            app.manage(logs);
             app.manage(connection_manager);
             app.manage(schedule);
 
@@ -43,10 +50,42 @@ pub fn run() {
             commands::servers::delete_server,
             commands::settings::get_settings,
             commands::settings::set_auto_refresh_settings,
+            commands::logs::list_logs,
+            commands::logs::clear_logs,
             commands::connection::connect,
             commands::connection::disconnect,
             commands::connection::connection_status,
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    let shutdown_started = Arc::new(AtomicBool::new(false));
+    app.run(move |app_handle, event| match event {
+        tauri::RunEvent::ExitRequested { code, api, .. } => {
+            if shutdown_started.swap(true, Ordering::SeqCst) {
+                return;
+            }
+
+            api.prevent_exit();
+            let app_handle = app_handle.clone();
+            tauri::async_runtime::spawn(async move {
+                let logs = app_handle.state::<app_log::AppLog>();
+                logs.info("application shutdown requested");
+                let manager = app_handle.state::<connection::manager::ConnectionManager>();
+                match manager.shutdown().await {
+                    Ok(()) => logs.info("application shutdown completed"),
+                    Err(error) => logs.error(format!(
+                        "application shutdown failed kind={} message={error}",
+                        error.kind()
+                    )),
+                }
+                app_handle.exit(code.unwrap_or(0));
+            });
+        }
+        tauri::RunEvent::Exit => {
+            let manager = app_handle.state::<connection::manager::ConnectionManager>();
+            let _ = manager.shutdown_now();
+        }
+        _ => {}
+    });
 }

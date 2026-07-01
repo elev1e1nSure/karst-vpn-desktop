@@ -497,3 +497,52 @@ a, img {
   opacity: 0.85;
 }
 
+.log-action {
+  border: 0;
+  padding: 6px 4px;
+  background: transparent;
+  color: var(--theme-muted-ink);
+  font: 500 12px/1 'Inter', sans-serif;
+  cursor: default;
+}
+
+.log-action:hover:not(:disabled) {
+  color: var(--theme-ink);
+}
+
+.log-action:disabled {
+  opacity: 0.45;
+}
+
+.log-action-danger:hover:not(:disabled) {
+  color: #a56060;
+}
+
+.log-viewer {
+  min-height: 132px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  overflow: auto;
+  border-radius: 8px;
+  user-select: text;
+  -webkit-user-select: text;
+  font: 400 11px/1.45 ui-monospace, 'Cascadia Mono', Consolas, monospace;
+}
+
+.log-line {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.log-empty,
+.log-error {
+  display: flex;
+  min-height: 112px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.log-error {
+  color: #a56060;
+}

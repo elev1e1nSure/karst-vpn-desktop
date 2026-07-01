@@ -29,6 +29,11 @@ type ConnectionStatusDto = {
   message?: string | null;
 };
 
+type LogEntryDto = {
+  source: string;
+  message: string;
+};
+
 const getErrorMessage = (error: unknown) => {
   if (typeof error === 'string') return error;
   if (error && typeof error === 'object' && 'message' in error) {
@@ -79,6 +84,9 @@ export function App() {
   
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
+  const [logs, setLogs] = useState<LogEntryDto[]>([]);
+  const [logsLoading, setLogsLoading] = useState(false);
+  const [logsError, setLogsError] = useState('');
   
   const [darkModeOn, setDarkModeOn] = useState<boolean | null>(null);
 
@@ -279,10 +287,36 @@ export function App() {
     }
   };
 
+  const loadLogs = async () => {
+    setLogsLoading(true);
+    setLogsError('');
+    try {
+      setLogs(await invoke<LogEntryDto[]>('list_logs'));
+    } catch (error) {
+      setLogsError(getErrorMessage(error));
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
+  const onClearLogs = async () => {
+    setLogsLoading(true);
+    setLogsError('');
+    try {
+      await invoke('clear_logs');
+      setLogs([]);
+    } catch (error) {
+      setLogsError(getErrorMessage(error));
+    } finally {
+      setLogsLoading(false);
+    }
+  };
+
   const onOpenSettings = () => {
     if (settingsVisible) return;
     setSettingsVisible(true);
     setSettingsClosing(false);
+    void loadLogs();
   };
 
   const onCloseSettings = () => {
@@ -713,7 +747,7 @@ export function App() {
               left: 0,
               right: 0,
               bottom: 0,
-              maxHeight: '40%',
+              maxHeight: '78%',
               display: 'flex',
               flexDirection: 'column',
               background: theme.appBg,
@@ -759,6 +793,38 @@ export function App() {
                   }}
                 />
               </div>
+            </div>
+
+            <div style={{ height: '1px', background: theme.border, margin: '12px 0 8px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+              <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>Логи</div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button type="button" className="log-action" onClick={() => void loadLogs()} disabled={logsLoading}>Обновить</button>
+                <button type="button" className="log-action log-action-danger" onClick={() => void onClearLogs()} disabled={logsLoading || logs.length === 0}>Очистить</button>
+              </div>
+            </div>
+            <div
+              className="log-viewer"
+              style={{
+                background: theme.cardBg,
+                border: `1px solid ${theme.border}`,
+                color: theme.mutedInk,
+              }}
+            >
+              {logsLoading && logs.length === 0 ? (
+                <div className="log-empty">Загрузка…</div>
+              ) : logsError ? (
+                <div className="log-error">{logsError}</div>
+              ) : logs.length === 0 ? (
+                <div className="log-empty">Лог пуст</div>
+              ) : (
+                logs.map((entry, index) => (
+                  <div className="log-line" key={`${entry.source}-${index}`}>
+                    <span style={{ color: entry.source === 'app' ? accent : theme.ink }}>[{entry.source}]</span>{' '}
+                    {entry.message}
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </>

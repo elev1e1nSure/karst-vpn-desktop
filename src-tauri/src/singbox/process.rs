@@ -5,6 +5,7 @@ use tauri::AppHandle;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 use tokio::io::AsyncWriteExt;
+use tokio::sync::oneshot;
 use tokio::task::JoinHandle;
 
 use crate::error::{AppError, AppResult};
@@ -16,14 +17,11 @@ const MAX_LOG_BYTES: u64 = 1024 * 1024;
 pub struct SingboxProcess {
     child: Option<CommandChild>,
     log_task: JoinHandle<()>,
+    terminated: Option<oneshot::Receiver<()>>,
 }
 
 impl SingboxProcess {
-    pub async fn spawn(
-        app: &AppHandle,
-        config: &Value,
-        app_data_dir: &Path,
-    ) -> AppResult<Self> {
+    pub async fn spawn(app: &AppHandle, config: &Value, app_data_dir: &Path) -> AppResult<Self> {
         tokio::fs::create_dir_all(app_data_dir).await?;
         let config_path = app_data_dir.join("sing-box-config.json");
         let config_bytes = serde_json::to_vec_pretty(config)?;
@@ -43,8 +41,11 @@ impl SingboxProcess {
         let (mut receiver, child) = sidecar
             .spawn()
             .map_err(|error| AppError::Singbox(error.to_string()))?;
+        let (terminated_tx, terminated_rx) = oneshot::channel();
         let log_task = tokio::spawn(async move {
+            let mut terminated_tx = Some(terminated_tx);
             while let Some(event) = receiver.recv().await {
+                let terminated = matches!(event, CommandEvent::Terminated(_));
                 let line = match event {
                     CommandEvent::Stdout(bytes) => prefixed_bytes("stdout", bytes),
                     CommandEvent::Stderr(bytes) => prefixed_bytes("stderr", bytes),
@@ -58,16 +59,45 @@ impl SingboxProcess {
                 };
 
                 let _ = append_log(&log_path, &line).await;
+                if terminated {
+                    if let Some(sender) = terminated_tx.take() {
+                        let _ = sender.send(());
+                    }
+                }
             }
         });
 
         Ok(Self {
             child: Some(child),
             log_task,
+            terminated: Some(terminated_rx),
         })
     }
 
-    pub fn stop(&mut self) -> AppResult<()> {
+    pub async fn stop(&mut self) -> AppResult<()> {
+        if let Some(child) = self.child.take() {
+            child
+                .kill()
+                .map_err(|error| AppError::Singbox(error.to_string()))?;
+
+            if let Some(terminated) = self.terminated.take() {
+                tokio::time::timeout(std::time::Duration::from_secs(5), terminated)
+                    .await
+                    .map_err(|_| {
+                        AppError::Singbox("sing-box did not terminate within 5 seconds".to_string())
+                    })?
+                    .map_err(|_| {
+                        AppError::Singbox(
+                            "sing-box termination channel closed unexpectedly".to_string(),
+                        )
+                    })?;
+            }
+        }
+        self.log_task.abort();
+        Ok(())
+    }
+
+    pub fn terminate_now(&mut self) -> AppResult<()> {
         if let Some(child) = self.child.take() {
             child
                 .kill()
@@ -80,7 +110,7 @@ impl SingboxProcess {
 
 impl Drop for SingboxProcess {
     fn drop(&mut self) {
-        let _ = self.stop();
+        let _ = self.terminate_now();
     }
 }
 
