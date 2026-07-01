@@ -1,5 +1,6 @@
 pub mod db;
 pub mod error;
+pub mod scheduler;
 pub mod singbox;
 pub mod subscription;
 pub mod vless;
