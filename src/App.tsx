@@ -794,7 +794,7 @@ function ServerSheet(props: ServerSheetProps) {
 
 // ─── Settings Sheet ───────────────────────────────────────────────────────────
 
-const ROUTING_LABELS: Record<RoutingMode, string> = { Full: 'Полный VPN', BypassLocal: 'Обход локалки', BypassRu: 'Обход RU' };
+const ROUTING_LABELS: Record<RoutingMode, string> = { Full: 'Полный VPN', BypassLocal: 'Обход локалки', BypassRu: 'Обход RU и локалки' };
 const ROUTING_SUBTITLES: Record<RoutingMode, string> = { Full: 'Весь трафик через выбранный сервер', BypassLocal: 'Локальные сети и private IP идут напрямую', BypassRu: 'RU-домены и локальные сети идут напрямую' };
 const REFRESH_LABELS: Record<AutoRefreshMode, string> = { Auto: 'Авто', Off: 'Выкл', EveryHours: 'Каждые N часов' };
 const REFRESH_SUBTITLES: Record<AutoRefreshMode, string> = { Auto: 'По Profile-Update-Interval, иначе раз в 24 часа', Off: 'Обновлять только вручную', EveryHours: 'Фиксированный интервал для всех подписок' };
@@ -808,79 +808,139 @@ function SettingsSheet({ theme, accent, darkModeOn, routingMode, autoRefreshMode
   onSetAutoRefreshHours: (h: number) => void;
   onOpenLogs: () => void;
 }) {
-  const [hoursText, setHoursText] = useState(autoRefreshHours.toString());
-
-  useEffect(() => { setHoursText(autoRefreshHours.toString()); }, [autoRefreshHours]);
-
-  const Divider = () => <div style={{ height: 1, background: theme.border, margin: '0 -6px' }} />;
-
   return (
     <div style={{ overflow: 'auto' }}>
       <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, marginBottom: 16 }}>Настройки</div>
 
-      <Divider />
-      <SettingsActionRow theme={theme} title="Логи" subtitle="Открыть журнал sing-box" onClick={onOpenLogs} />
-      <Divider />
-      <ToggleRow theme={theme} accent={accent} title="Тёмная тема" subtitle="Спокойнее для глаз вечером" checked={darkModeOn} onToggle={onToggleDarkMode} />
-      <Divider />
-
-      <SettingsSectionTitle theme={theme} title="Маршрутизация" />
-      {(['Full', 'BypassLocal', 'BypassRu'] as RoutingMode[]).map((mode) => (
-        <SettingsChoiceRow
-          key={mode}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <SettingsActionRow theme={theme} title="Логи" subtitle="Открыть журнал sing-box" onClick={onOpenLogs} />
+        <ToggleRow theme={theme} accent={accent} title="Тёмная тема" subtitle="Спокойнее для глаз вечером" checked={darkModeOn} onToggle={onToggleDarkMode} />
+        <RoutingModeSection theme={theme} accent={accent} selectedMode={routingMode} onSelect={onSetRoutingMode} />
+        <AutoRefreshSection
           theme={theme} accent={accent}
-          title={ROUTING_LABELS[mode]}
-          subtitle={ROUTING_SUBTITLES[mode]}
-          selected={routingMode === mode}
-          onClick={() => onSetRoutingMode(mode)}
-        />
-      ))}
-
-      <Divider />
-
-      <SettingsSectionTitle theme={theme} title="Обновление подписок" />
-      {(['Auto', 'Off', 'EveryHours'] as AutoRefreshMode[]).map((mode) => (
-        <SettingsChoiceRow
-          key={mode}
-          theme={theme} accent={accent}
-          title={REFRESH_LABELS[mode]}
-          subtitle={REFRESH_SUBTITLES[mode]}
-          selected={autoRefreshMode === mode}
-          onClick={() => onSetAutoRefreshMode(mode)}
-        />
-      ))}
-      <div className={`hours-input-wrapper ${autoRefreshMode === 'EveryHours' ? 'visible' : ''}`}>
-        <input
-          className="hours-input"
-          type="number"
-          value={hoursText}
-          onChange={(e) => {
-            const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
-            setHoursText(digits);
-            const num = parseInt(digits, 10);
-            if (num > 0) onSetAutoRefreshHours(num);
-          }}
-          placeholder="Часы"
-          style={{
-            font: "400 14px/1 'Inter', sans-serif",
-            color: theme.ink,
-            background: theme.pageBg,
-            border: `1px solid ${theme.border}`,
-            borderRadius: 10,
-            padding: '10px 12px',
-            marginTop: 8,
-          }}
+          mode={autoRefreshMode} hours={autoRefreshHours}
+          onSetMode={onSetAutoRefreshMode} onSetHours={onSetAutoRefreshHours}
         />
       </div>
     </div>
   );
 }
 
-function SettingsSectionTitle({ theme, title }: { theme: Theme; title: string }) {
+function RoutingModeSection({ theme, accent, selectedMode, onSelect }: {
+  theme: Theme; accent: string; selectedMode: RoutingMode; onSelect: (m: RoutingMode) => void;
+}) {
+  const [dialogOpen, setDialogOpen] = useState(false);
   return (
-    <div style={{ font: "500 12px/1.3 'Inter', sans-serif", color: theme.mutedInk, padding: '18px 0 6px' }}>
-      {title}
-    </div>
+    <>
+      <SettingsActionRow theme={theme} title="Маршрутизация" subtitle={ROUTING_LABELS[selectedMode]} onClick={() => setDialogOpen(true)} />
+      {dialogOpen && (
+        <SettingsPickerDialog theme={theme} title="Маршрутизация" onDismiss={() => setDialogOpen(false)}>
+          {(['Full', 'BypassLocal', 'BypassRu'] as RoutingMode[]).map((mode) => (
+            <SettingsChoiceRow
+              key={mode}
+              theme={theme} accent={accent}
+              title={ROUTING_LABELS[mode]}
+              subtitle={ROUTING_SUBTITLES[mode]}
+              selected={selectedMode === mode}
+              onClick={() => { onSelect(mode); setDialogOpen(false); }}
+            />
+          ))}
+        </SettingsPickerDialog>
+      )}
+    </>
+  );
+}
+
+function AutoRefreshSection({ theme, accent, mode, hours, onSetMode, onSetHours }: {
+  theme: Theme; accent: string; mode: AutoRefreshMode; hours: number;
+  onSetMode: (m: AutoRefreshMode) => void; onSetHours: (h: number) => void;
+}) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [hoursText, setHoursText] = useState(hours.toString());
+
+  useEffect(() => { setHoursText(hours.toString()); }, [hours]);
+
+  const subtitle = mode === 'EveryHours' ? `Каждые ${hours} ч` : REFRESH_LABELS[mode];
+
+  return (
+    <>
+      <SettingsActionRow theme={theme} title="Обновление подписок" subtitle={subtitle} onClick={() => setDialogOpen(true)} />
+      {dialogOpen && (
+        <SettingsPickerDialog theme={theme} title="Обновление подписок" onDismiss={() => setDialogOpen(false)}>
+          {(['Auto', 'Off', 'EveryHours'] as AutoRefreshMode[]).map((m) => (
+            <SettingsChoiceRow
+              key={m}
+              theme={theme} accent={accent}
+              title={REFRESH_LABELS[m]}
+              subtitle={REFRESH_SUBTITLES[m]}
+              selected={mode === m}
+              onClick={() => { onSetMode(m); if (m !== 'EveryHours') setDialogOpen(false); }}
+            />
+          ))}
+          <div className={`hours-input-wrapper ${mode === 'EveryHours' ? 'visible' : ''}`}>
+            <input
+              className="hours-input"
+              type="number"
+              value={hoursText}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
+                setHoursText(digits);
+                const num = parseInt(digits, 10);
+                if (num > 0) onSetHours(num);
+              }}
+              placeholder="Часы"
+              style={{
+                font: "400 14px/1 'Inter', sans-serif",
+                color: theme.ink,
+                background: theme.pageBg,
+                border: `1px solid ${theme.border}`,
+                borderRadius: 10,
+                padding: '10px 12px',
+                marginTop: 8,
+              }}
+            />
+          </div>
+        </SettingsPickerDialog>
+      )}
+    </>
+  );
+}
+
+function SettingsPickerDialog({ theme, title, onDismiss, children }: {
+  theme: Theme; title: string; onDismiss: () => void; children: React.ReactNode;
+}) {
+  const [closing, setClosing] = useState(false);
+  const closeTimeoutRef = useRef<any>(null);
+
+  useEffect(() => { return () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); }; }, []);
+
+  const close = () => {
+    if (closing) return;
+    setClosing(true);
+    closeTimeoutRef.current = setTimeout(onDismiss, 180);
+  };
+
+  return (
+    <>
+      <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, animation: `${closing ? 'backdropOut' : 'backdropIn'} 0.2s cubic-bezier(0.4,0,0.2,1) both` }} />
+      <div
+        style={{
+          position: 'fixed', top: '50%', left: '50%',
+          width: 'min(400px, calc(100vw - 64px))',
+          zIndex: 101,
+          animation: `${closing ? 'dialogOut' : 'dialogIn'} ${closing ? '0.18s' : '0.22s'} cubic-bezier(0.4,0,0.2,1) both`,
+          boxSizing: 'border-box',
+          borderRadius: 22,
+          background: theme.appBg,
+          border: `1px solid ${theme.border}`,
+          padding: '4px 18px',
+        }}
+      >
+        <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, padding: '18px 0 13px' }}>{title}</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{children}</div>
+        <div style={{ height: 14 }} />
+      </div>
+    </>
   );
 }
 
@@ -888,8 +948,12 @@ function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }
   theme: Theme; accent: string; title: string; subtitle: string; selected: boolean; onClick: () => void;
 }) {
   return (
-    <div className="settings-choice-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0' }}>
+    <div
+      className="settings-choice-row"
+      onClick={onClick}
+      style={{ borderRadius: 14 }}
+    >
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -911,8 +975,8 @@ function SettingsActionRow({ theme, title, subtitle, onClick }: {
   theme: Theme; title: string; subtitle: string; onClick: () => void;
 }) {
   return (
-    <div className="settings-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0' }}>
+    <div className="settings-row" onClick={onClick} style={{ borderRadius: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -929,8 +993,8 @@ function ToggleRow({ theme, accent, title, subtitle, checked, onToggle }: {
   theme: Theme; accent: string; title: string; subtitle: string; checked: boolean; onToggle: () => void;
 }) {
   return (
-    <div className="settings-row" onClick={onToggle}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0' }}>
+    <div className="settings-row" onClick={onToggle} style={{ borderRadius: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>

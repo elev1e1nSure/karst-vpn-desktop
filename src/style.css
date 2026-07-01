@@ -377,6 +377,16 @@ a, img {
   100% { opacity: 0; }
 }
 
+@keyframes dialogIn {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+@keyframes dialogOut {
+  from { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  to { opacity: 0; transform: translate(-50%, -50%) scale(0.92); }
+}
+
 /* Horizontal route transition (Main ↔ Logs) */
 @keyframes slideInFromRight {
   0% { transform: translateX(33%); opacity: 0; }
@@ -545,10 +555,10 @@ a, img {
 
 /* ─── Add server form/trigger ────────────────────────────────────────────── */
 .add-server-trigger {
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+  transition: background-color 0.15s ease;
 }
 .add-server-trigger:hover {
-  border-color: var(--accent) !important;
+  background-color: var(--card-bg);
 }
 .add-server-trigger:active {
   transform: scale(0.99);
@@ -642,29 +652,23 @@ a, img {
 
 /* ─── Settings ───────────────────────────────────────────────────────────── */
 .settings-row {
-  transition: opacity 0.15s ease, background-color 0.15s ease;
-  border-radius: 8px;
-  padding: 4px 8px;
-  margin: 0 -6px;
+  transition: background-color 0.15s ease, transform 0.12s ease;
 }
 .settings-row:hover {
   background-color: var(--card-bg);
 }
 .settings-row:active {
-  opacity: 0.8;
+  transform: scale(0.98);
 }
 
 .settings-choice-row {
-  transition: opacity 0.15s ease, background-color 0.15s ease;
-  border-radius: 8px;
-  padding: 4px 8px;
-  margin: 0 -6px;
+  transition: background-color 0.15s ease, transform 0.12s ease;
 }
 .settings-choice-row:hover {
   background-color: var(--card-bg);
 }
 .settings-choice-row:active {
-  opacity: 0.8;
+  transform: scale(0.98);
 }
 
 /* ─── Mini switch ────────────────────────────────────────────────────────── */
