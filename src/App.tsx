@@ -84,6 +84,7 @@ export function App() {
   
   const [settingsVisible, setSettingsVisible] = useState(false);
   const [settingsClosing, setSettingsClosing] = useState(false);
+  const [settingsPage, setSettingsPage] = useState<'settings' | 'logs'>('settings');
   const [logs, setLogs] = useState<LogEntryDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState('');
@@ -312,11 +313,26 @@ export function App() {
     }
   };
 
+  const onCopyLogs = async () => {
+    try {
+      await navigator.clipboard.writeText(
+        logs.map((entry) => `[${entry.source}] ${entry.message}`).join('\n'),
+      );
+    } catch (error) {
+      setLogsError(getErrorMessage(error));
+    }
+  };
+
+  const onOpenLogs = () => {
+    setSettingsPage('logs');
+    void loadLogs();
+  };
+
   const onOpenSettings = () => {
     if (settingsVisible) return;
+    setSettingsPage('settings');
     setSettingsVisible(true);
     setSettingsClosing(false);
-    void loadLogs();
   };
 
   const onCloseSettings = () => {
@@ -326,6 +342,7 @@ export function App() {
     settingsCloseTimeoutRef.current = setTimeout(() => {
       setSettingsVisible(false);
       setSettingsClosing(false);
+      setSettingsPage('settings');
     }, 320);
   };
 
@@ -600,6 +617,7 @@ export function App() {
               left: 0,
               right: 0,
               bottom: 0,
+              height: settingsPage === 'logs' ? '78%' : undefined,
               maxHeight: '78%',
               display: 'flex',
               flexDirection: 'column',
@@ -762,70 +780,103 @@ export function App() {
             }}
           >
             <div style={{ width: '36px', height: '4px', borderRadius: '2px', background: theme.border, margin: '4px auto 10px' }}></div>
-            <div style={{ font: "500 20px/1.2 'Source Serif 4', serif", color: theme.ink, marginBottom: '0px' }}>Настройки</div>
-
-            {/* toggle rows */}
-            <div style={{ height: '1px', background: theme.border, margin: '16px 0' }} />
-            <div
-              onClick={onToggleDarkMode}
-              className="settings-row"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 8px', cursor: 'default' }}
-            >
-              <div>
-                <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>Тёмная тема</div>
-                <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>Спокойнее для глаз вечером</div>
-              </div>
-              <div
-                className="switch-btn"
-                style={{ width: '46px', height: '28px', borderRadius: '14px', background: switchTrack(dark), position: 'relative', flexShrink: 0 }}
-              >
+            {settingsPage === 'settings' ? (
+              <>
+                <div style={{ font: "500 20px/1.2 'Source Serif 4', serif", color: theme.ink }}>Настройки</div>
+                <div style={{ height: '1px', background: theme.border, margin: '16px 0' }} />
                 <div
-                  style={{
-                    position: 'absolute',
-                    top: '3px',
-                    left: switchKnob(dark),
-                    width: '22px',
-                    height: '22px',
-                    borderRadius: '50%',
-                    background: '#fff',
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
-                    transition: 'left 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
-                  }}
-                />
-              </div>
-            </div>
-
-            <div style={{ height: '1px', background: theme.border, margin: '12px 0 8px' }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-              <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>Логи</div>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button type="button" className="log-action" onClick={() => void loadLogs()} disabled={logsLoading}>Обновить</button>
-                <button type="button" className="log-action log-action-danger" onClick={() => void onClearLogs()} disabled={logsLoading || logs.length === 0}>Очистить</button>
-              </div>
-            </div>
-            <div
-              className="log-viewer"
-              style={{
-                background: theme.cardBg,
-                border: `1px solid ${theme.border}`,
-                color: theme.mutedInk,
-              }}
-            >
-              {logsLoading && logs.length === 0 ? (
-                <div className="log-empty">Загрузка…</div>
-              ) : logsError ? (
-                <div className="log-error">{logsError}</div>
-              ) : logs.length === 0 ? (
-                <div className="log-empty">Лог пуст</div>
-              ) : (
-                logs.map((entry, index) => (
-                  <div className="log-line" key={`${entry.source}-${index}`}>
-                    <span style={{ color: entry.source === 'app' ? accent : theme.ink }}>[{entry.source}]</span>{' '}
-                    {entry.message}
+                  onClick={onToggleDarkMode}
+                  className="settings-row"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'default' }}
+                >
+                  <div>
+                    <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>Тёмная тема</div>
+                    <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>Спокойнее для глаз вечером</div>
                   </div>
-                ))
-              )}
-            </div>
+                  <div
+                    className="switch-btn"
+                    style={{ width: '46px', height: '28px', borderRadius: '14px', background: switchTrack(dark), position: 'relative', flexShrink: 0 }}
+                  >
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '3px',
+                        left: switchKnob(dark),
+                        width: '22px',
+                        height: '22px',
+                        borderRadius: '50%',
+                        background: '#fff',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                        transition: 'left 0.22s cubic-bezier(0.4, 0, 0.2, 1)',
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ height: '1px', background: theme.border, margin: '12px 0 8px' }} />
+                <div
+                  onClick={onOpenLogs}
+                  className="settings-row"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'default' }}
+                >
+                  <div>
+                    <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>Логи</div>
+                    <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>Диагностика работы приложения</div>
+                  </div>
+                  <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 6L15 12L9 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="logs-header">
+                  <button type="button" className="log-icon-button" onClick={() => setSettingsPage('settings')} aria-label="Назад" title="Назад">
+                    <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+                      <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                  <div style={{ font: "500 20px/1.2 'Source Serif 4', serif", color: theme.ink }}>Логи</div>
+                  <div style={{ display: 'flex', gap: '4px', justifyContent: 'flex-end' }}>
+                    <button type="button" className="log-icon-button" onClick={() => void onCopyLogs()} disabled={logsLoading || logs.length === 0} aria-label="Копировать логи" title="Копировать">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                        <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
+                        <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+                      </svg>
+                    </button>
+                    <button type="button" className="log-icon-button log-icon-button-danger" onClick={() => void onClearLogs()} disabled={logsLoading || logs.length === 0} aria-label="Очистить логи" title="Очистить">
+                      <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div style={{ height: '1px', background: theme.border, margin: '12px 0 8px' }} />
+                <div
+                  className="log-viewer"
+                  style={{
+                    background: theme.cardBg,
+                    border: `1px solid ${theme.border}`,
+                    color: theme.mutedInk,
+                  }}
+                >
+                  {logsLoading && logs.length === 0 ? (
+                    <div className="log-empty">Загрузка…</div>
+                  ) : logsError ? (
+                    <div className="log-error">{logsError}</div>
+                  ) : logs.length === 0 ? (
+                    <div className="log-empty">Лог пуст</div>
+                  ) : (
+                    logs.map((entry, index) => (
+                      <div className="log-line" key={`${entry.source}-${index}`}>
+                        <span style={{ color: entry.source === 'app' ? accent : theme.ink }}>[{entry.source}]</span>{' '}
+                        {entry.message}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </>
       )}
