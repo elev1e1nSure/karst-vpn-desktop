@@ -644,7 +644,7 @@ a, img {
 .settings-row {
   transition: opacity 0.15s ease, background-color 0.15s ease;
   border-radius: 8px;
-  padding: 12px 8px;
+  padding: 2px 8px;
   margin: 0 -6px;
 }
 .settings-row:hover {
@@ -657,7 +657,7 @@ a, img {
 .settings-choice-row {
   transition: opacity 0.15s ease, background-color 0.15s ease;
   border-radius: 8px;
-  padding: 12px 8px;
+  padding: 2px 8px;
   margin: 0 -6px;
 }
 .settings-choice-row:hover {

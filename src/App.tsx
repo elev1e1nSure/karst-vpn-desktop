@@ -867,7 +867,7 @@ function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }
 }) {
   return (
     <div className="settings-choice-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -890,7 +890,7 @@ function SettingsActionRow({ theme, title, subtitle, onClick }: {
 }) {
   return (
     <div className="settings-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -908,7 +908,7 @@ function ToggleRow({ theme, accent, title, subtitle, checked, onToggle }: {
 }) {
   return (
     <div className="settings-row" onClick={onToggle}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
