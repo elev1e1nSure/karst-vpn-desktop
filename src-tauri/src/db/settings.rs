@@ -2,13 +2,10 @@ use chrono::Utc;
 use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::error::{AppError, AppResult};
+use crate::scheduler::AutoRefreshMode;
 
 pub const AUTO_REFRESH_MODE_KEY: &str = "auto_refresh_mode";
 pub const AUTO_REFRESH_HOURS_KEY: &str = "auto_refresh_hours";
-
-pub const AUTO_REFRESH_OFF: &str = "off";
-pub const AUTO_REFRESH_AUTO: &str = "auto";
-pub const AUTO_REFRESH_EVERY_HOURS: &str = "every_hours";
 
 pub fn get_setting(connection: &Connection, key: &str) -> AppResult<Option<String>> {
     connection
@@ -36,16 +33,14 @@ pub fn set_setting(connection: &Connection, key: &str, value: &str) -> AppResult
     Ok(())
 }
 
-pub fn get_auto_refresh_mode(connection: &Connection) -> AppResult<String> {
+pub fn get_auto_refresh_mode(connection: &Connection) -> AppResult<AutoRefreshMode> {
     let value = get_setting(connection, AUTO_REFRESH_MODE_KEY)?
-        .unwrap_or_else(|| AUTO_REFRESH_OFF.to_string());
-    validate_auto_refresh_mode(&value)?;
-    Ok(value)
+        .unwrap_or_else(|| AutoRefreshMode::Off.as_str().to_string());
+    AutoRefreshMode::try_from(value.as_str())
 }
 
-pub fn set_auto_refresh_mode(connection: &Connection, value: &str) -> AppResult<()> {
-    validate_auto_refresh_mode(value)?;
-    set_setting(connection, AUTO_REFRESH_MODE_KEY, value)
+pub fn set_auto_refresh_mode(connection: &Connection, value: AutoRefreshMode) -> AppResult<()> {
+    set_setting(connection, AUTO_REFRESH_MODE_KEY, value.as_str())
 }
 
 pub fn get_auto_refresh_hours(connection: &Connection) -> AppResult<u64> {
@@ -65,13 +60,4 @@ pub fn set_auto_refresh_hours(connection: &Connection, hours: u64) -> AppResult<
         ));
     }
     set_setting(connection, AUTO_REFRESH_HOURS_KEY, &hours.to_string())
-}
-
-fn validate_auto_refresh_mode(value: &str) -> AppResult<()> {
-    match value {
-        AUTO_REFRESH_OFF | AUTO_REFRESH_AUTO | AUTO_REFRESH_EVERY_HOURS => Ok(()),
-        _ => Err(AppError::InvalidInput(format!(
-            "invalid auto refresh mode: {value}"
-        ))),
-    }
 }

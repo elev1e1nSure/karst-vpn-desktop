@@ -7,9 +7,7 @@ use tauri::async_runtime::JoinHandle;
 use tokio::sync::watch;
 
 use crate::db::lock_pool;
-use crate::db::settings::{
-    self, AUTO_REFRESH_AUTO, AUTO_REFRESH_EVERY_HOURS, AUTO_REFRESH_OFF,
-};
+use crate::db::settings;
 use crate::db::subscriptions;
 use crate::db::DbPool;
 use crate::error::{AppError, AppResult};
@@ -20,6 +18,31 @@ pub enum AutoRefreshMode {
     Off,
     Auto,
     EveryHours,
+}
+
+impl AutoRefreshMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Off => "off",
+            Self::Auto => "auto",
+            Self::EveryHours => "every_hours",
+        }
+    }
+}
+
+impl TryFrom<&str> for AutoRefreshMode {
+    type Error = AppError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        match value {
+            "off" => Ok(Self::Off),
+            "auto" => Ok(Self::Auto),
+            "every_hours" => Ok(Self::EveryHours),
+            _ => Err(AppError::InvalidInput(format!(
+                "invalid auto refresh mode: {value}"
+            ))),
+        }
+    }
 }
 
 pub struct ScheduleHandle {
@@ -87,13 +110,13 @@ fn next_delay(pool: &DbPool) -> AppResult<Option<Duration>> {
     let guard = lock_pool(pool)?;
     let mode = settings::get_auto_refresh_mode(&guard)?;
 
-    match mode.as_str() {
-        AUTO_REFRESH_OFF => Ok(None),
-        AUTO_REFRESH_EVERY_HOURS => {
+    match mode {
+        AutoRefreshMode::Off => Ok(None),
+        AutoRefreshMode::EveryHours => {
             let hours = settings::get_auto_refresh_hours(&guard)?;
             Ok(Some(Duration::from_secs(hours * 60 * 60)))
         }
-        AUTO_REFRESH_AUTO => {
+        AutoRefreshMode::Auto => {
             let subscriptions = subscriptions::list_subscriptions(&guard)?;
             let now = Utc::now();
             let mut min_seconds = 24 * 60 * 60;
@@ -114,8 +137,5 @@ fn next_delay(pool: &DbPool) -> AppResult<Option<Duration>> {
 
             Ok(Some(Duration::from_secs(min_seconds)))
         }
-        _ => Err(AppError::InvalidInput(format!(
-            "invalid auto refresh mode: {mode}"
-        ))),
     }
 }
