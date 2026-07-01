@@ -17,10 +17,10 @@ impl TunOptions {
     pub fn new(cache_file: PathBuf) -> Self {
         Self {
             interface_name: "Karst VPN".to_string(),
-            // Private point-to-point ranges avoid collisions with common home and office LANs.
-            address: vec!["172.19.0.1/30".to_string(), "fdfe:dcba:9876::1/126".to_string()],
-            // 9000 lets sing-box amortize userspace TUN overhead; path MTU still limits real packets.
-            mtu: 9000,
+            // Keep the tunnel IPv4-only until the proxy path provides reliable IPv6 routing.
+            address: vec!["172.19.0.1/30".to_string()],
+            // A standard MTU avoids PMTU black holes across VLESS transports.
+            mtu: 1500,
             stack: "gvisor".to_string(),
             cache_file,
         }
@@ -48,7 +48,7 @@ pub fn build_config(outbound: Value, tun: &TunOptions) -> Value {
                 }
             ],
             "final": "cloudflare",
-            "strategy": "prefer_ipv4",
+            "strategy": "ipv4_only",
         },
         "inbounds": [
             {
