@@ -628,15 +628,17 @@ function ServerSheet(props: ServerSheetProps) {
               className="refresh-all-btn"
               onClick={props.onRefreshAll}
               disabled={props.refreshAllLoading}
-              pressedScale={0.88}
+              pressedScale={1}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `color-mix(in oklch, ${accent} 10%, transparent)`, borderRadius: 10, padding: '8px 12px' }}>
                 {props.refreshAllLoading ? (
                   <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2.5px solid color-mix(in oklch, ${accent} 40%, transparent)`, borderTopColor: accent, animation: 'spin 0.85s linear infinite' }} />
                 ) : (
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-                    <path d="M4 4v5h5M20 20v-5h-5" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M20.49 9A9 9 0 105.64 5.64L4 4" stroke={accent} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M21 3v5h-5" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 21v-5h5" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 )}
                 <div style={{ font: "500 13px/1 'Inter', sans-serif", color: accent }}>Обновить</div>
@@ -792,6 +794,11 @@ function ServerSheet(props: ServerSheetProps) {
 
 // ─── Settings Sheet ───────────────────────────────────────────────────────────
 
+const ROUTING_LABELS: Record<RoutingMode, string> = { Full: 'Полный VPN', BypassLocal: 'Обход локалки', BypassRu: 'Обход RU' };
+const ROUTING_SUBTITLES: Record<RoutingMode, string> = { Full: 'Весь трафик через выбранный сервер', BypassLocal: 'Локальные сети и private IP идут напрямую', BypassRu: 'RU-домены и локальные сети идут напрямую' };
+const REFRESH_LABELS: Record<AutoRefreshMode, string> = { Auto: 'Авто', Off: 'Выкл', EveryHours: 'Каждые N часов' };
+const REFRESH_SUBTITLES: Record<AutoRefreshMode, string> = { Auto: 'По Profile-Update-Interval, иначе раз в 24 часа', Off: 'Обновлять только вручную', EveryHours: 'Фиксированный интервал для всех подписок' };
+
 function SettingsSheet({ theme, accent, darkModeOn, routingMode, autoRefreshMode, autoRefreshHours, onToggleDarkMode, onSetRoutingMode, onSetAutoRefreshMode, onSetAutoRefreshHours, onOpenLogs }: {
   theme: Theme; accent: string; darkModeOn: boolean;
   routingMode: RoutingMode; autoRefreshMode: AutoRefreshMode; autoRefreshHours: number;
@@ -801,9 +808,30 @@ function SettingsSheet({ theme, accent, darkModeOn, routingMode, autoRefreshMode
   onSetAutoRefreshHours: (h: number) => void;
   onOpenLogs: () => void;
 }) {
+  const [modal, setModal] = useState<'routing' | 'refresh' | null>(null);
+  const [modalClosing, setModalClosing] = useState(false);
   const [hoursText, setHoursText] = useState(autoRefreshHours.toString());
+  const modalCloseTimeoutRef = useRef<any>(null);
+
+  useEffect(() => { return () => { if (modalCloseTimeoutRef.current) clearTimeout(modalCloseTimeoutRef.current); }; }, []);
 
   useEffect(() => { setHoursText(autoRefreshHours.toString()); }, [autoRefreshHours]);
+
+  const openModal = (m: 'routing' | 'refresh') => {
+    if (modal !== null) return;
+    setModal(m);
+    setModalClosing(false);
+  };
+
+  const closeModal = () => {
+    if (modalClosing) return;
+    setModalClosing(true);
+    if (modalCloseTimeoutRef.current) clearTimeout(modalCloseTimeoutRef.current);
+    modalCloseTimeoutRef.current = setTimeout(() => {
+      setModal(null);
+      setModalClosing(false);
+    }, 280);
+  };
 
   const Divider = () => <div style={{ height: 1, background: theme.border, margin: '0 -8px' }} />;
 
@@ -815,51 +843,117 @@ function SettingsSheet({ theme, accent, darkModeOn, routingMode, autoRefreshMode
       <SettingsActionRow theme={theme} title="Логи" subtitle="Открыть журнал sing-box" onClick={onOpenLogs} />
       <Divider />
       <ToggleRow theme={theme} accent={accent} title="Тёмная тема" subtitle="Спокойнее для глаз вечером" checked={darkModeOn} onToggle={onToggleDarkMode} />
+      <Divider />
+      <SettingsActionRow theme={theme} title="Маршрутизация" subtitle={ROUTING_LABELS[routingMode]} onClick={() => openModal('routing')} />
+      <Divider />
+      <SettingsActionRow theme={theme} title="Обновление подписок" subtitle={REFRESH_LABELS[autoRefreshMode]} onClick={() => openModal('refresh')} />
 
-      <SettingsSectionTitle theme={theme} title="Маршрутизация" />
-      <Divider />
-      <SettingsChoiceRow theme={theme} accent={accent} title="Полный VPN" subtitle="Весь трафик через выбранный сервер" selected={routingMode === 'Full'} onClick={() => onSetRoutingMode('Full')} />
-      <Divider />
-      <SettingsChoiceRow theme={theme} accent={accent} title="Обход локалки" subtitle="Локальные сети и private IP идут напрямую" selected={routingMode === 'BypassLocal'} onClick={() => onSetRoutingMode('BypassLocal')} />
-      <Divider />
-      <SettingsChoiceRow theme={theme} accent={accent} title="Обход RU" subtitle="RU-домены и локальные сети идут напрямую" selected={routingMode === 'BypassRu'} onClick={() => onSetRoutingMode('BypassRu')} />
+      {(modal === 'routing' || modalClosing) && modal === 'routing' && (
+        <SettingsPickerModal theme={theme} accent={accent} title="Маршрутизация" isClosing={modalClosing} onClose={closeModal}>
+          {(['Full', 'BypassLocal', 'BypassRu'] as RoutingMode[]).map(mode => (
+            <SettingsChoiceRow
+              key={mode}
+              theme={theme} accent={accent}
+              title={ROUTING_LABELS[mode]}
+              subtitle={ROUTING_SUBTITLES[mode]}
+              selected={routingMode === mode}
+              onClick={() => onSetRoutingMode(mode)}
+            />
+          ))}
+        </SettingsPickerModal>
+      )}
 
-      <SettingsSectionTitle theme={theme} title="Обновление подписок" />
-      <Divider />
-      <SettingsChoiceRow theme={theme} accent={accent} title="Авто" subtitle="По Profile-Update-Interval, иначе раз в 24 часа" selected={autoRefreshMode === 'Auto'} onClick={() => onSetAutoRefreshMode('Auto')} />
-      <Divider />
-      <SettingsChoiceRow theme={theme} accent={accent} title="Выкл" subtitle="Обновлять только вручную" selected={autoRefreshMode === 'Off'} onClick={() => onSetAutoRefreshMode('Off')} />
-      <Divider />
-      <SettingsChoiceRow theme={theme} accent={accent} title="Каждые N часов" subtitle="Фиксированный интервал для всех подписок" selected={autoRefreshMode === 'EveryHours'} onClick={() => onSetAutoRefreshMode('EveryHours')} />
-
-      <div className={`hours-input-wrapper${autoRefreshMode === 'EveryHours' ? ' visible' : ''}`} style={{ marginTop: 8 }}>
-        <input
-          className="hours-input"
-          type="number"
-          value={hoursText}
-          onChange={(e) => {
-            const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
-            setHoursText(digits);
-            const num = parseInt(digits, 10);
-            if (num > 0) onSetAutoRefreshHours(num);
-          }}
-          placeholder="Часы"
-          style={{
-            font: "400 14px/1 'Inter', sans-serif",
-            color: theme.ink,
-            background: theme.pageBg,
-            border: `1px solid ${theme.border}`,
-            borderRadius: 10,
-            padding: '10px 12px',
-          }}
-        />
-      </div>
+      {(modal === 'refresh' || modalClosing) && modal === 'refresh' && (
+        <SettingsPickerModal theme={theme} accent={accent} title="Обновление подписок" isClosing={modalClosing} onClose={closeModal}>
+          {(['Auto', 'Off', 'EveryHours'] as AutoRefreshMode[]).map(mode => (
+            <div key={mode}>
+              <SettingsChoiceRow
+                theme={theme} accent={accent}
+                title={REFRESH_LABELS[mode]}
+                subtitle={REFRESH_SUBTITLES[mode]}
+                selected={autoRefreshMode === mode}
+                onClick={() => onSetAutoRefreshMode(mode)}
+              />
+              {mode === 'EveryHours' && autoRefreshMode === 'EveryHours' && (
+                <input
+                  className="hours-input"
+                  type="number"
+                  value={hoursText}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
+                    setHoursText(digits);
+                    const num = parseInt(digits, 10);
+                    if (num > 0) onSetAutoRefreshHours(num);
+                  }}
+                  placeholder="Часы"
+                  style={{
+                    font: "400 14px/1 'Inter', sans-serif",
+                    color: theme.ink,
+                    background: theme.pageBg,
+                    border: `1px solid ${theme.border}`,
+                    borderRadius: 10,
+                    padding: '10px 12px',
+                    margin: '6px 0 0 28px',
+                    width: 'calc(100% - 28px)',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              )}
+            </div>
+          ))}
+        </SettingsPickerModal>
+      )}
     </div>
   );
 }
 
-function SettingsSectionTitle({ theme, title }: { theme: Theme; title: string }) {
-  return <div style={{ font: "500 12px/1 'Inter', sans-serif", color: theme.mutedInk, padding: '18px 0 6px' }}>{title}</div>;
+// ─── Settings Picker Modal ────────────────────────────────────────────────────
+
+function SettingsPickerModal({ theme, accent, title, isClosing, onClose, children }: {
+  theme: Theme; accent: string; title: string; isClosing: boolean; onClose: () => void; children: React.ReactNode;
+}) {
+  const anim = isClosing ? 'modalOut 0.24s cubic-bezier(0.4,0,0.2,1) both' : 'modalIn 0.28s cubic-bezier(0.4,0,0.2,1) both';
+  const backdropAnim = isClosing ? 'backdropOut 0.22s cubic-bezier(0.4,0,0.2,1) both' : 'backdropIn 0.24s cubic-bezier(0.4,0,0.2,1) both';
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0,
+          background: 'rgba(0,0,0,0.45)',
+          zIndex: 100,
+          animation: backdropAnim,
+        }}
+      />
+      <div style={{
+        position: 'fixed', top: '50%', left: '50%',
+        transform: 'translate(-50%,-50%)',
+        zIndex: 101,
+        animation: anim,
+      }}>
+        <div style={{
+          background: theme.appBg,
+          borderRadius: 18,
+          padding: '20px 16px 22px',
+          width: 'calc(100vw - 32px)',
+          boxSizing: 'border-box',
+          boxShadow: '0 10px 40px -12px rgba(0,0,0,0.45)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <div style={{ font: "500 16px/1.2 'Source Serif 4', serif", color: theme.ink }}>{title}</div>
+            <Pressable onClick={onClose} pressedScale={0.88} style={{ padding: 4 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M18 6L6 18M6 6L18 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </Pressable>
+          </div>
+          <div style={{ margin: '0 -8px' }}>
+            {children}
+          </div>
+        </div>
+      </div>
+    </>
+  );
 }
 
 function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }: {
@@ -867,7 +961,7 @@ function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }
 }) {
   return (
     <div className="settings-choice-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -890,7 +984,7 @@ function SettingsActionRow({ theme, title, subtitle, onClick }: {
 }) {
   return (
     <div className="settings-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -908,7 +1002,7 @@ function ToggleRow({ theme, accent, title, subtitle, checked, onToggle }: {
 }) {
   return (
     <div className="settings-row" onClick={onToggle}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -929,61 +1023,63 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
   return (
     <div
       style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
+        width: '100%', height: '100%',
+        display: 'flex', flexDirection: 'column',
         background: theme.appBg,
         ...themeVars(theme),
-        color: theme.ink,
         boxSizing: 'border-box',
-        padding: '20px 22px 24px',
+        padding: '18px 18px 20px',
         overflow: 'hidden',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      <div className="logs-header">
-        <div style={{ display: 'flex', justifyContent: 'flex-start' }}>
-          <button type="button" className="log-icon-button" onClick={onBack} aria-label="Назад" title="Назад">
-            <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
-              <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+      {/* Header: back arrow | Логи (flex) | copy | delete */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14, flexShrink: 0 }}>
+        <Pressable onClick={onBack} pressedScale={0.88} style={{ padding: 4 }}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Pressable>
+        <div style={{ width: 14, flexShrink: 0 }} />
+        <div style={{ flex: 1, font: "500 18px/1.2 'Source Serif 4', serif", color: theme.ink }}>
+          Логи
         </div>
-        <div style={{ font: "500 20px/1.2 'Source Serif 4', serif" }}>Логи</div>
-        <div style={{ display: 'flex', gap: 4, justifyContent: 'flex-end' }}>
-          <button type="button" className="log-icon-button" onClick={onCopy} disabled={logsLoading || logs.length === 0} aria-label="Копировать логи" title="Копировать">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-              <rect x="9" y="9" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="1.8" />
-              <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-            </svg>
-          </button>
-          <button type="button" className="log-icon-button log-icon-button-danger" onClick={onClear} disabled={logsLoading || logs.length === 0} aria-label="Очистить логи" title="Очистить">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
-              <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-        </div>
+        <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={0.88} style={{ padding: 4 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.mutedInk} strokeWidth="1.8" />
+            <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </Pressable>
+        <div style={{ width: 14, flexShrink: 0 }} />
+        <Pressable onClick={logs.length > 0 ? onClear : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={0.88} style={{ padding: 4 }}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+            <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </Pressable>
       </div>
-      <div style={{ height: 1, background: theme.border, margin: '14px 0 12px' }} />
-      <div className="log-viewer" style={{ background: theme.cardBg, border: `1px solid ${theme.border}`, color: theme.mutedInk }}>
+
+      {/* Log lines — plain text directly on background, no card */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
         {logsLoading && logs.length === 0 ? (
-          <div className="log-empty">Загрузка…</div>
+          <span style={{ color: theme.mutedInk, font: "400 12px/1.5 ui-monospace, 'Cascadia Mono', monospace" }}>
+            Загрузка…
+          </span>
         ) : logsError ? (
-          <div className="log-error">{logsError}</div>
+          <span style={{ color: theme.danger, font: "400 12px/1.5 ui-monospace, 'Cascadia Mono', monospace" }}>
+            {logsError}
+          </span>
         ) : logs.length === 0 ? (
-          <div className="log-empty">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="9" stroke={theme.mutedInk} strokeWidth="1.5" opacity="0.5" />
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: 10 }}>
+            <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="9" stroke={theme.mutedInk} strokeWidth="1.4" opacity="0.5" />
               <path d="M12 8v4M12 16h.01" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" opacity="0.5" />
             </svg>
-            Логов пока нет
+            <div style={{ font: "500 15px/1.2 'Source Serif 4', serif", color: theme.mutedInk }}>Логов пока нет</div>
           </div>
         ) : (
           logs.map((entry, index) => (
-            <div className="log-line" key={`${entry.source}-${index}`}>
-              <span style={{ color: entry.source === 'app' ? accent : theme.ink }}>[{entry.source}]</span>{' '}
-              {entry.message}
+            <div key={`${entry.source}-${index}`} style={{ font: "400 12px/1.45 ui-monospace, 'Cascadia Mono', Consolas, monospace", color: theme.ink, overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', paddingBottom: 2 }}>
+              <span style={{ color: accent }}>[{entry.source}]</span>{' '}{entry.message}
             </div>
           ))
         )}
@@ -991,6 +1087,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
     </div>
   );
 }
+
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
@@ -1239,7 +1336,7 @@ export function App() {
 
   const onOpenLogs = () => {
     if (settingsCloseTimeoutRef.current) clearTimeout(settingsCloseTimeoutRef.current);
-    setSettingsVisible(false); setSettingsClosing(false);
+    setSettingsClosing(false);
     setScreenDir('forward');
     setAppScreen('logs');
     void loadLogs();
