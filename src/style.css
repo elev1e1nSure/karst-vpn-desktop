@@ -609,7 +609,7 @@ a, img {
   filter: brightness(1.08);
 }
 .refresh-all-btn:active {
-  transform: scale(0.92);
+  transform: none;
 }
 .refresh-all-btn:disabled {
   opacity: 0.55;
