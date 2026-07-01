@@ -21,7 +21,7 @@ impl TunOptions {
             address: vec!["172.19.0.1/30".to_string(), "fdfe:dcba:9876::1/126".to_string()],
             // 9000 lets sing-box amortize userspace TUN overhead; path MTU still limits real packets.
             mtu: 9000,
-            stack: "mixed".to_string(),
+            stack: "gvisor".to_string(),
             cache_file,
         }
     }
