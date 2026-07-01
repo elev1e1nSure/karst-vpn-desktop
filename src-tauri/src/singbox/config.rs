@@ -76,6 +76,7 @@ pub fn build_config(outbound: Value, tun: &TunOptions) -> Value {
             "rule_set": [],
             "final": "proxy",
             "auto_detect_interface": true,
+            "default_domain_resolver": "cloudflare",
         },
         "experimental": {
             "cache_file": {
