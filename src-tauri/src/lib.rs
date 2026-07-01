@@ -1,5 +1,6 @@
 pub mod db;
 pub mod error;
+pub mod subscription;
 pub mod vless;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
