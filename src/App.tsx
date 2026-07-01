@@ -1,15 +1,44 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { invoke } from '@tauri-apps/api/core';
 import './style.css';
 
-// Default configuration from original specifications
-const defaultServers = [
-  { id: 'frankfurt', name: 'Франкфурт, Германия', tag: 'Самый быстрый сервер' },
-  { id: 'amsterdam', name: 'Амстердам, Нидерланды', tag: '12 мс' },
-  { id: 'stockholm', name: 'Стокгольм, Швеция', tag: '24 мс' },
-  { id: 'zurich', name: 'Цюрих, Швейцария', tag: '31 мс' },
-  { id: 'lisbon', name: 'Лиссабон, Португалия', tag: '47 мс' },
-];
+type Phase = 'off' | 'connecting' | 'on';
 
+type ServerDto = {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  security: string;
+  transport: string;
+  flow?: string | null;
+};
+
+type ConnectionStatusDto = {
+  state: 'disconnected' | 'connecting' | 'connected' | 'error';
+  server_id?: string | null;
+  server_name?: string | null;
+  message?: string | null;
+};
+
+const getErrorMessage = (error: unknown) => {
+  if (typeof error === 'string') return error;
+  if (error && typeof error === 'object' && 'message' in error) {
+    return String((error as { message: unknown }).message);
+  }
+  return 'Не удалось выполнить команду';
+};
+
+const tagForServer = (server: ServerDto) => {
+  const flow = server.flow ? ` · ${server.flow}` : '';
+  return `${server.security.toUpperCase()} · ${server.transport} · ${server.host}:${server.port}${flow}`;
+};
+
+const phaseFromStatus = (status: ConnectionStatusDto): Phase => {
+  if (status.state === 'connected') return 'on';
+  if (status.state === 'connecting') return 'connecting';
+  return 'off';
+};
 
 const moodMap = {
   calm: { ringDuration: '2.3s', iconStroke: '1.9', chipRadius: '16px', subOff: 'Нажми на кнопку, чтобы защититься', subConnecting: 'Устанавливаем безопасное соединение' },
@@ -24,15 +53,17 @@ export function App() {
   const defaultMood = 'focused' as 'calm' | 'focused' | 'urgent';
 
   // React State
-  const [phase, setPhase] = useState<'off' | 'connecting' | 'on'>('off');
+  const [phase, setPhase] = useState<Phase>('off');
   const [elapsed, setElapsed] = useState(0);
   const [showBurst, setShowBurst] = useState(false);
   const [showFadeOut, setShowFadeOut] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [appError, setAppError] = useState('');
   
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
-  const [selectedServerId, setSelectedServerId] = useState('frankfurt');
-  const [customServers, setCustomServers] = useState<any[]>([]);
+  const [selectedServerId, setSelectedServerId] = useState('');
+  const [servers, setServers] = useState<ServerDto[]>([]);
   
   const [addServerOpen, setAddServerOpen] = useState(false);
   const [addServerValue, setAddServerValue] = useState('');
@@ -44,7 +75,6 @@ export function App() {
   const [darkModeOn, setDarkModeOn] = useState<boolean | null>(null);
 
   // Refs for timeouts
-  const connectTimeoutRef = useRef<any>(null);
   const burstTimeoutRef = useRef<any>(null);
   const fadeOutTimeoutRef = useRef<any>(null);
   const menuCloseTimeoutRef = useRef<any>(null);
@@ -68,7 +98,6 @@ export function App() {
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
-      if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
       if (burstTimeoutRef.current) clearTimeout(burstTimeoutRef.current);
       if (fadeOutTimeoutRef.current) clearTimeout(fadeOutTimeoutRef.current);
       if (menuCloseTimeoutRef.current) clearTimeout(menuCloseTimeoutRef.current);
@@ -76,23 +105,82 @@ export function App() {
     };
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadBackendState = async () => {
+      try {
+        const [serverList, status] = await Promise.all([
+          invoke<ServerDto[]>('list_servers'),
+          invoke<ConnectionStatusDto>('connection_status'),
+        ]);
+        if (cancelled) return;
+
+        setServers(serverList);
+        setPhase(phaseFromStatus(status));
+        setSelectedServerId((current) => {
+          if (status.server_id && serverList.some((server) => server.id === status.server_id)) {
+            return status.server_id;
+          }
+          if (current && serverList.some((server) => server.id === current)) {
+            return current;
+          }
+          return serverList[0]?.id ?? '';
+        });
+        setAppError(status.state === 'error' ? status.message ?? 'Ошибка соединения' : '');
+      } catch (error) {
+        if (!cancelled) setAppError(getErrorMessage(error));
+      }
+    };
+
+    void loadBackendState();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   // Handlers
-  const onTapButton = () => {
+  const onTapButton = async () => {
+    if (isBusy || phase === 'connecting') return;
+
     if (phase === 'off') {
+      if (!selectedServerId) {
+        setAppError('Добавь VLESS-сервер перед подключением');
+        return;
+      }
+
+      setIsBusy(true);
+      setAppError('');
       setPhase('connecting');
-      if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
       if (burstTimeoutRef.current) clearTimeout(burstTimeoutRef.current);
-      
-      connectTimeoutRef.current = setTimeout(() => {
-        setPhase('on');
+
+      try {
+        const status = await invoke<ConnectionStatusDto>('connect', { serverId: selectedServerId });
+        setPhase(phaseFromStatus(status));
+        if (status.server_id) setSelectedServerId(status.server_id);
         setShowBurst(true);
         burstTimeoutRef.current = setTimeout(() => setShowBurst(false), 600);
-      }, 1300);
+      } catch (error) {
+        setPhase('off');
+        setAppError(getErrorMessage(error));
+      } finally {
+        setIsBusy(false);
+      }
     } else if (phase === 'on') {
-      setPhase('off');
-      setShowFadeOut(true);
-      if (fadeOutTimeoutRef.current) clearTimeout(fadeOutTimeoutRef.current);
-      fadeOutTimeoutRef.current = setTimeout(() => setShowFadeOut(false), 400);
+      setIsBusy(true);
+      setAppError('');
+      try {
+        const status = await invoke<ConnectionStatusDto>('disconnect');
+        setPhase(phaseFromStatus(status));
+        setShowFadeOut(true);
+        if (fadeOutTimeoutRef.current) clearTimeout(fadeOutTimeoutRef.current);
+        fadeOutTimeoutRef.current = setTimeout(() => setShowFadeOut(false), 400);
+      } catch (error) {
+        setAppError(getErrorMessage(error));
+      } finally {
+        setIsBusy(false);
+      }
     }
   };
 
@@ -130,47 +218,44 @@ export function App() {
 
   const onCancelAddServer = () => closeAddServerForm();
 
-  const parseVless = (raw: string) => {
-    const str = (raw || '').trim();
-    if (!str.toLowerCase().startsWith('vless://')) return null;
-    const m = str.match(/^vless:\/\/([^@]+)@([^:/?#]+):(\d+)/i);
-    if (!m) return null;
-    const host = m[2];
-    const port = m[3];
-    let remark = '';
-    const hashIdx = str.indexOf('#');
-    if (hashIdx !== -1) {
-      try {
-        remark = decodeURIComponent(str.slice(hashIdx + 1));
-      } catch (e) {
-        remark = str.slice(hashIdx + 1);
-      }
-    }
-    return { host, port, name: remark || host };
-  };
-
-  const onSubmitAddServer = () => {
-    const parsed = parseVless(addServerValue);
-    if (!parsed) {
-      setAddServerError('Не похоже на vless:// ссылку — проверь формат');
+  const onSubmitAddServer = async () => {
+    const value = addServerValue.trim();
+    if (!value) {
+      setAddServerError('Вставь vless:// ссылку');
       return;
     }
-    const id = 'custom-' + Date.now();
-    const newServer = {
-      id,
-      name: parsed.name,
-      tag: `VLESS · ${parsed.host}:${parsed.port}`,
-      isCustom: true,
-    };
-    setCustomServers((prev) => [...prev, newServer]);
-    setSelectedServerId(id);
-    closeAddServerForm();
+
+    setIsBusy(true);
+    setAddServerError('');
+    try {
+      const server = await invoke<ServerDto>('add_manual_link', { vlessUri: value });
+      setServers((prev) => [server, ...prev.filter((item) => item.id !== server.id)]);
+      setSelectedServerId(server.id);
+      setAppError('');
+      closeAddServerForm();
+    } catch (error) {
+      setAddServerError(getErrorMessage(error));
+    } finally {
+      setIsBusy(false);
+    }
   };
 
-  const onRemoveServer = (id: string, e: React.MouseEvent) => {
+  const onRemoveServer = async (id: string, e: React.MouseEvent) => {
     if (e && e.stopPropagation) e.stopPropagation();
-    setCustomServers((prev) => prev.filter((srv) => srv.id !== id));
-    setSelectedServerId((prev) => (prev === id ? 'frankfurt' : prev));
+    if (isBusy) return;
+
+    setIsBusy(true);
+    setAppError('');
+    try {
+      await invoke<boolean>('delete_server', { serverId: id });
+      const nextServers = servers.filter((server) => server.id !== id);
+      setServers(nextServers);
+      setSelectedServerId((current) => (current === id ? nextServers[0]?.id ?? '' : current));
+    } catch (error) {
+      setAppError(getErrorMessage(error));
+    } finally {
+      setIsBusy(false);
+    }
   };
 
   const onOpenSettings = () => {
@@ -194,7 +279,7 @@ export function App() {
   };
 
   // Calculations
-  const isConnecting = phase === 'connecting';
+  const isConnecting = phase === 'connecting' || (isBusy && phase === 'off');
   const isConnected = phase === 'on';
   const dark = darkModeOn ?? defaultDarkMode;
   const accent = defaultAccentColor;
@@ -275,7 +360,7 @@ export function App() {
   };
 
   const statusLabel = isConnected ? 'Подключено' : isConnecting ? 'Подключаемся…' : 'Не подключено';
-  const subLabel = isConnecting ? mood.subConnecting : mood.subOff;
+  const subLabel = appError || (servers.length === 0 ? 'Добавь VLESS-сервер для подключения' : isConnecting ? mood.subConnecting : mood.subOff);
 
   const formatElapsed = (s: number) => {
     const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -283,8 +368,7 @@ export function App() {
     return `${m}:${sec}`;
   };
 
-  const allServers = [...defaultServers, ...customServers];
-  const selectedServer = allServers.find((s) => s.id === selectedServerId) || defaultServers[0];
+  const selectedServer = servers.find((server) => server.id === selectedServerId) ?? servers[0] ?? null;
 
   const menuAnim = `${menuClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.38s cubic-bezier(0.4,0,0.2,1) both`;
   const backdropAnim = `${menuClosing ? 'backdropOut' : 'backdropIn'} 0.32s cubic-bezier(0.4,0,0.2,1) both`;
@@ -434,8 +518,8 @@ export function App() {
           <div style={{ width: '15px', height: '15px', borderRadius: '50%', border: `2px solid ${theme.mutedInk}` }}></div>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ font: "500 15px/1.3 'Inter', sans-serif", color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedServer.name}</div>
-          <div style={{ font: "400 13px/1.3 'Inter', sans-serif", color: theme.mutedInk, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedServer.tag}</div>
+          <div style={{ font: "500 15px/1.3 'Inter', sans-serif", color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedServer?.name ?? 'Сервер не выбран'}</div>
+          <div style={{ font: "400 13px/1.3 'Inter', sans-serif", color: theme.mutedInk, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedServer ? tagForServer(selectedServer) : 'Добавь VLESS-ссылку'}</div>
         </div>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, opacity: 0.5 }}>
           <path d="M9 6L15 12L9 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"></path>
@@ -477,7 +561,7 @@ export function App() {
             <div style={{ font: "500 20px/1.2 'Source Serif 4', serif", color: theme.ink, marginBottom: '0px' }}>Выбор сервера</div>
             <div style={{ height: '1px', background: theme.border, margin: '16px 0' }} />
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', overflow: 'auto' }}>
-              {allServers.map((srv) => {
+              {servers.map((srv) => {
                 const isSelected = srv.id === selectedServerId;
                 const dotColor = isSelected ? accent : theme.border;
                 return (
@@ -497,32 +581,33 @@ export function App() {
                     <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0 }}></div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{srv.name}</div>
-                      <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{srv.tag}</div>
+                      <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{tagForServer(srv)}</div>
                     </div>
-                    {srv.isCustom && (
-                      <span style={{ font: "500 10px/1 'Inter', sans-serif", color: accent, background: `color-mix(in oklch, ${accent} 16%, transparent)`, padding: '3px 7px', borderRadius: '6px', flexShrink: 0 }}>
-                        VLESS
-                      </span>
-                    )}
+                    <span style={{ font: "500 10px/1 'Inter', sans-serif", color: accent, background: `color-mix(in oklch, ${accent} 16%, transparent)`, padding: '3px 7px', borderRadius: '6px', flexShrink: 0 }}>
+                      VLESS
+                    </span>
                     {isSelected && (
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
                         <path d="M5 13L9.5 17.5L19 7" stroke={accent} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"></path>
                       </svg>
                     )}
-                    {srv.isCustom && (
-                      <div
-                        onClick={(e) => onRemoveServer(srv.id, e)}
-                        className="remove-server-btn"
-                        style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'default' }}
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
-                          <path d="M5 5L19 19M19 5L5 19" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round"></path>
-                        </svg>
-                      </div>
-                    )}
+                    <div
+                      onClick={(e) => onRemoveServer(srv.id, e)}
+                      className="remove-server-btn"
+                      style={{ width: '22px', height: '22px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, cursor: 'default' }}
+                    >
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none">
+                        <path d="M5 5L19 19M19 5L5 19" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round"></path>
+                      </svg>
+                    </div>
                   </div>
                 );
               })}
+              {servers.length === 0 && (
+                <div style={{ padding: '18px 10px', font: "400 13px/1.4 'Inter', sans-serif", color: theme.mutedInk }}>
+                  Список пуст. Добавь сервер по VLESS-ссылке ниже.
+                </div>
+              )}
             </div>
 
             <div style={{ marginTop: '6px' }}>
