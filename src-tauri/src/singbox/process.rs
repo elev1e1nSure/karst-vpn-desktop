@@ -16,7 +16,6 @@ const MAX_LOG_BYTES: u64 = 1024 * 1024;
 pub struct SingboxProcess {
     child: Option<CommandChild>,
     log_task: JoinHandle<()>,
-    config_path: PathBuf,
 }
 
 impl SingboxProcess {
@@ -39,7 +38,7 @@ impl SingboxProcess {
             .map_err(|error| AppError::Singbox(error.to_string()))?
             .args(["run", "-c"])
             .arg(&config_path)
-            .current_dir(dev_binaries_dir());
+            .current_dir(sidecar_working_dir()?);
 
         let (mut receiver, child) = sidecar
             .spawn()
@@ -65,7 +64,6 @@ impl SingboxProcess {
         Ok(Self {
             child: Some(child),
             log_task,
-            config_path,
         })
     }
 
@@ -78,10 +76,6 @@ impl SingboxProcess {
         self.log_task.abort();
         Ok(())
     }
-
-    pub fn config_path(&self) -> &Path {
-        &self.config_path
-    }
 }
 
 impl Drop for SingboxProcess {
@@ -90,8 +84,23 @@ impl Drop for SingboxProcess {
     }
 }
 
-fn dev_binaries_dir() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("binaries")
+fn sidecar_working_dir() -> AppResult<PathBuf> {
+    let path = if cfg!(debug_assertions) {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("binaries")
+    } else {
+        std::env::current_exe()?
+            .parent()
+            .ok_or_else(|| {
+                AppError::Io(std::io::Error::new(
+                    std::io::ErrorKind::NotFound,
+                    "current executable has no parent directory",
+                ))
+            })?
+            .to_path_buf()
+    };
+
+    // wintun.dll must be in the sidecar DLL search path when sing-box starts.
+    Ok(path)
 }
 
 fn prefixed_bytes(prefix: &str, bytes: Vec<u8>) -> Vec<u8> {
