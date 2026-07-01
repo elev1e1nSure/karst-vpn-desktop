@@ -372,16 +372,6 @@ a, img {
   100% { opacity: 1; }
 }
 
-@keyframes modalIn {
-  from { opacity: 0; transform: translate(-50%,-50%) scale(0.94); }
-  to { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-}
-
-@keyframes modalOut {
-  from { opacity: 1; transform: translate(-50%,-50%) scale(1); }
-  to { opacity: 0; transform: translate(-50%,-50%) scale(0.94); }
-}
-
 @keyframes backdropOut {
   0% { opacity: 1; }
   100% { opacity: 0; }

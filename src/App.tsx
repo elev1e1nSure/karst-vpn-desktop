@@ -273,7 +273,7 @@ function MiniSwitch({ checked, accent, theme, onToggle }: { checked: boolean; ac
   const trackColor = checked ? `color-mix(in oklch, ${accent} 70%, transparent)` : theme.border;
   return (
     <div
-      className="switch-btn"
+      className="switch-btn mini-switch-track"
       onClick={onToggle}
       style={{ width: 46, height: 28, borderRadius: 14, background: trackColor, position: 'relative', flexShrink: 0, cursor: 'default' }}
     >
@@ -808,32 +808,11 @@ function SettingsSheet({ theme, accent, darkModeOn, routingMode, autoRefreshMode
   onSetAutoRefreshHours: (h: number) => void;
   onOpenLogs: () => void;
 }) {
-  const [modal, setModal] = useState<'routing' | 'refresh' | null>(null);
-  const [modalClosing, setModalClosing] = useState(false);
   const [hoursText, setHoursText] = useState(autoRefreshHours.toString());
-  const modalCloseTimeoutRef = useRef<any>(null);
-
-  useEffect(() => { return () => { if (modalCloseTimeoutRef.current) clearTimeout(modalCloseTimeoutRef.current); }; }, []);
 
   useEffect(() => { setHoursText(autoRefreshHours.toString()); }, [autoRefreshHours]);
 
-  const openModal = (m: 'routing' | 'refresh') => {
-    if (modal !== null) return;
-    setModal(m);
-    setModalClosing(false);
-  };
-
-  const closeModal = () => {
-    if (modalClosing) return;
-    setModalClosing(true);
-    if (modalCloseTimeoutRef.current) clearTimeout(modalCloseTimeoutRef.current);
-    modalCloseTimeoutRef.current = setTimeout(() => {
-      setModal(null);
-      setModalClosing(false);
-    }, 280);
-  };
-
-  const Divider = () => <div style={{ height: 1, background: theme.border, margin: '0 -8px' }} />;
+  const Divider = () => <div style={{ height: 1, background: theme.border, margin: '0 -6px' }} />;
 
   return (
     <div style={{ overflow: 'auto' }}>
@@ -844,115 +823,64 @@ function SettingsSheet({ theme, accent, darkModeOn, routingMode, autoRefreshMode
       <Divider />
       <ToggleRow theme={theme} accent={accent} title="Тёмная тема" subtitle="Спокойнее для глаз вечером" checked={darkModeOn} onToggle={onToggleDarkMode} />
       <Divider />
-      <SettingsActionRow theme={theme} title="Маршрутизация" subtitle={ROUTING_LABELS[routingMode]} onClick={() => openModal('routing')} />
+
+      <SettingsSectionTitle theme={theme} title="Маршрутизация" />
+      {(['Full', 'BypassLocal', 'BypassRu'] as RoutingMode[]).map((mode) => (
+        <SettingsChoiceRow
+          key={mode}
+          theme={theme} accent={accent}
+          title={ROUTING_LABELS[mode]}
+          subtitle={ROUTING_SUBTITLES[mode]}
+          selected={routingMode === mode}
+          onClick={() => onSetRoutingMode(mode)}
+        />
+      ))}
+
       <Divider />
-      <SettingsActionRow theme={theme} title="Обновление подписок" subtitle={REFRESH_LABELS[autoRefreshMode]} onClick={() => openModal('refresh')} />
 
-      {(modal === 'routing' || modalClosing) && modal === 'routing' && (
-        <SettingsPickerModal theme={theme} accent={accent} title="Маршрутизация" isClosing={modalClosing} onClose={closeModal}>
-          {(['Full', 'BypassLocal', 'BypassRu'] as RoutingMode[]).map(mode => (
-            <SettingsChoiceRow
-              key={mode}
-              theme={theme} accent={accent}
-              title={ROUTING_LABELS[mode]}
-              subtitle={ROUTING_SUBTITLES[mode]}
-              selected={routingMode === mode}
-              onClick={() => onSetRoutingMode(mode)}
-            />
-          ))}
-        </SettingsPickerModal>
-      )}
-
-      {(modal === 'refresh' || modalClosing) && modal === 'refresh' && (
-        <SettingsPickerModal theme={theme} accent={accent} title="Обновление подписок" isClosing={modalClosing} onClose={closeModal}>
-          {(['Auto', 'Off', 'EveryHours'] as AutoRefreshMode[]).map(mode => (
-            <div key={mode}>
-              <SettingsChoiceRow
-                theme={theme} accent={accent}
-                title={REFRESH_LABELS[mode]}
-                subtitle={REFRESH_SUBTITLES[mode]}
-                selected={autoRefreshMode === mode}
-                onClick={() => onSetAutoRefreshMode(mode)}
-              />
-              {mode === 'EveryHours' && autoRefreshMode === 'EveryHours' && (
-                <input
-                  className="hours-input"
-                  type="number"
-                  value={hoursText}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
-                    setHoursText(digits);
-                    const num = parseInt(digits, 10);
-                    if (num > 0) onSetAutoRefreshHours(num);
-                  }}
-                  placeholder="Часы"
-                  style={{
-                    font: "400 14px/1 'Inter', sans-serif",
-                    color: theme.ink,
-                    background: theme.pageBg,
-                    border: `1px solid ${theme.border}`,
-                    borderRadius: 10,
-                    padding: '10px 12px',
-                    margin: '6px 0 0 28px',
-                    width: 'calc(100% - 28px)',
-                    boxSizing: 'border-box',
-                  }}
-                />
-              )}
-            </div>
-          ))}
-        </SettingsPickerModal>
-      )}
+      <SettingsSectionTitle theme={theme} title="Обновление подписок" />
+      {(['Auto', 'Off', 'EveryHours'] as AutoRefreshMode[]).map((mode) => (
+        <SettingsChoiceRow
+          key={mode}
+          theme={theme} accent={accent}
+          title={REFRESH_LABELS[mode]}
+          subtitle={REFRESH_SUBTITLES[mode]}
+          selected={autoRefreshMode === mode}
+          onClick={() => onSetAutoRefreshMode(mode)}
+        />
+      ))}
+      <div className={`hours-input-wrapper ${autoRefreshMode === 'EveryHours' ? 'visible' : ''}`}>
+        <input
+          className="hours-input"
+          type="number"
+          value={hoursText}
+          onChange={(e) => {
+            const digits = e.target.value.replace(/[^0-9]/g, '').slice(0, 3);
+            setHoursText(digits);
+            const num = parseInt(digits, 10);
+            if (num > 0) onSetAutoRefreshHours(num);
+          }}
+          placeholder="Часы"
+          style={{
+            font: "400 14px/1 'Inter', sans-serif",
+            color: theme.ink,
+            background: theme.pageBg,
+            border: `1px solid ${theme.border}`,
+            borderRadius: 10,
+            padding: '10px 12px',
+            marginTop: 8,
+          }}
+        />
+      </div>
     </div>
   );
 }
 
-// ─── Settings Picker Modal ────────────────────────────────────────────────────
-
-function SettingsPickerModal({ theme, accent, title, isClosing, onClose, children }: {
-  theme: Theme; accent: string; title: string; isClosing: boolean; onClose: () => void; children: React.ReactNode;
-}) {
-  const anim = isClosing ? 'modalOut 0.24s cubic-bezier(0.4,0,0.2,1) both' : 'modalIn 0.28s cubic-bezier(0.4,0,0.2,1) both';
-  const backdropAnim = isClosing ? 'backdropOut 0.22s cubic-bezier(0.4,0,0.2,1) both' : 'backdropIn 0.24s cubic-bezier(0.4,0,0.2,1) both';
+function SettingsSectionTitle({ theme, title }: { theme: Theme; title: string }) {
   return (
-    <>
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0,
-          background: 'rgba(0,0,0,0.45)',
-          zIndex: 100,
-          animation: backdropAnim,
-        }}
-      />
-      <div style={{
-        position: 'fixed', top: '50%', left: '50%',
-        transform: 'translate(-50%,-50%)',
-        zIndex: 101,
-        animation: anim,
-      }}>
-        <div style={{
-          background: theme.appBg,
-          borderRadius: 18,
-          padding: '20px 16px 22px',
-          width: 'calc(100vw - 32px)',
-          boxSizing: 'border-box',
-          boxShadow: '0 10px 40px -12px rgba(0,0,0,0.45)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-            <div style={{ font: "500 16px/1.2 'Source Serif 4', serif", color: theme.ink }}>{title}</div>
-            <Pressable onClick={onClose} pressedScale={0.88} style={{ padding: 4 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M18 6L6 18M6 6L18 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </Pressable>
-          </div>
-          <div style={{ margin: '0 -8px' }}>
-            {children}
-          </div>
-        </div>
-      </div>
-    </>
+    <div style={{ font: "500 12px/1.3 'Inter', sans-serif", color: theme.mutedInk, padding: '18px 0 6px' }}>
+      {title}
+    </div>
   );
 }
 
@@ -961,7 +889,7 @@ function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }
 }) {
   return (
     <div className="settings-choice-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -984,7 +912,7 @@ function SettingsActionRow({ theme, title, subtitle, onClick }: {
 }) {
   return (
     <div className="settings-row" onClick={onClick}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
@@ -1002,7 +930,7 @@ function ToggleRow({ theme, accent, title, subtitle, checked, onToggle }: {
 }) {
   return (
     <div className="settings-row" onClick={onToggle}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 0' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
           <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{subtitle}</div>
