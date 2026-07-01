@@ -24,6 +24,7 @@ a, img {
   -webkit-user-drag: none;
 }
 
+/* ─── Fonts ──────────────────────────────────────────────────────────────── */
 /* cyrillic-ext */
 @font-face {
   font-family: 'Inter';
@@ -213,7 +214,7 @@ a, img {
   src: url("/assets/fonts/inter-07-4393370f.woff2") format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-/* cyrillic-ext */
+/* Source Serif 4 – cyrillic-ext */
 @font-face {
   font-family: 'Source Serif 4';
   font-style: normal;
@@ -322,71 +323,124 @@ a, img {
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
-@keyframes pulseRing {
-  0% { transform: scale(1); opacity: 0; }
-  50% { transform: scale(1.16); opacity: 0.4; }
-  100% { transform: scale(1.32); opacity: 0; }
-}
+/* ─── Keyframes ──────────────────────────────────────────────────────────── */
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
 @keyframes buttonConnectPulse {
   0% { transform: scale(0.92); }
   100% { transform: scale(1); }
 }
+
 @keyframes buttonDisconnectPulse {
   0% { transform: scale(1); }
   40% { transform: scale(0.92); }
   100% { transform: scale(1); }
 }
-@keyframes fadeText {
-  0% { opacity: 0; filter: blur(3px); transform: translateY(5px) scale(0.985); }
-  60% { opacity: 1; filter: blur(0); }
-  100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+
+@keyframes connectingPulse {
+  0% { opacity: 0.10; }
+  50% { opacity: 0.24; }
+  100% { opacity: 0.10; }
 }
+
 @keyframes menuSlideUp {
   0% { transform: translateY(100%); }
   100% { transform: translateY(0); }
 }
+
 @keyframes menuSlideDown {
   0% { transform: translateY(0); }
   100% { transform: translateY(100%); }
 }
+
 @keyframes backdropIn {
   0% { opacity: 0; }
   100% { opacity: 1; }
 }
+
 @keyframes backdropOut {
   0% { opacity: 1; }
   100% { opacity: 0; }
 }
-@keyframes panelExpand {
+
+/* Horizontal route transition (Main ↔ Logs) */
+@keyframes slideInFromRight {
+  0% { transform: translateX(33%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutToLeft {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-33%); opacity: 0; }
+}
+@keyframes slideInFromLeft {
+  0% { transform: translateX(-33%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideOutToRight {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(33%); opacity: 0; }
+}
+
+/* Add server form entry */
+@keyframes addServerExpand {
   0% { opacity: 0; transform: scaleY(0.88) translateY(-8px); }
   100% { opacity: 1; transform: scaleY(1) translateY(0); }
 }
-@keyframes panelCollapse {
-  0% { opacity: 1; transform: scaleY(1) translateY(0); }
-  100% { opacity: 0; transform: scaleY(0.88) translateY(-8px); }
+
+/* Checkmark scale-in */
+@keyframes scaleIn {
+  0% { transform: scale(0.6); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
-@keyframes addServerExpand {
-  0% {
-    opacity: 0;
-    transform: scale(0.92) translateY(8px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
+/* Subscription drill-in */
+@keyframes drillInFromRight {
+  0% { transform: translateX(25%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes drillOutToLeft {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(-25%); opacity: 0; }
+}
+@keyframes drillInFromLeft {
+  0% { transform: translateX(-25%); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+@keyframes drillOutToRight {
+  0% { transform: translateX(0); opacity: 1; }
+  100% { transform: translateX(25%); opacity: 0; }
 }
 
-.add-server-panel {
-  animation: addServerExpand 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-  transform-origin: top center;
+/* Expand/collapse for routing hours field */
+@keyframes expandDown {
+  0% { opacity: 0; max-height: 0; }
+  100% { opacity: 1; max-height: 80px; }
+}
+@keyframes collapseUp {
+  0% { opacity: 1; max-height: 80px; }
+  100% { opacity: 0; max-height: 0; }
 }
 
+/* ─── Route transition wrappers ──────────────────────────────────────────── */
+.route-enter-from-right {
+  animation: slideInFromRight 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.route-exit-to-left {
+  animation: slideOutToLeft 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+.route-enter-from-left {
+  animation: slideInFromLeft 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.route-exit-to-right {
+  animation: slideOutToRight 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
 
+/* ─── Settings button ────────────────────────────────────────────────────── */
 .settings-btn {
   transition: transform 0.15s ease, background-color 0.15s ease;
 }
@@ -397,8 +451,36 @@ a, img {
   transform: scale(0.92);
 }
 
+/* ─── Connect button ─────────────────────────────────────────────────────── */
+.connect-btn {
+  transition:
+    border-color 0.4s cubic-bezier(0.4,0,0.2,1),
+    background-color 0.4s cubic-bezier(0.4,0,0.2,1),
+    box-shadow 0.4s cubic-bezier(0.4,0,0.2,1),
+    transform 0.15s ease,
+    filter 0.15s ease;
+}
+.connect-btn:hover {
+  filter: brightness(1.06);
+}
+.connect-btn:active {
+  transform: scale(0.97) !important;
+}
+
+/* ─── Connecting pulse ring ──────────────────────────────────────────────── */
+.pulse-ring-connecting {
+  animation: connectingPulse 0.9s ease-in-out infinite;
+}
+.pulse-ring-connected {
+  opacity: 0.16;
+}
+.pulse-ring-off {
+  opacity: 0;
+}
+
+/* ─── Location chip ──────────────────────────────────────────────────────── */
 .location-chip {
-  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, filter 0.15s ease;
 }
 .location-chip:hover {
   filter: brightness(1.06);
@@ -407,8 +489,10 @@ a, img {
   transform: scale(0.985);
 }
 
+/* ─── Server sheet list items ────────────────────────────────────────────── */
 .server-item {
   transition: background-color 0.15s ease, transform 0.15s ease;
+  border-radius: 14px;
 }
 .server-item:hover {
   background-color: var(--card-bg);
@@ -417,36 +501,52 @@ a, img {
   transform: scale(0.99);
 }
 
-.connect-btn {
-  transition: border-color 0.4s cubic-bezier(0.4,0,0.2,1), box-shadow 0.4s cubic-bezier(0.4,0,0.2,1), transform 0.15s ease, background-color 0.15s ease, filter 0.15s ease;
-}
-.connect-btn:hover {
-  filter: brightness(1.06);
-}
-.connect-btn:active {
-  transform: scale(0.97);
+.server-checkmark {
+  animation: scaleIn 0.18s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
+/* ─── Remove server button ───────────────────────────────────────────────── */
 .remove-server-btn {
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
 .remove-server-btn:hover {
   background-color: rgba(165, 96, 96, 0.15) !important;
 }
-.remove-server-btn:hover svg path {
+.remove-server-btn:hover .remove-icon {
   stroke: var(--theme-danger) !important;
 }
 .remove-server-btn:active {
   transform: scale(0.9);
 }
 
+/* ─── Add server form/trigger ────────────────────────────────────────────── */
 .add-server-trigger {
   transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 .add-server-trigger:hover {
   border-color: var(--accent) !important;
 }
+.add-server-trigger:active {
+  transform: scale(0.99);
+}
 
+.add-server-panel {
+  animation: addServerExpand 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transform-origin: top center;
+  overflow: hidden;
+}
+
+.add-server-input {
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+.add-server-input:focus {
+  border-color: var(--accent) !important;
+}
+
+/* ─── Buttons: cancel / submit ───────────────────────────────────────────── */
 .btn-cancel {
   transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
 }
@@ -461,29 +561,62 @@ a, img {
   transition: filter 0.15s ease, transform 0.15s ease;
 }
 .btn-submit:hover {
-  filter: brightness(1.06);
+  filter: brightness(1.08);
 }
 .btn-submit:active {
   transform: scale(0.97);
 }
 
-.protocol-btn {
-  transition: border-color 0.15s ease, background-color 0.15s ease, transform 0.15s ease;
+/* ─── Refresh all button ─────────────────────────────────────────────────── */
+.refresh-all-btn {
+  transition: filter 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
 }
-.protocol-btn:hover {
-  border-color: var(--accent) !important;
+.refresh-all-btn:hover {
+  filter: brightness(1.08);
 }
-.protocol-btn:active {
-  transform: scale(0.97);
+.refresh-all-btn:active {
+  transform: scale(0.92);
 }
-
-.switch-btn {
-  transition: filter 0.15s ease;
-}
-.switch-btn:hover {
-  filter: brightness(1.06);
+.refresh-all-btn:disabled {
+  opacity: 0.55;
 }
 
+/* ─── Subscription group header ──────────────────────────────────────────── */
+.sub-group-header {
+  transition: opacity 0.15s ease;
+}
+.sub-group-header:hover {
+  opacity: 0.85;
+}
+.sub-group-header:active {
+  opacity: 0.7;
+}
+
+/* ─── Subscription drill-in ──────────────────────────────────────────────── */
+.drill-in-forward {
+  animation: drillInFromRight 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.drill-out-forward {
+  animation: drillOutToLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+.drill-in-back {
+  animation: drillInFromLeft 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.drill-out-back {
+  animation: drillOutToRight 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+  pointer-events: none;
+}
+
+/* ─── Back pressable ─────────────────────────────────────────────────────── */
+.pressable {
+  transition: transform 0.12s ease, opacity 0.12s ease;
+}
+.pressable:active {
+  transform: scale(0.92);
+}
+
+/* ─── Settings ───────────────────────────────────────────────────────────── */
 .settings-row {
   transition: opacity 0.15s ease, background-color 0.15s ease;
   border-radius: 8px;
@@ -494,9 +627,81 @@ a, img {
   background-color: var(--card-bg);
 }
 .settings-row:active {
-  opacity: 0.85;
+  opacity: 0.8;
 }
 
+.settings-choice-row {
+  transition: opacity 0.15s ease, background-color 0.15s ease;
+  border-radius: 8px;
+  padding: 12px 8px;
+  margin: 0 -6px;
+}
+.settings-choice-row:hover {
+  background-color: var(--card-bg);
+}
+.settings-choice-row:active {
+  opacity: 0.8;
+}
+
+/* ─── Mini switch ────────────────────────────────────────────────────────── */
+.mini-switch-track {
+  transition: background-color 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.mini-switch-knob {
+  transition: left 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.switch-btn {
+  transition: filter 0.15s ease;
+}
+.switch-btn:hover {
+  filter: brightness(1.08);
+}
+
+/* ─── Progress bar ───────────────────────────────────────────────────────── */
+.progress-bar-track {
+  height: 6px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+/* ─── Hours input ────────────────────────────────────────────────────────── */
+.hours-input-wrapper {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.16s ease, opacity 0.16s ease;
+}
+.hours-input-wrapper.visible {
+  max-height: 72px;
+  opacity: 1;
+}
+.hours-input {
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+.hours-input:focus {
+  border-color: var(--accent) !important;
+}
+
+/* ─── Delete confirmation ────────────────────────────────────────────────── */
+.confirm-delete-btn {
+  transition: transform 0.12s ease;
+}
+.confirm-delete-btn:hover {
+  filter: brightness(1.06);
+}
+.confirm-delete-btn:active {
+  transform: scale(0.97);
+}
+
+/* ─── Logs screen ────────────────────────────────────────────────────────── */
 .logs-screen {
   width: 100%;
   height: 100%;
@@ -505,7 +710,7 @@ a, img {
   box-sizing: border-box;
   padding: 20px 22px 24px;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .logs-header {
@@ -529,16 +734,13 @@ a, img {
   justify-content: center;
   transition: color 0.15s ease, background-color 0.15s ease;
 }
-
 .log-icon-button:hover:not(:disabled) {
   color: var(--theme-ink);
   background: var(--card-bg);
 }
-
 .log-icon-button:disabled {
   opacity: 0.45;
 }
-
 .log-icon-button-danger:hover:not(:disabled) {
   color: #a56060;
 }
@@ -567,8 +769,9 @@ a, img {
   align-items: center;
   justify-content: center;
   text-align: center;
+  flex-direction: column;
+  gap: 10px;
 }
-
 .log-error {
   color: #a56060;
 }
