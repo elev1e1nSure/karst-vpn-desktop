@@ -1766,6 +1766,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "karst-vpn"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64 0.22.1",
+ "chrono",
+ "reqwest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-shell",
+ "thiserror 2.0.18",
+ "tokio",
+ "url",
+ "uuid",
+]
+
+[[package]]
 name = "keyboard-types"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3705,26 +3725,6 @@ dependencies = [
  "dunce",
  "embed-resource",
  "toml 1.1.2+spec-1.1.0",
-]
-
-[[package]]
-name = "tauri_vite_react_ts_port"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64 0.22.1",
- "chrono",
- "reqwest",
- "rusqlite",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-shell",
- "thiserror 2.0.18",
- "tokio",
- "url",
- "uuid",
 ]
 
 [[package]]

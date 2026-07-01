@@ -24,7 +24,7 @@ pub fn run() {
             std::fs::create_dir_all(&app_data_dir)?;
             let pool = db::open(&app_data_dir.join("karst.sqlite3"))?;
             let client = reqwest::Client::builder()
-                .user_agent("Karst VPN Desktop/0.1.0")
+                .user_agent(concat!("Karst VPN Desktop/", env!("CARGO_PKG_VERSION")))
                 .build()?;
             let logs = app_log::AppLog::new(app_data_dir.clone());
             logs.info("application startup");

@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Frontend Port",
+  "productName": "Karst VPN",
   "version": "0.1.0",
-  "identifier": "com.local.frontend-port",
+  "identifier": "com.karst.vpn",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://127.0.0.1:1420",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Frontend Port",
+        "title": "Karst VPN",
         "width": 380,
         "height": 760,
         "resizable": true

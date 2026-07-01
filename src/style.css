@@ -16,6 +16,15 @@ body {
   overflow: hidden;
 }
 
+/* ─── Hide scrollbars everywhere (keep scroll behaviour) ─────────────────── */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
 input, textarea, [contenteditable="true"] {
   user-select: text;
   -webkit-user-select: text;
