@@ -34,7 +34,10 @@ export function Tooltip({
     if (disabled) return;
     clearShowTimer();
     showTimerRef.current = setTimeout(() => {
-      const el = anchorRef.current;
+      // anchorRef itself is `display: contents` and has no box of its own
+      // (getBoundingClientRect would return a zero rect at 0,0), so measure
+      // the actual rendered child instead.
+      const el = anchorRef.current?.firstElementChild;
       if (!el) return;
       const r = el.getBoundingClientRect();
       setRect({
