@@ -1,12 +1,16 @@
+use std::time::Duration;
+
 use tauri::State;
+use tokio::task::JoinSet;
 use uuid::Uuid;
 
 use crate::app_log::AppLog;
 use crate::db;
 use crate::db::servers::{self, NewServer};
 use crate::db::DbPool;
-use crate::dto::ServerDto;
+use crate::dto::{ServerDto, ServerPingDto};
 use crate::error::{AppError, AppResult};
+use crate::healthcheck::measure_latency;
 use crate::vless::parser::parse_vless_uri;
 
 #[tauri::command]
@@ -51,6 +55,33 @@ pub fn add_manual_link(
         )),
     }
     result
+}
+
+#[tauri::command]
+pub async fn ping_servers(pool: State<'_, DbPool>) -> AppResult<Vec<ServerPingDto>> {
+    let records = {
+        let guard = db::lock_pool(pool.inner())?;
+        servers::list_servers(&guard)?
+    };
+
+    let mut set = JoinSet::new();
+    for record in records {
+        set.spawn(async move {
+            let latency_ms = measure_latency(&record.host, record.port, Duration::from_secs(4)).await;
+            ServerPingDto {
+                id: record.id,
+                latency_ms,
+            }
+        });
+    }
+
+    let mut results = Vec::new();
+    while let Some(result) = set.join_next().await {
+        if let Ok(ping) = result {
+            results.push(ping);
+        }
+    }
+    Ok(results)
 }
 
 #[tauri::command]

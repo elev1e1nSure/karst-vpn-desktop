@@ -48,6 +48,7 @@ pub fn run() {
             commands::servers::list_servers,
             commands::servers::add_manual_link,
             commands::servers::delete_server,
+            commands::servers::ping_servers,
             commands::settings::get_settings,
             commands::settings::set_auto_refresh_settings,
             commands::logs::list_logs,

@@ -21,6 +21,12 @@ pub struct ServerDto {
 }
 
 #[derive(Debug, Clone, Serialize)]
+pub struct ServerPingDto {
+    pub id: String,
+    pub latency_ms: Option<u64>,
+}
+
+#[derive(Debug, Clone, Serialize)]
 pub struct SubscriptionDto {
     pub id: String,
     pub url: String,
