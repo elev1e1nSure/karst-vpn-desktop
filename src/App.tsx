@@ -778,12 +778,12 @@ function ServerSheet(props: ServerSheetProps) {
         {/* Add server */}
         <div style={{ marginTop: 6 }}>
           {!props.addServerOpen ? (
-            <Pressable className="add-server-trigger" onClick={props.onOpenAddServer} borderRadius={14}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 10px', borderRadius: 14, border: `1.5px solid ${theme.border}`, cursor: 'default' }}>
-              <div style={{ width: 22, height: 22, borderRadius: '50%', background: theme.cardBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                <span style={{ font: "400 15px/1 'Inter', sans-serif", color: theme.mutedInk }}>+</span>
-              </div>
-              <span style={{ font: "500 14px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>Добавить VLESS или подписку</span>
+            <Pressable className="add-server-trigger" onClick={props.onOpenAddServer} borderRadius={10}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `color-mix(in oklch, ${accent} 10%, transparent)`, borderRadius: 10, padding: '8px 12px' }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ font: "400 15px/1 'Inter', sans-serif", color: accent }}>+</span>
+                </div>
+                <span style={{ font: "500 13px/1 'Inter', sans-serif", color: accent }}>Добавить VLESS или подписку</span>
             </div>
             </Pressable>
           ) : (

@@ -558,8 +558,7 @@ a, img {
   transition: background-color 0.15s ease;
 }
 .add-server-trigger:hover {
-  background-color: var(--card-bg);
-  filter: brightness(1.06);
+  filter: brightness(1.08);
 }
 .add-server-trigger:active {
   transform: none;
