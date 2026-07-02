@@ -250,6 +250,7 @@ function Pressable({
   onClick,
   disabled = false,
   pressedScale = 0.95,
+  ripple = false,
   style,
   className = '',
   children,
@@ -257,25 +258,42 @@ function Pressable({
   onClick?: () => void;
   disabled?: boolean;
   pressedScale?: number;
+  ripple?: boolean;
   style?: React.CSSProperties;
   className?: string;
   children: React.ReactNode;
 }) {
   const [pressed, setPressed] = useState(false);
+  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
+  const rippleIdRef = useRef(0);
+
+  const createRipple = (e: React.MouseEvent) => {
+    if (!ripple) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const id = ++rippleIdRef.current;
+    setRipples((prev) => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
+    setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 600);
+  };
+
   return (
     <div
       className={`pressable ${className}`}
       style={{
         ...style,
+        position: 'relative',
+        overflow: ripple ? 'hidden' : undefined,
         transform: pressed && !disabled ? `scale(${pressedScale})` : undefined,
         opacity: disabled ? 0.55 : 1,
         cursor: 'default',
       }}
-      onMouseDown={() => !disabled && setPressed(true)}
+      onMouseDown={(e) => { if (!disabled) { setPressed(true); createRipple(e); } }}
       onMouseUp={() => setPressed(false)}
       onMouseLeave={() => setPressed(false)}
       onClick={disabled ? undefined : onClick}
     >
+      {ripple && ripples.map((r) => (
+        <span key={r.id} className="touch-ripple" style={{ left: r.x, top: r.y }} />
+      ))}
       {children}
     </div>
   );
@@ -1039,16 +1057,18 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
     >
       {/* Header: back arrow | Логи (flex) | copy | delete */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14, flexShrink: 0 }}>
-        <Pressable onClick={onBack} pressedScale={0.88} style={{ padding: 4 }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-            <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <Pressable onClick={onBack} pressedScale={1}>
+          <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </Pressable>
         <div style={{ width: 14, flexShrink: 0 }} />
         <div style={{ flex: 1, font: "500 18px/1.2 'Source Serif 4', serif", color: theme.ink }}>
           Логи
         </div>
-        <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1}>
+        <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1} ripple={true}>
           <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.mutedInk} strokeWidth="2" />
@@ -1057,7 +1077,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
           </div>
         </Pressable>
         <div style={{ width: 6, flexShrink: 0 }} />
-        <Pressable onClick={logs.length > 0 ? onClear : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1}>
+        <Pressable onClick={logs.length > 0 ? onClear : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1} ripple={true}>
           <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -1082,7 +1102,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
               <circle cx="12" cy="12" r="9" stroke={theme.mutedInk} strokeWidth="1.4" opacity="0.5" />
               <path d="M12 8v4M12 16h.01" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" opacity="0.5" />
             </svg>
-            <div style={{ font: "500 15px/1.2 'Source Serif 4', serif", color: theme.mutedInk }}>Логов пока нет</div>
+            <div style={{ font: "500 18px/1.2 'Source Serif 4', serif", color: theme.mutedInk }}>Логов пока нет</div>
           </div>
         ) : (
           logs.map((entry, index) => (
@@ -1131,6 +1151,9 @@ export function App() {
   const [logs, setLogs] = useState<LogEntryDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastClosing, setToastClosing] = useState(false);
+  const toastTimeoutRef = useRef<any>(null);
 
   const [darkModeOn, setDarkModeOn] = useState(true);
   const [routingMode, setRoutingMode] = useState<RoutingMode>('BypassRu');
@@ -1375,15 +1398,25 @@ export function App() {
     void loadLogs();
   };
 
+  const showToast = (msg: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastClosing(false);
+    setToastMessage(msg);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastClosing(true);
+      toastTimeoutRef.current = setTimeout(() => setToastMessage(''), 280);
+    }, 1800);
+  };
+
   const onClearLogs = async () => {
     setLogsLoading(true); setLogsError('');
-    try { await invoke('clear_logs'); setLogs([]); }
+    try { await invoke('clear_logs'); setLogs([]); showToast('Логи очищены'); }
     catch (err) { setLogsError(getErrorMessage(err)); }
     finally { setLogsLoading(false); }
   };
 
   const onCopyLogs = async () => {
-    try { await navigator.clipboard.writeText(logs.map((e) => `[${e.source}] ${e.message}`).join('\n')); }
+    try { await navigator.clipboard.writeText(logs.map((e) => `[${e.source}] ${e.message}`).join('\n')); showToast('Логи скопированы'); }
     catch (err) { setLogsError(getErrorMessage(err)); }
   };
 
