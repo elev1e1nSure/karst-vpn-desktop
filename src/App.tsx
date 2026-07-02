@@ -371,7 +371,7 @@ function ConnectButton({ phase, enabled, theme, accent, onClick }: {
           height: 152,
           borderRadius: '50%',
           background: buttonBg,
-          border: `1.5px solid ${borderColor}`,
+          border: `2px solid ${borderColor}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -456,7 +456,7 @@ function SubscriptionMenuContent({ sub, theme, accent, onBack, onDelete }: {
     <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Pressable onClick={onBack} pressedScale={0.88}>
+        <Pressable onClick={onBack}>
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
             <path d="M15 18L9 12L15 6" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
@@ -685,23 +685,30 @@ function ServerSheet(props: ServerSheetProps) {
               style={{ borderRadius: 16, background: theme.cardBg, border: `1px solid ${theme.border}`, overflow: 'hidden' }}
             >
               {/* Group header */}
-              <div
-                className={group.id ? 'sub-group-header' : ''}
-                onClick={group.id ? () => props.onOpenSubscription(group.id!) : undefined}
-                style={{ padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 8, cursor: group.id ? 'default' : undefined }}
-              >
-                <div style={{ flex: 1 }}>
-                  <div style={{ font: "600 15px/1.3 'Inter', sans-serif", color: theme.ink }}>{group.name}</div>
-                  {group.announce && (
-                    <div style={{ font: "400 12px/1.4 'Inter', sans-serif", color: theme.mutedInk, marginTop: 2 }}>{group.announce}</div>
-                  )}
+              {group.id ? (
+                <Pressable className="sub-group-header" onClick={() => props.onOpenSubscription(group.id!)} borderRadius={16}>
+                  <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'default' }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ font: "600 15px/1.3 'Inter', sans-serif", color: theme.ink }}>{group.name}</div>
+                      {group.announce && (
+                        <div style={{ font: "400 12px/1.4 'Inter', sans-serif", color: theme.mutedInk, marginTop: 2 }}>{group.announce}</div>
+                      )}
+                    </div>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                      <path d="M9 6L15 12L9 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                </Pressable>
+              ) : (
+                <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ font: "600 15px/1.3 'Inter', sans-serif", color: theme.ink }}>{group.name}</div>
+                    {group.announce && (
+                      <div style={{ font: "400 12px/1.4 'Inter', sans-serif", color: theme.mutedInk, marginTop: 2 }}>{group.announce}</div>
+                    )}
+                  </div>
                 </div>
-                {group.id && (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
-                    <path d="M9 6L15 12L9 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                )}
-              </div>
+              )}
 
               {/* Servers */}
               {group.servers.map((srv) => {
@@ -753,16 +760,14 @@ function ServerSheet(props: ServerSheetProps) {
         {/* Add server */}
         <div style={{ marginTop: 6 }}>
           {!props.addServerOpen ? (
-            <div
-              className="add-server-trigger"
-              onClick={props.onOpenAddServer}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 10px', borderRadius: 14, border: `1.5px solid ${theme.border}`, cursor: 'default' }}
-            >
+            <Pressable className="add-server-trigger" onClick={props.onOpenAddServer} borderRadius={14}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 10px', borderRadius: 14, border: `1.5px solid ${theme.border}`, cursor: 'default' }}>
               <div style={{ width: 22, height: 22, borderRadius: '50%', background: theme.cardBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                 <span style={{ font: "400 15px/1 'Inter', sans-serif", color: theme.mutedInk }}>+</span>
               </div>
               <span style={{ font: "500 14px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>Добавить VLESS или подписку</span>
             </div>
+            </Pressable>
           ) : (
             <div className="add-server-panel" style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: 14, borderRadius: 14, background: theme.cardBg }}>
               <div style={{ font: "500 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>VLESS-ссылка или URL подписки</div>
@@ -1469,7 +1474,7 @@ export function App() {
       >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: 18, paddingBottom: 0 }}>
-        <Pressable onClick={onOpenSettings} pressedScale={0.92} className="settings-btn" style={{
+        <Pressable onClick={onOpenSettings} className="settings-btn" style={{
           width: 46, height: 46, borderRadius: '50%',
           background: theme.cardBg,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
