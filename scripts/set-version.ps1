@@ -4,6 +4,6 @@ param(
 )
 
 $cargoTomlPath = "$PSScriptRoot/../src-tauri/Cargo.toml"
-(Get-Content $cargoTomlPath -Raw) -replace 'version\s*=\s*".+?"', "version = `"$Version`"" | Set-Content -NoNewline -LiteralPath $cargoTomlPath
+(Get-Content $cargoTomlPath -Raw) -replace '(?m)^version\s*=\s*".+?"', "version = `"$Version`"" | Set-Content -NoNewline -LiteralPath $cargoTomlPath
 
 Write-Output "Set version $Version in Cargo.toml"
