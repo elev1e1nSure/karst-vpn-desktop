@@ -1049,7 +1049,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
           Логи
         </div>
         <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1}>
-          <div className="log-header-btn" style={{ padding: 6, borderRadius: 10, transition: 'background-color 0.15s ease' }}>
+          <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.mutedInk} strokeWidth="2" />
               <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" />
@@ -1058,7 +1058,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
         </Pressable>
         <div style={{ width: 6, flexShrink: 0 }} />
         <Pressable onClick={logs.length > 0 ? onClear : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1}>
-          <div className="log-header-btn" style={{ padding: 6, borderRadius: 10, transition: 'background-color 0.15s ease' }}>
+          <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
               <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
