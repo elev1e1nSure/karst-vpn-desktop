@@ -1056,7 +1056,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
       }}
     >
       {/* Header: back arrow | Логи (flex) | copy | delete */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 14, flexShrink: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10, flexShrink: 0 }}>
         <Pressable onClick={onBack} pressedScale={1}>
           <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
@@ -1085,6 +1085,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
           </div>
         </Pressable>
       </div>
+      <div style={{ height: 1, background: theme.border, marginBottom: 12, flexShrink: 0 }} />
 
       {/* Log lines — plain text directly on background, no card */}
       <div style={{ flex: 1, overflow: 'auto' }}>
