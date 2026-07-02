@@ -2342,6 +2342,7 @@ export function App() {
                 boxSizing: 'border-box',
                 zIndex: 6,
                 animation: menuAnim,
+                overflow: 'hidden',
                 translate: `0 ${menuDrag.offset}px`,
                 transition: sheetDragTransition(menuDrag.dragging),
               }}
