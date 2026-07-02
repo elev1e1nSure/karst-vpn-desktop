@@ -962,11 +962,11 @@ function SettingsPickerDialog({ theme, title, onDismiss, children }: {
           borderRadius: 22,
           background: theme.appBg,
           border: `1px solid ${theme.border}`,
-          padding: '4px 18px',
+          padding: '4px 0',
         }}
       >
-        <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, padding: '18px 0 13px' }}>{title}</div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{children}</div>
+        <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, padding: '18px 18px 13px' }}>{title}</div>
+        <div style={{ display: 'flex', flexDirection: 'column' }}>{children}</div>
         <div style={{ height: 14 }} />
       </div>
     </>,
@@ -1058,8 +1058,8 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
       {/* Header: back arrow + Назад | copy | delete */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10, flexShrink: 0 }}>
         <Pressable onClick={onBack} pressedScale={1}>
-          <div className="log-header-btn" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px 6px 8px', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <div className="log-header-btn" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px 10px 10px', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <div style={{ font: "500 14px/1 'Inter', sans-serif", color: theme.ink }}>Назад</div>
