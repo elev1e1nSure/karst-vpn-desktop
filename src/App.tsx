@@ -363,7 +363,7 @@ function SubscriptionMenuContent({
         </div>
       )}
 
-      {/* Traffic card (mock — no data from backend yet) */}
+      {/* Traffic card */}
       <div
         style={{
           display: 'flex',
@@ -389,7 +389,7 @@ function SubscriptionMenuContent({
             Трафик
           </div>
           <div style={{ font: "400 12px/1 'Inter', sans-serif", color: theme.mutedInk }}>
-            Не указано
+            {sub.trafficLabel}
           </div>
         </div>
         <div style={{ height: 1, background: theme.border }} />
@@ -415,7 +415,7 @@ function SubscriptionMenuContent({
             Истекает
           </div>
           <div style={{ font: "400 12px/1 'Inter', sans-serif", color: theme.mutedInk }}>
-            Не указано
+            {sub.expiresLabel}
           </div>
         </div>
       </div>

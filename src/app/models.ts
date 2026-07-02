@@ -19,8 +19,48 @@ export type UiSubscription = {
   routingEnabled?: boolean | null;
   lastRefreshedAt?: string | null;
   lastRefreshError?: string | null;
+  trafficLabel: string;
+  expiresLabel: string;
   servers: UiServer[];
 };
+
+function formatBytes(bytes: number): string {
+  if (bytes <= 0) return '0 Б';
+  const units = ['Б', 'КБ', 'МБ', 'ГБ', 'ТБ'];
+  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  const value = bytes / 1024 ** exponent;
+  return `${value >= 10 || exponent === 0 ? Math.round(value) : value.toFixed(1)} ${units[exponent]}`;
+}
+
+// Parses the standard "Subscription-Userinfo" header format:
+// "upload=123; download=456; total=789; expire=1735689600"
+function parseSubscriptionUserinfo(raw: string): Partial<Record<string, number>> {
+  const fields: Partial<Record<string, number>> = {};
+  for (const part of raw.split(';')) {
+    const [key, value] = part.split('=').map((s) => s.trim());
+    if (key && value && /^\d+$/.test(value)) fields[key] = Number(value);
+  }
+  return fields;
+}
+
+export function formatTrafficLabel(userinfo: string | null | undefined): string {
+  if (!userinfo) return 'Не указано';
+  const { upload = 0, download = 0, total } = parseSubscriptionUserinfo(userinfo);
+  const used = upload + download;
+  if (!total) return used > 0 ? `${formatBytes(used)} использовано` : 'Не указано';
+  return `${formatBytes(used)} из ${formatBytes(total)}`;
+}
+
+export function formatExpiresLabel(userinfo: string | null | undefined): string {
+  if (!userinfo) return 'Не указано';
+  const { expire } = parseSubscriptionUserinfo(userinfo);
+  if (!expire) return 'Бессрочно';
+  return new Date(expire * 1000).toLocaleDateString('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
 
 function countryCodeToFlag(code: string): string {
   if (code.length !== 2) return code;
@@ -71,6 +111,8 @@ export function buildGroups(
     routingEnabled: subscription.routing_enable,
     lastRefreshedAt: subscription.last_refresh_at,
     lastRefreshError: subscription.last_refresh_error,
+    trafficLabel: formatTrafficLabel(subscription.subscription_userinfo),
+    expiresLabel: formatExpiresLabel(subscription.subscription_userinfo),
     servers: (bySubscription.get(subscription.id) ?? []).map(serverToUi),
   }));
   const manualServers = bySubscription.get(null) ?? [];
@@ -78,6 +120,8 @@ export function buildGroups(
     groups.push({
       id: null,
       name: 'Вручную',
+      trafficLabel: 'Не указано',
+      expiresLabel: 'Не указано',
       servers: manualServers.map(serverToUi),
     });
   }

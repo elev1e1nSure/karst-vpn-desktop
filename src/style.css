@@ -758,6 +758,7 @@ img {
 }
 .btn-cancel:hover {
   background-color: var(--theme-border) !important;
+  border-color: var(--theme-muted-ink) !important;
 }
 .btn-cancel:active {
   transform: none;
@@ -766,10 +767,12 @@ img {
 .btn-submit {
   transition:
     filter 0.15s ease,
+    box-shadow 0.15s ease,
     transform 0.15s ease;
 }
 .btn-submit:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.18);
+  box-shadow: 0 4px 16px -4px color-mix(in oklch, var(--accent) 60%, transparent);
 }
 .btn-submit:active {
   transform: none;
