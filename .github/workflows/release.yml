@@ -1,0 +1,69 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Extract tag version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $version = $tag.TrimStart("v")
+          "version=$version" >> $env:GITHUB_OUTPUT
+
+      - name: Sync version
+        shell: pwsh
+        run: |
+          .\scripts\set-version.ps1 -Version "${{ steps.version.outputs.version }}"
+          .\scripts\sync-version.ps1 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Build installer
+        run: npm run tauri build
+
+      - name: Collect installers
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist-installers | Out-Null
+          Copy-Item src-tauri/target/release/bundle/msi/*.msi dist-installers/
+          Copy-Item src-tauri/target/release/bundle/nsis/*.exe dist-installers/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-installers
+          path: dist-installers/*
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-installers
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: "*"
+          fail_on_unmatched_files: true

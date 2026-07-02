@@ -1,0 +1,17 @@
+#
+# https://help.github.com/articles/dealing-with-line-endings/
+#
+# Default: LF for all text files
+* text=auto eol=lf
+
+# Windows script files should use crlf
+*.bat           text eol=crlf
+*.ps1           text eol=crlf
+
+# Binary files should be left untouched
+*.exe           binary
+*.dll           binary
+*.woff2         binary
+*.png           binary
+*.ico           binary
+*.icns          binary
