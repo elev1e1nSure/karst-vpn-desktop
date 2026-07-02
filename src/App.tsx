@@ -1800,7 +1800,7 @@ export function App() {
         if (Object.keys(slides).length > 0) {
           setPingSlideStates(slides);
           if (pingSlideTimerRef.current) clearTimeout(pingSlideTimerRef.current);
-          pingSlideTimerRef.current = setTimeout(() => setPingSlideStates({}), 300);
+          pingSlideTimerRef.current = setTimeout(() => setPingSlideStates({}), 350);
         }
       } catch {
         // non-critical: ping display just stays blank

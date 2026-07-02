@@ -1115,11 +1115,11 @@ img {
 }
 
 .ping-slide-out {
-  animation: pingSlideOut 0.28s ease forwards;
+  animation: pingSlideOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .ping-slide-in {
-  animation: pingSlideIn 0.28s ease forwards;
+  animation: pingSlideIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 /* ─── Custom tooltip ───────────────────────────────────────────────────── */
