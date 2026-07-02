@@ -2452,7 +2452,11 @@ export function App() {
       {/* ── Toast ────────────────────────────────────────────────────────── */}
       {toastMessage &&
         createPortal(
-          <div className={`toast ${toastClosing ? 'toast-out' : 'toast-in'}`}>{toastMessage}</div>,
+          <div
+            className={`toast ${toastClosing ? 'toast-out' : 'toast-in'} ${darkModeOn ? 'toast-dark' : ''}`}
+          >
+            {toastMessage}
+          </div>,
           document.body,
         )}
     </div>

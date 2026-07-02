@@ -1056,6 +1056,11 @@ img {
   pointer-events: none;
 }
 
+.toast-dark {
+  background: rgba(255, 255, 255, 0.92);
+  color: #1a1a19;
+}
+
 .toast-in {
   animation: toastIn 0.28s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
