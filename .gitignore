@@ -30,6 +30,9 @@ logs/
 
 # TypeScript
 *.tsbuildinfo
+# tsc -b build output for the composite vite.config.ts project (no noEmit for composite projects)
+/vite.config.js
+/vite.config.d.ts
 
 # Rust
 **/*.rs.bk

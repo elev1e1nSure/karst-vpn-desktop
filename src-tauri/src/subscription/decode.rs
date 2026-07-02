@@ -34,7 +34,7 @@ fn padded_candidates(value: &str) -> Vec<String> {
     let remainder = value.len() % 4;
     if remainder != 0 {
         let mut padded = value.to_string();
-        padded.extend(std::iter::repeat('=').take(4 - remainder));
+        padded.extend(std::iter::repeat_n('=', 4 - remainder));
         candidates.push(padded);
     }
     candidates

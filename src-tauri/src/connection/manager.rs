@@ -92,7 +92,7 @@ impl ConnectionManager {
         let app_data_dir = app
             .path()
             .app_data_dir()
-            .map_err(|error| AppError::Io(std::io::Error::new(std::io::ErrorKind::Other, error)))?;
+            .map_err(|error| AppError::Io(std::io::Error::other(error)))?;
         let tun_options = TunOptions::new(app_data_dir.join("sing-box-cache.db"));
         let outbound = vless_to_outbound(&link);
         let config = build_config(outbound, &tun_options);

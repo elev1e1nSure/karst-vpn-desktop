@@ -99,7 +99,7 @@ impl AppLog {
             "[{}] [{}] {}",
             Utc::now().to_rfc3339_opts(chrono::SecondsFormat::Secs, true),
             level,
-            message.replace('\r', " ").replace('\n', " ")
+            message.replace(['\r', '\n'], " ")
         )?;
         Ok(())
     }

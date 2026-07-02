@@ -79,7 +79,7 @@ fn decode_base64_header(value: &str) -> Option<String> {
     let mut padded = compact.clone();
     let remainder = padded.len() % 4;
     if remainder != 0 {
-        padded.extend(std::iter::repeat('=').take(4 - remainder));
+        padded.extend(std::iter::repeat_n('=', 4 - remainder));
     }
 
     for candidate in [&compact, &padded] {

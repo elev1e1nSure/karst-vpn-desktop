@@ -7,6 +7,13 @@ set shell := ["pwsh", "-NoLogo", "-Command"]
 dev:
     npm run tauri dev
 
+# Run frontend formatting, lint and type checks plus Rust formatting and lint checks
+check:
+    npm run check
+    cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
+    cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
+    cargo check --manifest-path src-tauri/Cargo.toml --all-targets --all-features
+
 # Sync version across package.json/Cargo.toml/tauri.conf.json, then build the release bundle
 build:
     @just sync-version

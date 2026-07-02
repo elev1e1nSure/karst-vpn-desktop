@@ -194,23 +194,9 @@ function buildGroups(servers: ServerDto[], subscriptions: SubscriptionDto[]): Ui
   return groups;
 }
 
-function formatEpochStr(isoStr: string | null | undefined): string {
-  if (!isoStr) return 'Не указано';
-  try {
-    const d = new Date(isoStr);
-    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  } catch { return 'Не указано'; }
-}
-
 function formatUpdateInterval(hours: number | null | undefined): string {
   if (!hours || hours <= 0) return 'Не указан';
   return `${hours} ч`;
-}
-
-function formatOptionalBoolean(val: boolean | null | undefined): string {
-  if (val === true) return 'Включён';
-  if (val === false) return 'Выключен';
-  return 'Не указан';
 }
 
 // ─── Theme / Design tokens ─────────────────────────────────────────────────
@@ -467,8 +453,8 @@ function LocationChip({ server, theme, onClick }: {
 
 // ─── Subscription Menu Content ────────────────────────────────────────────────
 
-function SubscriptionMenuContent({ sub, theme, accent, onBack, onDelete }: {
-  sub: UiSubscription; theme: Theme; accent: string; onBack: () => void; onDelete: () => void;
+function SubscriptionMenuContent({ sub, theme, onBack, onDelete }: {
+  sub: UiSubscription; theme: Theme; onBack: () => void; onDelete: () => void;
 }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -646,9 +632,7 @@ function ServerSheet(props: ServerSheetProps) {
       }, 220);
       return () => clearTimeout(t);
     }
-  }, [subscriptionMenuId]);
-
-  const allServers = groups.flatMap((g) => g.servers);
+  }, [subscriptionMenuId, drillVisible]);
 
   return (
     // Grid stacks both panels in the same cell: the sheet's height auto-sizes to
@@ -834,7 +818,6 @@ function ServerSheet(props: ServerSheetProps) {
           <SubscriptionMenuContent
             sub={latchRef.current}
             theme={theme}
-            accent={accent}
             onBack={props.onCloseSubscription}
             onDelete={() => { if (latchRef.current?.id) props.onDeleteSubscription(latchRef.current.id); }}
           />
@@ -883,7 +866,7 @@ function RoutingModeSection({ theme, accent, selectedMode, onSelect }: {
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogClosing, setDialogClosing] = useState(false);
-  const closeRef = useRef<any>(null);
+  const closeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dismissDialog = () => {
     if (dialogClosing) return;
@@ -921,7 +904,7 @@ function AutoRefreshSection({ theme, accent, mode, hours, onSetMode, onSetHours 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogClosing, setDialogClosing] = useState(false);
   const [hoursText, setHoursText] = useState(hours.toString());
-  const closeRef = useRef<any>(null);
+  const closeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const dismissDialog = () => {
     if (dialogClosing) return;
@@ -1121,11 +1104,11 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
       {/* Log lines — plain text directly on background, no card */}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {logsLoading && logs.length === 0 ? (
-          <span style={{ color: theme.mutedInk, font: "400 12px/1.5 ui-monospace, 'Cascadia Mono', monospace" }}>
+          <span style={{ color: theme.mutedInk, font: "400 12px/1.5 'Inter', sans-serif" }}>
             Загрузка…
           </span>
         ) : logsError ? (
-          <span style={{ color: theme.danger, font: "400 12px/1.5 ui-monospace, 'Cascadia Mono', monospace" }}>
+          <span style={{ color: theme.danger, font: "400 12px/1.5 'Inter', sans-serif" }}>
             {logsError}
           </span>
         ) : logs.length === 0 ? (
@@ -1138,7 +1121,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
           </div>
         ) : (
           logs.map((entry, index) => (
-            <div key={`${entry.source}-${index}`} style={{ font: "400 12px/1.45 ui-monospace, 'Cascadia Mono', Consolas, monospace", color: theme.ink, overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', paddingBottom: 2 }}>
+            <div key={`${entry.source}-${index}`} style={{ font: "400 12px/1.45 'Inter', sans-serif", color: theme.ink, overflowWrap: 'anywhere', whiteSpace: 'pre-wrap', paddingBottom: 2 }}>
               <span style={{ color: accent }}>[{entry.source}]</span>{' '}{entry.message}
             </div>
           ))
@@ -1183,9 +1166,9 @@ export function App() {
   const [logs, setLogs] = useState<LogEntryDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState('');
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastClosing, setToastClosing] = useState(false);
-  const toastTimeoutRef = useRef<any>(null);
+  const [, setToastMessage] = useState('');
+  const [, setToastClosing] = useState(false);
+  const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [darkModeOn, setDarkModeOn] = useState(true);
   const [routingMode, setRoutingMode] = useState<RoutingMode>('BypassRu');
@@ -1193,12 +1176,12 @@ export function App() {
   const [autoRefreshHours, setAutoRefreshHours] = useState(24);
 
   // ── Refs ───────────────────────────────────────────────────────────────────
-  const menuCloseTimeoutRef = useRef<any>(null);
-  const settingsCloseTimeoutRef = useRef<any>(null);
+  const menuCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const settingsCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ── Timer ──────────────────────────────────────────────────────────────────
   useEffect(() => {
-    let id: any = null;
+    let id: ReturnType<typeof setInterval> | null = null;
     if (phase === 'on') {
       id = setInterval(() => setElapsed((p) => p + 1), 1000);
     } else {
@@ -1379,7 +1362,7 @@ export function App() {
     if (refreshAllLoading) return;
     setRefreshAllLoading(true);
     try {
-      await invoke<any[]>('refresh_all_subscriptions');
+      await invoke<ImportSummaryDto[]>('refresh_all_subscriptions');
       const [serverList, subList] = await Promise.all([invoke<ServerDto[]>('list_servers'), invoke<SubscriptionDto[]>('list_subscriptions')]);
       setServers(serverList);
       setSubscriptions(subList);
@@ -1411,12 +1394,16 @@ export function App() {
   const handleSetAutoRefreshMode = async (m: AutoRefreshMode) => {
     setAutoRefreshMode(m);
     const modeStr = m === 'Auto' ? 'auto' : m === 'Off' ? 'off' : 'every_hours';
-    try { await invoke('set_auto_refresh_settings', { mode: modeStr, hours: null }); } catch (_) {}
+    try { await invoke('set_auto_refresh_settings', { mode: modeStr, hours: null }); } catch {
+      // Settings persistence errors are intentionally deferred to the correctness pass.
+    }
   };
 
   const handleSetAutoRefreshHours = async (h: number) => {
     setAutoRefreshHours(h);
-    try { await invoke('set_auto_refresh_settings', { mode: 'every_hours', hours: h }); } catch (_) {}
+    try { await invoke('set_auto_refresh_settings', { mode: 'every_hours', hours: h }); } catch {
+      // Settings persistence errors are intentionally deferred to the correctness pass.
+    }
   };
 
   const loadLogs = async () => {
@@ -1463,11 +1450,6 @@ export function App() {
   const backdropAnim = `${menuClosing ? 'backdropOut' : 'backdropIn'} 0.22s cubic-bezier(0.4,0,0.2,1) both`;
   const settingsAnim = `${settingsClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.26s cubic-bezier(0.4,0,0.2,1) both`;
   const settingsBackdropAnim = `${settingsClosing ? 'backdropOut' : 'backdropIn'} 0.32s cubic-bezier(0.4,0,0.2,1) both`;
-
-  // Screen transition
-  const screenClass = appScreen === 'logs'
-    ? (screenDir === 'forward' ? 'route-enter-from-right' : 'route-enter-from-left')
-    : (screenDir === 'back' ? 'route-enter-from-left' : '');
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
