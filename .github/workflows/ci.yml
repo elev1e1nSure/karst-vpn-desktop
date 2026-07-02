@@ -31,6 +31,9 @@ jobs:
         with:
           tool: just
 
+      # node20's bundled npm hits a known "Exit handler never called!" bug on windows-latest runners
+      - run: npm install -g npm@latest
+
       - run: npm ci
 
       - run: just check
