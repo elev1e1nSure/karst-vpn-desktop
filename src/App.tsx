@@ -1438,7 +1438,7 @@ export function App() {
   // ── Sheet animations ────────────────────────────────────────────────────────
   const menuAnim = `${menuClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.26s cubic-bezier(0.4,0,0.2,1) both`;
   const backdropAnim = `${menuClosing ? 'backdropOut' : 'backdropIn'} 0.22s cubic-bezier(0.4,0,0.2,1) both`;
-  const settingsAnim = `${settingsClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.38s cubic-bezier(0.4,0,0.2,1) both`;
+  const settingsAnim = `${settingsClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.26s cubic-bezier(0.4,0,0.2,1) both`;
   const settingsBackdropAnim = `${settingsClosing ? 'backdropOut' : 'backdropIn'} 0.32s cubic-bezier(0.4,0,0.2,1) both`;
 
   // Screen transition
