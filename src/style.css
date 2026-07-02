@@ -1121,3 +1121,44 @@ img {
 .ping-slide-in {
   animation: pingSlideIn 0.28s ease forwards;
 }
+
+/* ─── Custom tooltip ───────────────────────────────────────────────────── */
+@keyframes tooltipInTop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -100%) translateY(4px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -100%) translateY(0) scale(1);
+  }
+}
+
+@keyframes tooltipInBottom {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) translateY(-4px) scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) translateY(0) scale(1);
+  }
+}
+
+.app-tooltip {
+  font: 500 12px/1 'Inter', sans-serif;
+  padding: 7px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.45);
+  transform-origin: center bottom;
+}
+
+.app-tooltip-top {
+  animation: tooltipInTop 0.14s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.app-tooltip-bottom {
+  animation: tooltipInBottom 0.14s cubic-bezier(0.4, 0, 0.2, 1) both;
+  transform-origin: center top;
+}

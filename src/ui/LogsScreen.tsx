@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable } from './Pressable';
 import { themeVars } from './theme';
 import type { Theme } from './theme';
+import { Tooltip } from './Tooltip';
 
 export function LogsScreen({
   theme,
@@ -66,6 +67,7 @@ export function LogsScreen({
         </Pressable>
         <div style={{ flex: 1 }} />
         <LogActionButton
+          theme={theme}
           label="Копировать логи"
           disabled={actionsDisabled}
           onClick={onCopy}
@@ -83,6 +85,7 @@ export function LogsScreen({
         />
         <div style={{ width: 6, flexShrink: 0 }} />
         <LogActionButton
+          theme={theme}
           label="Очистить логи"
           disabled={actionsDisabled}
           onClick={onClear}
@@ -131,38 +134,41 @@ export function LogsScreen({
 }
 
 function LogActionButton({
+  theme,
   label,
   disabled,
   onClick,
   icon,
 }: {
+  theme: Theme;
   label: string;
   disabled: boolean;
   onClick: () => void;
   icon: ReactNode;
 }) {
   return (
-    <Pressable
-      onClick={disabled ? undefined : onClick}
-      disabled={disabled}
-      style={{ borderRadius: 10 }}
-    >
-      <div
-        className="log-header-btn"
-        title={label}
-        style={{
-          width: 36,
-          height: 36,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+    <Tooltip label={label} theme={theme} placement="bottom" disabled={disabled}>
+      <Pressable
+        onClick={disabled ? undefined : onClick}
+        disabled={disabled}
+        style={{ borderRadius: 10 }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          {icon}
-        </svg>
-      </div>
-    </Pressable>
+        <div
+          className="log-header-btn"
+          style={{
+            width: 36,
+            height: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            {icon}
+          </svg>
+        </div>
+      </Pressable>
+    </Tooltip>
   );
 }
 
