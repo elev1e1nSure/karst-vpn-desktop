@@ -410,10 +410,11 @@ function ConnectButton({ phase, enabled, theme, accent, onClick }: {
 function LocationChip({ server, theme, onClick }: {
   server: UiServer | null; theme: Theme; onClick: () => void;
 }) {
+  const r = typeof mood.chipRadius === 'string' ? parseInt(mood.chipRadius, 10) : mood.chipRadius;
   return (
+    <Pressable onClick={onClick} borderRadius={r}>
     <div
       className="location-chip"
-      onClick={onClick}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -440,6 +441,7 @@ function LocationChip({ server, theme, onClick }: {
         <path d="M9 6L15 12L9 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </div>
+    </Pressable>
   );
 }
 
@@ -856,11 +858,22 @@ function RoutingModeSection({ theme, accent, selectedMode, onSelect }: {
   theme: Theme; accent: string; selectedMode: RoutingMode; onSelect: (m: RoutingMode) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogClosing, setDialogClosing] = useState(false);
+  const closeRef = useRef<any>(null);
+
+  const dismissDialog = () => {
+    if (dialogClosing) return;
+    setDialogClosing(true);
+    closeRef.current = setTimeout(() => { setDialogOpen(false); setDialogClosing(false); }, 160);
+  };
+
+  useEffect(() => { return () => { if (closeRef.current) clearTimeout(closeRef.current); }; }, []);
+
   return (
     <>
-      <SettingsActionRow theme={theme} title="Маршрутизация" subtitle={ROUTING_LABELS[selectedMode]} onClick={() => setDialogOpen(true)} />
+      <SettingsActionRow theme={theme} title="Маршрутизация" subtitle={ROUTING_LABELS[selectedMode]} onClick={() => { setDialogOpen(true); setDialogClosing(false); }} />
       {dialogOpen && (
-        <SettingsPickerDialog theme={theme} title="Маршрутизация" onDismiss={() => setDialogOpen(false)}>
+        <SettingsPickerDialog theme={theme} title="Маршрутизация" isClosing={dialogClosing} onDismiss={dismissDialog}>
           {(['Full', 'BypassLocal', 'BypassRu'] as RoutingMode[]).map((mode) => (
             <SettingsChoiceRow
               key={mode}
@@ -868,7 +881,7 @@ function RoutingModeSection({ theme, accent, selectedMode, onSelect }: {
               title={ROUTING_LABELS[mode]}
               subtitle={ROUTING_SUBTITLES[mode]}
               selected={selectedMode === mode}
-              onClick={() => { onSelect(mode); setDialogOpen(false); }}
+              onClick={() => { onSelect(mode); dismissDialog(); }}
             />
           ))}
         </SettingsPickerDialog>
@@ -882,17 +895,26 @@ function AutoRefreshSection({ theme, accent, mode, hours, onSetMode, onSetHours 
   onSetMode: (m: AutoRefreshMode) => void; onSetHours: (h: number) => void;
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogClosing, setDialogClosing] = useState(false);
   const [hoursText, setHoursText] = useState(hours.toString());
+  const closeRef = useRef<any>(null);
+
+  const dismissDialog = () => {
+    if (dialogClosing) return;
+    setDialogClosing(true);
+    closeRef.current = setTimeout(() => { setDialogOpen(false); setDialogClosing(false); }, 160);
+  };
 
   useEffect(() => { setHoursText(hours.toString()); }, [hours]);
+  useEffect(() => { return () => { if (closeRef.current) clearTimeout(closeRef.current); }; }, []);
 
   const subtitle = mode === 'EveryHours' ? `Каждые ${hours} ч` : REFRESH_LABELS[mode];
 
   return (
     <>
-      <SettingsActionRow theme={theme} title="Обновление подписок" subtitle={subtitle} onClick={() => setDialogOpen(true)} />
+      <SettingsActionRow theme={theme} title="Обновление подписок" subtitle={subtitle} onClick={() => { setDialogOpen(true); setDialogClosing(false); }} />
       {dialogOpen && (
-        <SettingsPickerDialog theme={theme} title="Обновление подписок" onDismiss={() => setDialogOpen(false)}>
+        <SettingsPickerDialog theme={theme} title="Обновление подписок" isClosing={dialogClosing} onDismiss={dismissDialog}>
           {(['Auto', 'Off', 'EveryHours'] as AutoRefreshMode[]).map((m) => (
             <SettingsChoiceRow
               key={m}
@@ -900,7 +922,7 @@ function AutoRefreshSection({ theme, accent, mode, hours, onSetMode, onSetHours 
               title={REFRESH_LABELS[m]}
               subtitle={REFRESH_SUBTITLES[m]}
               selected={mode === m}
-              onClick={() => { onSetMode(m); if (m !== 'EveryHours') setDialogOpen(false); }}
+              onClick={() => { onSetMode(m); if (m !== 'EveryHours') dismissDialog(); }}
             />
           ))}
           <div className={`hours-input-wrapper ${mode === 'EveryHours' ? 'visible' : ''}`}>
@@ -932,34 +954,18 @@ function AutoRefreshSection({ theme, accent, mode, hours, onSetMode, onSetHours 
   );
 }
 
-function SettingsPickerDialog({ theme, title, onDismiss, children }: {
-  theme: Theme; title: string; onDismiss: () => void; children: React.ReactNode;
+function SettingsPickerDialog({ theme, title, isClosing, onDismiss, children }: {
+  theme: Theme; title: string; isClosing: boolean; onDismiss: () => void; children: React.ReactNode;
 }) {
-  const [closing, setClosing] = useState(false);
-  const closeTimeoutRef = useRef<any>(null);
-
-  useEffect(() => { return () => { if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current); }; }, []);
-
-  const close = () => {
-    if (closing) return;
-    setClosing(true);
-    closeTimeoutRef.current = setTimeout(onDismiss, 160);
-  };
-
-  // Portaled to <body>: rendered inside the (transform-animated, overflow:hidden)
-  // settings sheet, `position: fixed` here would be contained by that ancestor
-  // instead of the viewport — clipping the dialog toward the bottom and letting
-  // clicks outside the clipped area fall through to the settings sheet's own
-  // backdrop, closing both at once.
   return createPortal(
     <>
-      <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, animation: `${closing ? 'backdropOut' : 'backdropIn'} 0.2s cubic-bezier(0.4,0,0.2,1) both` }} />
+      <div onClick={onDismiss} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, animation: `${isClosing ? 'backdropOut' : 'backdropIn'} 0.2s cubic-bezier(0.4,0,0.2,1) both` }} />
         <div
           style={{
             position: 'fixed', top: '50%', left: '50%',
             width: 'min(400px, calc(100vw - 64px))',
             zIndex: 101,
-            animation: `${closing ? 'dialogOut' : 'dialogIn'} ${closing ? '0.16s' : '0.22s'} cubic-bezier(0.4,0,0.2,1) both`,
+            animation: `${isClosing ? 'dialogOut' : 'dialogIn'} ${isClosing ? '0.16s' : '0.22s'} cubic-bezier(0.4,0,0.2,1) both`,
             boxSizing: 'border-box',
             borderRadius: 22,
             background: theme.appBg,
@@ -1425,8 +1431,8 @@ export function App() {
   const onBackToMain = () => { setScreenDir('back'); setAppScreen('main'); };
 
   // ── Sheet animations ────────────────────────────────────────────────────────
-  const menuAnim = `${menuClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.38s cubic-bezier(0.4,0,0.2,1) both`;
-  const backdropAnim = `${menuClosing ? 'backdropOut' : 'backdropIn'} 0.32s cubic-bezier(0.4,0,0.2,1) both`;
+  const menuAnim = `${menuClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.26s cubic-bezier(0.4,0,0.2,1) both`;
+  const backdropAnim = `${menuClosing ? 'backdropOut' : 'backdropIn'} 0.22s cubic-bezier(0.4,0,0.2,1) both`;
   const settingsAnim = `${settingsClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.38s cubic-bezier(0.4,0,0.2,1) both`;
   const settingsBackdropAnim = `${settingsClosing ? 'backdropOut' : 'backdropIn'} 0.32s cubic-bezier(0.4,0,0.2,1) both`;
 

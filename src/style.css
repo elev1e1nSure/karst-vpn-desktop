@@ -718,6 +718,15 @@ a, img {
   border-color: var(--accent) !important;
 }
 
+.hours-input::-webkit-inner-spin-button,
+.hours-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.hours-input {
+  -moz-appearance: textfield;
+}
+
 /* ─── Delete confirmation ────────────────────────────────────────────────── */
 .confirm-delete-btn {
   transition: transform 0.12s ease;
