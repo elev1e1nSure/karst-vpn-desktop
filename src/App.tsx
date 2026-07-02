@@ -250,7 +250,7 @@ function Pressable({
   onClick,
   disabled = false,
   pressedScale = 1,
-  ripple = false,
+  ripple = true,
   style,
   className = '',
   children,
