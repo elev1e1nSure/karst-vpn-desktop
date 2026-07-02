@@ -10,6 +10,7 @@ use crate::subscription::decode::decode_subscription;
 use crate::subscription::fetch::fetch_subscription;
 use crate::vless::model::VlessLink;
 use crate::vless::parser::parse_subscription_body;
+use crate::vless::xray_json::extract_vless_uris;
 
 #[derive(Debug, Clone)]
 pub struct ImportSummary {
@@ -39,7 +40,13 @@ pub async fn refresh(
     };
 
     let decoded = decode_subscription(&fetched.body);
-    let batch = parse_subscription_body(&decoded);
+    // Some panels serve a full Xray JSON client config instead of a vless:// link list;
+    // synthesize link lines from it so the rest of the pipeline stays untouched.
+    let source = match extract_vless_uris(&decoded) {
+        Some(uris) => uris.join("\n"),
+        None => decoded,
+    };
+    let batch = parse_subscription_body(&source);
     let mut seen = HashSet::new();
     let links = batch
         .links
