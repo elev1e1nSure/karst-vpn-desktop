@@ -737,6 +737,7 @@ function ServerSheet(props: ServerSheetProps) {
                     className="server-item"
                     onClick={() => props.onSelect(srv.id)}
                     borderRadius={14}
+                    ripple={false}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'default' }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: isSelected ? accent : theme.mutedInk, flexShrink: 0 }} />
@@ -1496,7 +1497,7 @@ export function App() {
       >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', paddingTop: 18, paddingBottom: 0 }}>
-        <Pressable onClick={onOpenSettings} className="settings-btn" style={{
+        <Pressable onClick={onOpenSettings} className="settings-btn" ripple={false} style={{
           width: 46, height: 46, borderRadius: '50%',
           background: theme.cardBg,
           display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
