@@ -829,6 +829,14 @@ img {
   transform: none;
 }
 
+/* ─── Delete subscription button ─────────────────────────────────────────── */
+.delete-subscription-btn {
+  transition: background-color 0.15s ease;
+}
+.delete-subscription-btn:hover {
+  background-color: var(--danger-bg-hover) !important;
+}
+
 /* ─── Settings ───────────────────────────────────────────────────────────── */
 .settings-row {
   transition:
@@ -1081,4 +1089,35 @@ img {
 /* ─── Disable transitions during theme switch ──────────────────────────── */
 .no-transitions * {
   transition: none !important;
+}
+
+/* ─── Ping refresh animation ───────────────────────────────────────────── */
+@keyframes pingSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+}
+
+@keyframes pingSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.ping-slide-out {
+  animation: pingSlideOut 0.28s ease forwards;
+}
+
+.ping-slide-in {
+  animation: pingSlideIn 0.28s ease forwards;
 }

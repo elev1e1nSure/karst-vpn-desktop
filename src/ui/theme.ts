@@ -37,6 +37,7 @@ export function themeVars(theme: Theme): CSSProperties {
     '--theme-muted-ink': theme.mutedInk,
     '--theme-border': theme.border,
     '--theme-danger': theme.danger,
+    '--danger-bg-hover': `color-mix(in oklch, ${theme.danger} 12%, ${theme.appBg})`,
     '--accent': ACCENT,
   } as CSSProperties;
 }

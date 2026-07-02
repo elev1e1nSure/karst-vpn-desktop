@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { commands, getErrorMessage } from './app/commands';
 import { buildGroups, formatPingLabel } from './app/models';
 import type { UiServer, UiSubscription } from './app/models';
@@ -539,6 +540,7 @@ function SubscriptionMenuContent({
       ) : (
         <Pressable onClick={() => setConfirmDelete(true)} borderRadius={14}>
           <div
+            className="delete-subscription-btn"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -655,6 +657,7 @@ type ServerSheetProps = {
   addServerLoading: boolean;
   importMessage: string;
   refreshAllLoading: boolean;
+  pingSlideStates: Record<string, { oldLabel: string; newLabel: string }>;
   subscriptionMenuId: string | null;
   theme: Theme;
   accent: string;
@@ -671,7 +674,7 @@ type ServerSheetProps = {
 };
 
 function ServerSheet(props: ServerSheetProps) {
-  const { groups, selectedServerId, theme, accent, subscriptionMenuId } = props;
+  const { groups, selectedServerId, theme, accent, subscriptionMenuId, pingSlideStates } = props;
 
   const subscriptionMenu = groups.find((g) => g.id === subscriptionMenuId) ?? null;
   const latchRef = useRef(subscriptionMenu);
@@ -944,14 +947,35 @@ function ServerSheet(props: ServerSheetProps) {
                           {srv.name}
                         </span>
                         {srv.latencyLabel && (
-                          <span
-                            style={{
-                              font: "400 13px/1.3 'Inter', sans-serif",
-                              color: theme.mutedInk,
-                            }}
-                          >
-                            {' '}
-                            {srv.latencyLabel}
+                          <span>
+                            {pingSlideStates[srv.id] ? (
+                              <span
+                                style={{
+                                  display: 'inline-grid',
+                                  font: "400 13px/1.3 'Inter', sans-serif",
+                                  color: theme.mutedInk,
+                                }}
+                              >
+                                <span className="ping-slide-out" style={{ gridArea: '1/1' }}>
+                                  {' '}
+                                  {pingSlideStates[srv.id].oldLabel}
+                                </span>
+                                <span className="ping-slide-in" style={{ gridArea: '1/1' }}>
+                                  {' '}
+                                  {pingSlideStates[srv.id].newLabel}
+                                </span>
+                              </span>
+                            ) : (
+                              <span
+                                style={{
+                                  font: "400 13px/1.3 'Inter', sans-serif",
+                                  color: theme.mutedInk,
+                                }}
+                              >
+                                {' '}
+                                {srv.latencyLabel}
+                              </span>
+                            )}
                           </span>
                         )}
                       </div>
@@ -1631,6 +1655,12 @@ export function App() {
   const [servers, setServers] = useState<ServerDto[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionDto[]>([]);
   const [pingMap, setPingMap] = useState<Record<string, number | null>>({});
+  const pingMapRef = useRef(pingMap);
+  pingMapRef.current = pingMap;
+  const [pingSlideStates, setPingSlideStates] = useState<
+    Record<string, { oldLabel: string; newLabel: string }>
+  >({});
+  const pingSlideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedServerId, setSelectedServerId] = useState('');
   const { phase, setPhase, elapsed, applyStatus } = useConnectionStatus(
     setSelectedServerId,
@@ -1727,6 +1757,11 @@ export function App() {
     [],
   );
 
+  // ── Sync titlebar theme with app dark mode ────────────────────────────────────
+  useEffect(() => {
+    getCurrentWindow().setTheme(darkModeOn ? 'dark' : 'light');
+  }, [darkModeOn]);
+
   // ── Ping ───────────────────────────────────────────────────────────────────
   // Re-runs whenever the server list changes, so it also refreshes on "Обновить".
   useEffect(() => {
@@ -1736,11 +1771,31 @@ export function App() {
       try {
         const results = await commands.pingServers();
         if (cancelled) return;
+
+        const oldPing = pingMapRef.current;
+        const slides: Record<string, { oldLabel: string; newLabel: string }> = {};
+
+        for (const r of results) {
+          const oldVal = oldPing[r.id];
+          const newVal = r.latency_ms ?? null;
+
+          slides[r.id] = {
+            oldLabel: oldVal !== undefined ? formatPingLabel(oldVal) : '',
+            newLabel: formatPingLabel(newVal),
+          };
+        }
+
         setPingMap((prev) => {
           const next = { ...prev };
           for (const r of results) next[r.id] = r.latency_ms ?? null;
           return next;
         });
+
+        if (Object.keys(slides).length > 0) {
+          setPingSlideStates(slides);
+          if (pingSlideTimerRef.current) clearTimeout(pingSlideTimerRef.current);
+          pingSlideTimerRef.current = setTimeout(() => setPingSlideStates({}), 300);
+        }
       } catch {
         // non-critical: ping display just stays blank
       }
@@ -1748,6 +1803,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [servers]);
 
   // ── Computed ───────────────────────────────────────────────────────────────
@@ -2259,6 +2315,7 @@ export function App() {
                 addServerLoading={addServerLoading}
                 importMessage={importMessage}
                 refreshAllLoading={refreshAllLoading}
+                pingSlideStates={pingSlideStates}
                 subscriptionMenuId={subscriptionMenuId}
                 theme={theme}
                 accent={ACCENT}

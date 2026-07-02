@@ -147,7 +147,17 @@ function LogActionButton({
       disabled={disabled}
       style={{ borderRadius: 10 }}
     >
-      <div className="log-header-btn" title={label} style={{ width: 36, height: 36 }}>
+      <div
+        className="log-header-btn"
+        title={label}
+        style={{
+          width: 36,
+          height: 36,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
           {icon}
         </svg>
