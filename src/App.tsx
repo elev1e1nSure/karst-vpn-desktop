@@ -1954,6 +1954,22 @@ export function App() {
       ]);
       setServers(serverList);
       setSubscriptions(subList);
+      // A subscription refresh replaces its servers with freshly parsed rows, whose ids
+      // are derived from the raw VLESS link — if the provider rotates link params, the
+      // previously selected server's id no longer exists. Re-resolve it by host/port so
+      // the selection (and its checkmark) survives a refresh.
+      setSelectedServerId((current) => {
+        if (serverList.some((s) => s.id === current)) return current;
+        const prev = servers.find((s) => s.id === current);
+        if (!prev) return current;
+        const match = serverList.find(
+          (s) =>
+            s.subscription_id === prev.subscription_id &&
+            s.host === prev.host &&
+            s.port === prev.port,
+        );
+        return match?.id ?? current;
+      });
     } catch (err) {
       setAppError(getErrorMessage(err));
     } finally {
