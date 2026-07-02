@@ -1,6 +1,6 @@
 [package]
 name = "karst-vpn"
-version = "0.1.0"
+version = "1.0.0"
 description = "Karst VPN desktop application"
 authors = ["Generated"]
 edition = "2021"
