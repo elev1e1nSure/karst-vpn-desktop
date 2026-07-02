@@ -835,6 +835,7 @@ function ServerSheet(props: ServerSheetProps) {
             <div
               key={group.id ?? 'manual'}
               style={{
+                flexShrink: 0,
                 borderRadius: 16,
                 background: theme.cardBg,
                 border: `1px solid ${theme.border}`,
