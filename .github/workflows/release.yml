@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*"
+      - 'v*'
 
 jobs:
   build:
@@ -65,5 +65,5 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          files: "*"
+          files: '*'
           fail_on_unmatched_files: true
