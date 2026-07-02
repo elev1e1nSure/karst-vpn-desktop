@@ -307,7 +307,7 @@ function MiniSwitch({ checked, accent, theme, onToggle }: { checked: boolean; ac
   return (
     <div
       className="switch-btn mini-switch-track"
-      onClick={onToggle}
+      onClick={(e) => { e.stopPropagation(); onToggle(); }}
       style={{ width: 46, height: 28, borderRadius: 14, background: trackColor, position: 'relative', flexShrink: 0, cursor: 'default' }}
     >
       <div
@@ -656,17 +656,13 @@ function ServerSheet(props: ServerSheetProps) {
               pressedScale={1}
               borderRadius={10}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `color-mix(in oklch, ${accent} 10%, transparent)`, borderRadius: 10, padding: '8px 12px' }}>
-                {props.refreshAllLoading ? (
-                  <div style={{ width: 18, height: 18, borderRadius: '50%', border: `2.5px solid color-mix(in oklch, ${accent} 40%, transparent)`, borderTopColor: accent, animation: 'spin 0.85s linear infinite' }} />
-                ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `color-mix(in oklch, ${accent} ${props.refreshAllLoading ? '5%' : '10%'}, transparent)`, borderRadius: 10, padding: '8px 12px', opacity: props.refreshAllLoading ? 0.55 : 1 }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M21 3v5h-5" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M3 21v-5h5" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                )}
                 <div style={{ font: "500 13px/1 'Inter', sans-serif", color: accent }}>Обновить</div>
               </div>
             </Pressable>
@@ -709,13 +705,14 @@ function ServerSheet(props: ServerSheetProps) {
               {group.servers.map((srv) => {
                 const isSelected = srv.id === selectedServerId;
                 return (
-                  <div
+                  <Pressable
                     key={srv.id}
                     className="server-item"
                     onClick={() => props.onSelect(srv.id)}
-                    style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'default' }}
+                    borderRadius={14}
                   >
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: isSelected ? accent : theme.border, flexShrink: 0 }} />
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'default' }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: isSelected ? accent : theme.mutedInk, flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
                       <span style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink }}>{srv.name}</span>
                       {srv.latencyLabel && (
@@ -739,6 +736,7 @@ function ServerSheet(props: ServerSheetProps) {
                       </div>
                     )}
                   </div>
+                  </Pressable>
                 );
               })}
             </div>
@@ -982,10 +980,10 @@ function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }
   theme: Theme; accent: string; title: string; subtitle: string; selected: boolean; onClick: () => void;
 }) {
   return (
-    <div
+    <Pressable
       className="settings-choice-row"
       onClick={onClick}
-      style={{ borderRadius: 14 }}
+      borderRadius={14}
     >
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px' }}>
         <div>
@@ -1001,7 +999,7 @@ function SettingsChoiceRow({ theme, accent, title, subtitle, selected, onClick }
           {selected && <div style={{ width: '100%', height: '100%', borderRadius: '50%', background: accent }} />}
         </div>
       </div>
-    </div>
+    </Pressable>
   );
 }
 
@@ -1009,7 +1007,7 @@ function SettingsActionRow({ theme, title, subtitle, onClick }: {
   theme: Theme; title: string; subtitle: string; onClick: () => void;
 }) {
   return (
-    <div className="settings-row" onClick={onClick} style={{ borderRadius: 14 }}>
+    <Pressable className="settings-row" onClick={onClick} borderRadius={14}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
@@ -1019,7 +1017,7 @@ function SettingsActionRow({ theme, title, subtitle, onClick }: {
           <path d="M9 6L15 12L9 18" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </div>
-    </div>
+    </Pressable>
   );
 }
 
@@ -1027,7 +1025,7 @@ function ToggleRow({ theme, accent, title, subtitle, checked, onToggle }: {
   theme: Theme; accent: string; title: string; subtitle: string; checked: boolean; onToggle: () => void;
 }) {
   return (
-    <div className="settings-row" onClick={onToggle} style={{ borderRadius: 14 }}>
+    <Pressable className="settings-row" onClick={onToggle} borderRadius={14}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px 14px' }}>
         <div>
           <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
@@ -1035,7 +1033,7 @@ function ToggleRow({ theme, accent, title, subtitle, checked, onToggle }: {
         </div>
         <MiniSwitch checked={checked} accent={accent} theme={theme} onToggle={onToggle} />
       </div>
-    </div>
+    </Pressable>
   );
 }
 
