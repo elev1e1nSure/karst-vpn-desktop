@@ -952,37 +952,33 @@ function ServerSheet(props: ServerSheetProps) {
                         {srv.latencyLabel && (
                           <span
                             style={{
-                              position: 'relative',
+                              display: 'inline-grid',
                               font: "400 13px/1.3 'Inter', sans-serif",
                               color: theme.mutedInk,
                             }}
                           >
                             {pingSlideStates[srv.id] ? (
                               <>
-                                <span style={{ visibility: 'hidden' }}>
-                                  {' '}
-                                  {pingSlideStates[srv.id].newLabel}
-                                </span>
                                 <span
                                   className="ping-slide-out"
-                                  style={{ position: 'absolute', left: 0 }}
+                                  style={{ gridArea: '1/1' }}
                                 >
                                   {' '}
                                   {pingSlideStates[srv.id].oldLabel}
                                 </span>
                                 <span
                                   className="ping-slide-in"
-                                  style={{ position: 'absolute', left: 0 }}
+                                  style={{ gridArea: '1/1' }}
                                 >
                                   {' '}
                                   {pingSlideStates[srv.id].newLabel}
                                 </span>
                               </>
                             ) : (
-                              <>
+                              <span style={{ gridArea: '1/1' }}>
                                 {' '}
                                 {srv.latencyLabel}
-                              </>
+                              </span>
                             )}
                           </span>
                         )}
