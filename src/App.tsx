@@ -249,7 +249,7 @@ function themeVars(theme: Theme): React.CSSProperties {
 function Pressable({
   onClick,
   disabled = false,
-  pressedScale = 0.95,
+  pressedScale = 1,
   ripple = false,
   style,
   className = '',

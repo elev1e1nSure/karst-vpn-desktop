@@ -647,7 +647,7 @@ a, img {
   transition: transform 0.12s ease, opacity 0.12s ease;
 }
 .pressable:active {
-  transform: scale(0.92);
+  transform: none;
 }
 
 /* ─── Settings ───────────────────────────────────────────────────────────── */
