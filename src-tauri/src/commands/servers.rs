@@ -1,7 +1,7 @@
 use std::time::Duration;
 
+use futures_util::stream::{self, StreamExt};
 use tauri::State;
-use tokio::task::JoinSet;
 use uuid::Uuid;
 
 use crate::app_log::AppLog;
@@ -64,24 +64,18 @@ pub async fn ping_servers(pool: State<'_, DbPool>) -> AppResult<Vec<ServerPingDt
         servers::list_servers(&guard)?
     };
 
-    let mut set = JoinSet::new();
-    for record in records {
-        set.spawn(async move {
+    let results = stream::iter(records)
+        .map(|record| async move {
             let latency_ms =
                 measure_latency(&record.host, record.port, Duration::from_secs(4)).await;
             ServerPingDto {
                 id: record.id,
                 latency_ms,
             }
-        });
-    }
-
-    let mut results = Vec::new();
-    while let Some(result) = set.join_next().await {
-        if let Ok(ping) = result {
-            results.push(ping);
-        }
-    }
+        })
+        .buffer_unordered(32)
+        .collect()
+        .await;
     Ok(results)
 }
 

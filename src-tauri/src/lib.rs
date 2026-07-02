@@ -12,6 +12,7 @@ pub mod vless;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use std::time::Duration;
 
 use tauri::Manager;
 
@@ -22,18 +23,27 @@ pub fn run() {
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
+            let logs = app_log::AppLog::new(app_data_dir.clone());
+            if let Err(error) = singbox::process::recover_stale_process(&app_data_dir) {
+                logs.error(format!(
+                    "stale sing-box recovery failed kind={} message={error}",
+                    error.kind()
+                ));
+                return Err(error.into());
+            }
             let pool = db::open(&app_data_dir.join("karst.sqlite3"))?;
             let client = reqwest::Client::builder()
                 .user_agent(concat!("Karst VPN Desktop/", env!("CARGO_PKG_VERSION")))
+                .connect_timeout(Duration::from_secs(10))
+                .timeout(Duration::from_secs(30))
                 .build()?;
-            let logs = app_log::AppLog::new(app_data_dir.clone());
             logs.info("application startup");
             let connection_manager = connection::manager::ConnectionManager::default();
-            let schedule = scheduler::spawn(pool.clone(), client.clone());
+            app.manage(logs);
+            let schedule = scheduler::spawn(pool.clone(), client.clone(), app.handle().clone());
 
             app.manage(pool);
             app.manage(client);
-            app.manage(logs);
             app.manage(connection_manager);
             app.manage(schedule);
 

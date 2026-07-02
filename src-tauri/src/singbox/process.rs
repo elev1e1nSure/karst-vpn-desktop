@@ -5,19 +5,30 @@ use tauri::AppHandle;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
 use tauri_plugin_shell::ShellExt;
 use tokio::io::AsyncWriteExt;
-use tokio::sync::oneshot;
+use tokio::sync::watch;
 use tokio::task::JoinHandle;
 
 use crate::error::{AppError, AppResult};
 
+use super::process_guard::{self, ProcessGuard};
+
 const LOG_FILE: &str = "sing-box.log";
 const ROTATED_LOG_FILE: &str = "sing-box.log.1";
+const PID_FILE: &str = "sing-box.pid";
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
+const STARTUP_STABILITY_DELAY: std::time::Duration = std::time::Duration::from_millis(750);
+
+#[derive(Debug, Clone)]
+pub struct ProcessExit {
+    pub message: String,
+}
 
 pub struct SingboxProcess {
     child: Option<CommandChild>,
     log_task: JoinHandle<()>,
-    terminated: Option<oneshot::Receiver<()>>,
+    exit: watch::Receiver<Option<ProcessExit>>,
+    pid_path: PathBuf,
+    _guard: ProcessGuard,
 }
 
 impl SingboxProcess {
@@ -41,11 +52,31 @@ impl SingboxProcess {
         let (mut receiver, child) = sidecar
             .spawn()
             .map_err(|error| AppError::Singbox(error.to_string()))?;
-        let (terminated_tx, terminated_rx) = oneshot::channel();
+        let pid = child.pid();
+        let guard = match ProcessGuard::attach(pid) {
+            Ok(guard) => guard,
+            Err(error) => {
+                let _ = child.kill();
+                return Err(error);
+            }
+        };
+        let pid_path = app_data_dir.join(PID_FILE);
+        tokio::fs::write(&pid_path, pid.to_string()).await?;
+
+        let (exit_tx, exit_rx) = watch::channel(None);
+        let task_pid_path = pid_path.clone();
         let log_task = tokio::spawn(async move {
-            let mut terminated_tx = Some(terminated_tx);
+            let mut observed_exit = false;
             while let Some(event) = receiver.recv().await {
-                let terminated = matches!(event, CommandEvent::Terminated(_));
+                let exit = match &event {
+                    CommandEvent::Terminated(payload) => Some(ProcessExit {
+                        message: format!(
+                            "sing-box terminated code={:?} signal={:?}",
+                            payload.code, payload.signal
+                        ),
+                    }),
+                    _ => None,
+                };
                 let line = match event {
                     CommandEvent::Stdout(bytes) => prefixed_bytes("stdout", bytes),
                     CommandEvent::Stderr(bytes) => prefixed_bytes("stderr", bytes),
@@ -59,19 +90,48 @@ impl SingboxProcess {
                 };
 
                 let _ = append_log(&log_path, &line).await;
-                if terminated {
-                    if let Some(sender) = terminated_tx.take() {
-                        let _ = sender.send(());
-                    }
+                if let Some(exit) = exit {
+                    observed_exit = true;
+                    let _ = tokio::fs::remove_file(&task_pid_path).await;
+                    exit_tx.send_replace(Some(exit));
                 }
+            }
+            if !observed_exit {
+                let _ = tokio::fs::remove_file(&task_pid_path).await;
+                exit_tx.send_replace(Some(ProcessExit {
+                    message: "sing-box event stream closed unexpectedly".to_string(),
+                }));
             }
         });
 
         Ok(Self {
             child: Some(child),
             log_task,
-            terminated: Some(terminated_rx),
+            exit: exit_rx,
+            pid_path,
+            _guard: guard,
         })
+    }
+
+    pub fn exit_receiver(&self) -> watch::Receiver<Option<ProcessExit>> {
+        self.exit.clone()
+    }
+
+    pub async fn ensure_stable(&mut self) -> AppResult<()> {
+        if let Some(exit) = self.exit.borrow().clone() {
+            return Err(AppError::Singbox(exit.message));
+        }
+
+        tokio::select! {
+            _ = tokio::time::sleep(STARTUP_STABILITY_DELAY) => Ok(()),
+            changed = self.exit.changed() => {
+                changed.map_err(|_| AppError::Singbox("sing-box exit monitor closed during startup".to_string()))?;
+                let message = self.exit.borrow().as_ref()
+                    .map(|exit| exit.message.clone())
+                    .unwrap_or_else(|| "sing-box terminated during startup".to_string());
+                Err(AppError::Singbox(message))
+            }
+        }
     }
 
     pub async fn stop(&mut self) -> AppResult<()> {
@@ -80,20 +140,10 @@ impl SingboxProcess {
                 .kill()
                 .map_err(|error| AppError::Singbox(error.to_string()))?;
 
-            if let Some(terminated) = self.terminated.take() {
-                tokio::time::timeout(std::time::Duration::from_secs(5), terminated)
-                    .await
-                    .map_err(|_| {
-                        AppError::Singbox("sing-box did not terminate within 5 seconds".to_string())
-                    })?
-                    .map_err(|_| {
-                        AppError::Singbox(
-                            "sing-box termination channel closed unexpectedly".to_string(),
-                        )
-                    })?;
-            }
+            self.wait_for_exit().await?;
         }
         self.log_task.abort();
+        remove_pid_file(&self.pid_path)?;
         Ok(())
     }
 
@@ -104,6 +154,22 @@ impl SingboxProcess {
                 .map_err(|error| AppError::Singbox(error.to_string()))?;
         }
         self.log_task.abort();
+        remove_pid_file(&self.pid_path)?;
+        Ok(())
+    }
+
+    async fn wait_for_exit(&mut self) -> AppResult<()> {
+        if self.exit.borrow().is_some() {
+            return Ok(());
+        }
+        tokio::time::timeout(std::time::Duration::from_secs(5), self.exit.changed())
+            .await
+            .map_err(|_| {
+                AppError::Singbox("sing-box did not terminate within 5 seconds".to_string())
+            })?
+            .map_err(|_| {
+                AppError::Singbox("sing-box exit monitor closed unexpectedly".to_string())
+            })?;
         Ok(())
     }
 }
@@ -111,6 +177,18 @@ impl SingboxProcess {
 impl Drop for SingboxProcess {
     fn drop(&mut self) {
         let _ = self.terminate_now();
+    }
+}
+
+pub fn recover_stale_process(app_data_dir: &Path) -> AppResult<()> {
+    process_guard::recover_stale_process(&app_data_dir.join(PID_FILE), &sidecar_working_dir()?)
+}
+
+fn remove_pid_file(path: &Path) -> AppResult<()> {
+    match std::fs::remove_file(path) {
+        Ok(()) => Ok(()),
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(error) => Err(error.into()),
     }
 }
 

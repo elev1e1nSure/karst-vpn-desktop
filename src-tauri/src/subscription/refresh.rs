@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use uuid::Uuid;
 
 use crate::db::servers::{self, NewServer};
@@ -38,7 +40,13 @@ pub async fn refresh(
 
     let decoded = decode_subscription(&fetched.body);
     let batch = parse_subscription_body(&decoded);
-    let imported = batch.links.len();
+    let mut seen = HashSet::new();
+    let links = batch
+        .links
+        .iter()
+        .filter(|link| seen.insert(link.raw.as_str()))
+        .collect::<Vec<_>>();
+    let imported = links.len();
     let failed = batch.failures.len();
 
     if imported == 0 {
@@ -60,7 +68,7 @@ pub async fn refresh(
         let mut guard = lock_pool(&pool)?;
         let transaction = guard.transaction()?;
         servers::delete_servers_for_subscription(&transaction, &sub_id)?;
-        for link in &batch.links {
+        for link in links {
             servers::insert_server(&transaction, &server_from_link(&sub_id, link))?;
         }
         subscriptions::update_subscription_metadata(&transaction, &sub_id, &fetched.metadata)?;
@@ -113,8 +121,9 @@ fn set_refresh_error(pool: &DbPool, sub_id: &str, error: &str) -> AppResult<()> 
 }
 
 fn server_from_link(subscription_id: &str, link: &VlessLink) -> NewServer {
+    let identity = format!("{subscription_id}\n{}", link.raw);
     NewServer {
-        id: Uuid::new_v4().to_string(),
+        id: Uuid::new_v5(&Uuid::NAMESPACE_URL, identity.as_bytes()).to_string(),
         subscription_id: Some(subscription_id.to_string()),
         name: link.name.clone(),
         vless_uri: link.raw.clone(),

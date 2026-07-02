@@ -1,9 +1,10 @@
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
+use crate::app_log::AppLog;
 use crate::db::DbPool;
 use crate::db::{lock_pool, servers};
 use crate::error::{AppError, AppResult};
@@ -30,22 +31,24 @@ pub enum ConnectionStatus {
 
 pub struct ConnectionManager {
     operation: tokio::sync::Mutex<()>,
-    inner: Mutex<ConnectionState>,
+    inner: Arc<Mutex<ConnectionState>>,
 }
 
 struct ConnectionState {
     process: Option<SingboxProcess>,
     status: ConnectionStatus,
+    generation: u64,
 }
 
 impl Default for ConnectionManager {
     fn default() -> Self {
         Self {
             operation: tokio::sync::Mutex::new(()),
-            inner: Mutex::new(ConnectionState {
+            inner: Arc::new(Mutex::new(ConnectionState {
                 process: None,
                 status: ConnectionStatus::Disconnected,
-            }),
+                generation: 0,
+            })),
         }
     }
 }
@@ -96,15 +99,22 @@ impl ConnectionManager {
         let tun_options = TunOptions::new(app_data_dir.join("sing-box-cache.db"));
         let outbound = vless_to_outbound(&link);
         let config = build_config(outbound, &tun_options);
-        let process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
+        let mut process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
+        process.ensure_stable().await?;
+        let exit = process.exit_receiver();
 
         let status = ConnectionStatus::Connected {
             server_id,
             server_name: server.name,
         };
-        let mut inner = self.lock_inner()?;
-        inner.process = Some(process);
-        inner.status = status.clone();
+        let generation = {
+            let mut inner = self.lock_inner()?;
+            inner.generation = inner.generation.wrapping_add(1);
+            inner.process = Some(process);
+            inner.status = status.clone();
+            inner.generation
+        };
+        Self::monitor_exit(app.clone(), self.inner.clone(), generation, exit);
         Ok(status)
     }
 
@@ -124,6 +134,7 @@ impl ConnectionManager {
     pub fn shutdown_now(&self) -> AppResult<()> {
         let process = {
             let mut inner = self.lock_inner()?;
+            inner.generation = inner.generation.wrapping_add(1);
             inner.status = ConnectionStatus::Disconnected;
             inner.process.take()
         };
@@ -138,7 +149,11 @@ impl ConnectionManager {
     }
 
     async fn stop_current_process(&self) -> AppResult<()> {
-        let process = self.lock_inner()?.process.take();
+        let process = {
+            let mut inner = self.lock_inner()?;
+            inner.generation = inner.generation.wrapping_add(1);
+            inner.process.take()
+        };
         if let Some(mut process) = process {
             process.stop().await?;
         }
@@ -154,5 +169,43 @@ impl ConnectionManager {
         self.inner
             .lock()
             .map_err(|_| AppError::Connection("connection state lock poisoned".to_string()))
+    }
+
+    fn monitor_exit(
+        app: AppHandle,
+        inner: Arc<Mutex<ConnectionState>>,
+        generation: u64,
+        mut exit: tokio::sync::watch::Receiver<Option<crate::singbox::process::ProcessExit>>,
+    ) {
+        tauri::async_runtime::spawn(async move {
+            let current_exit = { exit.borrow().clone() };
+            let process_exit = if let Some(process_exit) = current_exit {
+                process_exit
+            } else {
+                if exit.changed().await.is_err() {
+                    return;
+                }
+                let process_exit = exit.borrow().clone();
+                let Some(process_exit) = process_exit else {
+                    return;
+                };
+                process_exit
+            };
+
+            let updated = match inner.lock() {
+                Ok(mut state) if state.generation == generation && state.process.is_some() => {
+                    state.process.take();
+                    state.status = ConnectionStatus::Error {
+                        message: process_exit.message.clone(),
+                    };
+                    true
+                }
+                _ => false,
+            };
+            if updated {
+                app.state::<AppLog>()
+                    .error(format!("connection lost: {}", process_exit.message));
+            }
+        });
     }
 }

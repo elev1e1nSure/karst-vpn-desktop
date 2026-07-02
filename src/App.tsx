@@ -1,105 +1,24 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { invoke } from '@tauri-apps/api/core';
+import { commands, getErrorMessage } from './app/commands';
+import { buildGroups, formatPingLabel } from './app/models';
+import type { UiServer, UiSubscription } from './app/models';
+import { useConnectionStatus } from './app/useConnectionStatus';
+import { Pressable } from './ui/Pressable';
+import { LogsScreen } from './ui/LogsScreen';
+import { ACCENT, DARK_THEME, LIGHT_THEME, themeVars } from './ui/theme';
+import type { Theme } from './ui/theme';
+import type {
+  AutoRefreshMode,
+  LogEntryDto,
+  Phase,
+  RoutingMode,
+  ServerDto,
+  SubscriptionDto,
+} from './app/types';
 import './style.css';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-type Phase = 'off' | 'connecting' | 'on';
-
-type ServerDto = {
-  id: string;
-  subscription_id?: string | null;
-  name: string;
-  host: string;
-  port: number;
-  security: string;
-  transport: string;
-  flow?: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-type SubscriptionDto = {
-  id: string;
-  url: string;
-  name: string;
-  profile_title?: string | null;
-  announce?: string | null;
-  profile_update_interval_hours?: number | null;
-  profile_web_page_url?: string | null;
-  routing_enable?: boolean | null;
-  subscription_userinfo?: string | null;
-  last_refresh_at?: string | null;
-  last_refresh_error?: string | null;
-};
-
-type ImportSummaryDto = {
-  subscription_id: string;
-  imported: number;
-  failed: number;
-  error?: string | null;
-};
-
-type ConnectionStatusDto = {
-  state: 'disconnected' | 'connecting' | 'connected' | 'error';
-  server_id?: string | null;
-  server_name?: string | null;
-  message?: string | null;
-};
-
-type LogEntryDto = {
-  source: string;
-  message: string;
-};
-
-type SettingsDto = {
-  auto_refresh_mode: string;
-  auto_refresh_hours: number;
-};
-
-type ServerPingDto = {
-  id: string;
-  latency_ms?: number | null;
-};
-
-// ─── UI models (Android parity) ────────────────────────────────────────────
-
-type UiServer = {
-  id: string;
-  name: string;
-  tag: string;
-  latencyLabel: string;
-  isCustom: boolean;
-  subscriptionId?: string | null;
-};
-
-type UiSubscription = {
-  id: string | null;
-  name: string;
-  announce?: string | null;
-  url?: string | null;
-  profileUpdateIntervalHours?: number | null;
-  profileWebPageUrl?: string | null;
-  routingEnabled?: boolean | null;
-  lastRefreshedAt?: string | null;
-  lastRefreshError?: string | null;
-  servers: UiServer[];
-};
-
-type RoutingMode = 'Full' | 'BypassLocal' | 'BypassRu';
-type AutoRefreshMode = 'Auto' | 'Off' | 'EveryHours';
-
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const getErrorMessage = (error: unknown): string => {
-  if (typeof error === 'string') return error;
-  if (error && typeof error === 'object' && 'message' in error)
-    return String((error as { message: unknown }).message);
-  return 'Не удалось выполнить команду';
-};
-
-const tagForServer = (server: UiServer) => server.tag;
 
 const formatElapsed = (s: number): string => {
   const m = Math.floor(s / 60)
@@ -109,230 +28,23 @@ const formatElapsed = (s: number): string => {
   return `${m}:${sec}`;
 };
 
-const formatPingLabel = (ms: number | null | undefined): string => {
-  if (ms === undefined) return '';
-  if (ms === null) return 'нет ответа';
-  return `${ms} мс`;
-};
-
-const phaseFromStatus = (status: ConnectionStatusDto): Phase => {
-  if (status.state === 'connected') return 'on';
-  if (status.state === 'connecting') return 'connecting';
-  return 'off';
-};
-
-function countryCodeToFlag(code: string): string {
-  if (code.length !== 2) return code;
-  const a = code.toUpperCase().charCodeAt(0) - 65;
-  const b = code.toUpperCase().charCodeAt(1) - 65;
-  if (a < 0 || a > 25 || b < 0 || b > 25) return code;
-  return String.fromCodePoint(0x1f1e6 + a) + String.fromCodePoint(0x1f1e6 + b);
-}
-
-function emojifyName(name: string): string {
-  const m = name.match(/^([A-Za-z]{2})([ \-–—])(.*)/);
-  if (m) {
-    return countryCodeToFlag(m[1]) + m[2] + m[3];
-  }
-  const m2 = name.match(/^([A-Za-z]{2})$/);
-  if (m2) {
-    return countryCodeToFlag(m2[1]);
-  }
-  return name;
-}
-
-function serverToUi(dto: ServerDto): UiServer {
-  const flow = dto.flow ? ` · ${dto.flow}` : '';
-  return {
-    id: dto.id,
-    name: emojifyName(dto.name),
-    tag: `VLESS · ${dto.host}:${dto.port}${flow}`,
-    latencyLabel: '',
-    isCustom: !dto.subscription_id,
-    subscriptionId: dto.subscription_id,
-  };
-}
-
-function buildGroups(servers: ServerDto[], subscriptions: SubscriptionDto[]): UiSubscription[] {
-  const subMap = new Map(subscriptions.map((s) => [s.id, s]));
-  const bySubId = new Map<string | null, ServerDto[]>();
-
-  for (const srv of servers) {
-    const key = srv.subscription_id ?? null;
-    if (!bySubId.has(key)) bySubId.set(key, []);
-    bySubId.get(key)!.push(srv);
-  }
-
-  const groups: UiSubscription[] = [];
-
-  // Subscription groups first
-  for (const sub of subscriptions) {
-    const srvs = bySubId.get(sub.id) ?? [];
-    const dto = subMap.get(sub.id);
-    groups.push({
-      id: sub.id,
-      name: dto?.profile_title || dto?.name || 'Подписка',
-      announce: dto?.announce,
-      url: dto?.url,
-      profileUpdateIntervalHours: dto?.profile_update_interval_hours,
-      profileWebPageUrl: dto?.profile_web_page_url,
-      routingEnabled: dto?.routing_enable,
-      lastRefreshedAt: dto?.last_refresh_at,
-      lastRefreshError: dto?.last_refresh_error,
-      servers: srvs.map(serverToUi),
-    });
-  }
-
-  // Manual servers group
-  const manual = bySubId.get(null) ?? [];
-  if (manual.length > 0) {
-    groups.push({
-      id: null,
-      name: 'Вручную',
-      servers: manual.map(serverToUi),
-    });
-  }
-
-  return groups;
-}
+const isRoutingMode = (value: string): value is RoutingMode =>
+  value === 'Full' || value === 'BypassLocal' || value === 'BypassRu';
 
 function formatUpdateInterval(hours: number | null | undefined): string {
   if (!hours || hours <= 0) return 'Не указан';
   return `${hours} ч`;
 }
 
-// ─── Theme / Design tokens ─────────────────────────────────────────────────
-
-const ACCENT = '#D97757';
-
-const DARK_THEME = {
-  pageBg: '#1A1A19',
-  appBg: '#1A1A19',
-  cardBg: '#262421',
-  ink: '#EAE8E4',
-  mutedInk: '#98948E',
-  border: '#32302C',
-  buttonOffBg: '#262421',
-  buttonOffBorder: '#373430',
-  buttonOffIcon: '#A7A39D',
-  danger: '#A56060',
+const mood = {
+  ringDuration: '1.7s',
+  iconStroke: '2.2',
+  chipRadius: '14px',
+  subOff: 'Готов к подключению',
+  subConnecting: 'Настраиваем туннель',
 };
-const LIGHT_THEME = {
-  pageBg: '#DFDCD7',
-  appBg: '#EDEAE5',
-  cardBg: '#F9F8F5',
-  ink: '#352E27',
-  mutedInk: '#847D74',
-  border: '#DAD6CF',
-  buttonOffBg: '#F9F8F5',
-  buttonOffBorder: '#D1CDC5',
-  buttonOffIcon: '#675F56',
-  danger: '#A56060',
-};
-
-type Theme = typeof DARK_THEME;
-
-const MOOD = {
-  calm: {
-    ringDuration: '2.3s',
-    iconStroke: '1.9',
-    chipRadius: '16px',
-    subOff: 'VPN выключен',
-    subConnecting: 'Устанавливаем соединение',
-  },
-  focused: {
-    ringDuration: '1.7s',
-    iconStroke: '2.2',
-    chipRadius: '14px',
-    subOff: 'Готов к подключению',
-    subConnecting: 'Настраиваем туннель',
-  },
-  urgent: {
-    ringDuration: '1s',
-    iconStroke: '2.6',
-    chipRadius: '10px',
-    subOff: 'VPN выключен',
-    subConnecting: 'Устанавливаем соединение',
-  },
-};
-const mood = MOOD.focused;
-
-// ─── CSS variable helper ──────────────────────────────────────────────────────
-
-function themeVars(theme: Theme): React.CSSProperties {
-  return {
-    '--card-bg': theme.cardBg,
-    '--theme-ink': theme.ink,
-    '--theme-muted-ink': theme.mutedInk,
-    '--theme-border': theme.border,
-    '--theme-danger': theme.danger,
-    '--accent': ACCENT,
-  } as React.CSSProperties;
-}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function Pressable({
-  onClick,
-  disabled = false,
-  pressedScale = 1,
-  ripple = true,
-  borderRadius,
-  style,
-  className = '',
-  children,
-}: {
-  onClick?: () => void;
-  disabled?: boolean;
-  pressedScale?: number;
-  ripple?: boolean;
-  borderRadius?: number;
-  style?: React.CSSProperties;
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const [pressed, setPressed] = useState(false);
-  const [ripples, setRipples] = useState<{ id: number; x: number; y: number }[]>([]);
-  const rippleIdRef = useRef(0);
-
-  const createRipple = (e: React.MouseEvent) => {
-    if (!ripple) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const id = ++rippleIdRef.current;
-    setRipples((prev) => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
-    setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 400);
-  };
-
-  return (
-    <div
-      className={`pressable ${className}`}
-      style={{
-        ...style,
-        position: 'relative',
-        overflow: ripple ? 'hidden' : undefined,
-        borderRadius: borderRadius ?? style?.borderRadius,
-        transform: pressed && !disabled ? `scale(${pressedScale})` : undefined,
-        opacity: disabled ? 0.55 : 1,
-        cursor: 'default',
-      }}
-      onMouseDown={(e) => {
-        if (!disabled) {
-          setPressed(true);
-          createRipple(e);
-        }
-      }}
-      onMouseUp={() => setPressed(false)}
-      onMouseLeave={() => setPressed(false)}
-      onClick={disabled ? undefined : onClick}
-    >
-      {ripple &&
-        ripples.map((r) => (
-          <span key={r.id} className="touch-ripple" style={{ left: r.x, top: r.y }} />
-        ))}
-      {children}
-    </div>
-  );
-}
 
 function MiniSwitch({
   checked,
@@ -555,7 +267,7 @@ function LocationChip({
               textOverflow: 'ellipsis',
             }}
           >
-            {server ? tagForServer(server) : 'VLESS-ссылка или URL подписки'}
+            {server ? server.tag : 'VLESS-ссылка или URL подписки'}
           </div>
         </div>
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -1909,202 +1621,10 @@ function ToggleRow({
   );
 }
 
-// ─── Logs Screen ──────────────────────────────────────────────────────────────
-
-function LogsScreen({
-  theme,
-  accent,
-  logs,
-  logsLoading,
-  logsError,
-  onBack,
-  onClear,
-  onCopy,
-}: {
-  theme: Theme;
-  accent: string;
-  logs: LogEntryDto[];
-  logsLoading: boolean;
-  logsError: string;
-  onBack: () => void;
-  onClear: () => void;
-  onCopy: () => void;
-}) {
-  return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        background: theme.appBg,
-        ...themeVars(theme),
-        boxSizing: 'border-box',
-        padding: '18px 18px 20px',
-        overflow: 'hidden',
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      }}
-    >
-      {/* Header: back arrow + Назад | copy | delete */}
-      <div
-        style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10, flexShrink: 0 }}
-      >
-        <Pressable onClick={onBack} borderRadius={10}>
-          <div
-            className="log-header-btn"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 14px 10px 10px',
-              borderRadius: 10,
-              transition: 'background-color 0.15s ease',
-            }}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M19 12H5M5 12L12 19M5 12L12 5"
-                stroke={theme.ink}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div style={{ font: "500 14px/1 'Inter', sans-serif", color: theme.ink }}>Назад</div>
-          </div>
-        </Pressable>
-        <div style={{ flex: 1 }} />
-        <Pressable
-          onClick={logs.length > 0 ? onCopy : undefined}
-          disabled={logs.length === 0 || logsLoading}
-          ripple={true}
-          style={{ borderRadius: 10 }}
-        >
-          <div
-            className="log-header-btn"
-            style={{
-              width: 36,
-              height: 36,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 10,
-              transition: 'background-color 0.15s ease',
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.ink} strokeWidth="2" />
-              <path
-                d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9"
-                stroke={theme.ink}
-                strokeWidth="2"
-                strokeLinecap="round"
-              />
-            </svg>
-          </div>
-        </Pressable>
-        <div style={{ width: 6, flexShrink: 0 }} />
-        <Pressable
-          onClick={logs.length > 0 ? onClear : undefined}
-          disabled={logs.length === 0 || logsLoading}
-          ripple={true}
-          style={{ borderRadius: 10 }}
-        >
-          <div
-            className="log-header-btn"
-            style={{
-              width: 36,
-              height: 36,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderRadius: 10,
-              transition: 'background-color 0.15s ease',
-            }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7"
-                stroke={theme.ink}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </div>
-        </Pressable>
-      </div>
-      <div style={{ height: 1, background: theme.border, marginBottom: 12, flexShrink: 0 }} />
-
-      {/* Log lines — plain text directly on background, no card */}
-      <div style={{ flex: 1, overflow: 'auto' }}>
-        {logsLoading && logs.length === 0 ? (
-          <span style={{ color: theme.mutedInk, font: "400 12px/1.5 'Inter', sans-serif" }}>
-            Загрузка…
-          </span>
-        ) : logsError ? (
-          <span style={{ color: theme.danger, font: "400 12px/1.5 'Inter', sans-serif" }}>
-            {logsError}
-          </span>
-        ) : logs.length === 0 ? (
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              height: '100%',
-              gap: 10,
-            }}
-          >
-            <svg width="56" height="56" viewBox="0 0 24 24" fill="none">
-              <circle
-                cx="12"
-                cy="12"
-                r="9"
-                stroke={theme.mutedInk}
-                strokeWidth="1.4"
-                opacity="0.5"
-              />
-              <path
-                d="M12 8v4M12 16h.01"
-                stroke={theme.mutedInk}
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                opacity="0.5"
-              />
-            </svg>
-            <div style={{ font: "500 18px/1.2 'Source Serif 4', serif", color: theme.mutedInk }}>
-              Логов пока нет
-            </div>
-          </div>
-        ) : (
-          logs.map((entry, index) => (
-            <div
-              key={`${entry.source}-${index}`}
-              style={{
-                font: "400 12px/1.45 'Inter', sans-serif",
-                color: theme.ink,
-                overflowWrap: 'anywhere',
-                whiteSpace: 'pre-wrap',
-                paddingBottom: 2,
-              }}
-            >
-              <span style={{ color: accent }}>[{entry.source}]</span> {entry.message}
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
-}
-
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
 export function App() {
   // ── State ──────────────────────────────────────────────────────────────────
-  const [phase, setPhase] = useState<Phase>('off');
-  const [elapsed, setElapsed] = useState(0);
   const [isBusy, setIsBusy] = useState(false);
   const [appError, setAppError] = useState('');
 
@@ -2112,6 +1632,10 @@ export function App() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionDto[]>([]);
   const [pingMap, setPingMap] = useState<Record<string, number | null>>({});
   const [selectedServerId, setSelectedServerId] = useState('');
+  const { phase, setPhase, elapsed, applyStatus } = useConnectionStatus(
+    setSelectedServerId,
+    setAppError,
+  );
 
   const [menuVisible, setMenuVisible] = useState(false);
   const [menuClosing, setMenuClosing] = useState(false);
@@ -2146,35 +1670,22 @@ export function App() {
   const menuCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const settingsCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Timer ──────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    let id: ReturnType<typeof setInterval> | null = null;
-    if (phase === 'on') {
-      id = setInterval(() => setElapsed((p) => p + 1), 1000);
-    } else {
-      setElapsed(0);
-    }
-    return () => {
-      if (id) clearInterval(id);
-    };
-  }, [phase]);
-
   // ── Initial load ────────────────────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       try {
         const [serverList, subList, status, settings] = await Promise.all([
-          invoke<ServerDto[]>('list_servers'),
-          invoke<SubscriptionDto[]>('list_subscriptions'),
-          invoke<ConnectionStatusDto>('connection_status'),
-          invoke<SettingsDto>('get_settings'),
+          commands.listServers(),
+          commands.listSubscriptions(),
+          commands.connectionStatus(),
+          commands.getSettings(),
         ]);
         if (cancelled) return;
 
         setServers(serverList);
         setSubscriptions(subList);
-        setPhase(phaseFromStatus(status));
+        applyStatus(status);
         setSelectedServerId((current) => {
           if (status.server_id && serverList.some((s) => s.id === status.server_id))
             return status.server_id!;
@@ -2195,8 +1706,8 @@ export function App() {
         // Dark mode from localStorage
         const saved = localStorage.getItem('karst-dark-mode');
         if (saved !== null) setDarkModeOn(saved === 'true');
-        const savedRouting = localStorage.getItem('karst-routing-mode') as RoutingMode | null;
-        if (savedRouting) setRoutingMode(savedRouting);
+        const savedRouting = localStorage.getItem('karst-routing-mode');
+        if (savedRouting && isRoutingMode(savedRouting)) setRoutingMode(savedRouting);
       } catch (err) {
         if (!cancelled) setAppError(getErrorMessage(err));
       }
@@ -2205,7 +1716,16 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyStatus]);
+
+  useEffect(
+    () => () => {
+      if (menuCloseTimeoutRef.current) clearTimeout(menuCloseTimeoutRef.current);
+      if (settingsCloseTimeoutRef.current) clearTimeout(settingsCloseTimeoutRef.current);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    },
+    [],
+  );
 
   // ── Ping ───────────────────────────────────────────────────────────────────
   // Re-runs whenever the server list changes, so it also refreshes on "Обновить".
@@ -2214,7 +1734,7 @@ export function App() {
     let cancelled = false;
     (async () => {
       try {
-        const results = await invoke<ServerPingDto[]>('ping_servers');
+        const results = await commands.pingServers();
         if (cancelled) return;
         setPingMap((prev) => {
           const next = { ...prev };
@@ -2235,10 +1755,17 @@ export function App() {
   const isConnected = phase === 'on';
   const theme = darkModeOn ? DARK_THEME : LIGHT_THEME;
 
-  const groups = buildGroups(servers, subscriptions).map((g) => ({
-    ...g,
-    servers: g.servers.map((s) => ({ ...s, latencyLabel: formatPingLabel(pingMap[s.id]) })),
-  }));
+  const groups = useMemo(
+    () =>
+      buildGroups(servers, subscriptions).map((group) => ({
+        ...group,
+        servers: group.servers.map((server) => ({
+          ...server,
+          latencyLabel: formatPingLabel(pingMap[server.id]),
+        })),
+      })),
+    [servers, subscriptions, pingMap],
+  );
   const allServers = groups.flatMap((g) => g.servers);
   const selectedServer = allServers.find((s) => s.id === selectedServerId) ?? allServers[0] ?? null;
 
@@ -2263,9 +1790,8 @@ export function App() {
       setAppError('');
       setPhase('connecting');
       try {
-        const status = await invoke<ConnectionStatusDto>('connect', { serverId: selectedServerId });
-        setPhase(phaseFromStatus(status));
-        if (status.server_id) setSelectedServerId(status.server_id);
+        const status = await commands.connect(selectedServerId);
+        applyStatus(status);
       } catch (err) {
         setPhase('off');
         setAppError(getErrorMessage(err));
@@ -2275,10 +1801,12 @@ export function App() {
     } else if (phase === 'on') {
       setIsBusy(true);
       setAppError('');
+      setPhase('off');
       try {
-        const status = await invoke<ConnectionStatusDto>('disconnect');
-        setPhase(phaseFromStatus(status));
+        const status = await commands.disconnect();
+        applyStatus(status);
       } catch (err) {
+        setPhase('on');
         setAppError(getErrorMessage(err));
       } finally {
         setIsBusy(false);
@@ -2314,7 +1842,7 @@ export function App() {
     setIsBusy(true);
     setAppError('');
     try {
-      await invoke<boolean>('delete_server', { serverId: id });
+      await commands.deleteServer(id);
       const next = servers.filter((s) => s.id !== id);
       setServers(next);
       setSelectedServerId((c) => (c === id ? (next[0]?.id ?? '') : c));
@@ -2329,10 +1857,10 @@ export function App() {
     if (isBusy) return;
     setIsBusy(true);
     try {
-      await invoke<boolean>('delete_subscription', { subscriptionId: id });
+      await commands.deleteSubscription(id);
       const [serverList, subList] = await Promise.all([
-        invoke<ServerDto[]>('list_servers'),
-        invoke<SubscriptionDto[]>('list_subscriptions'),
+        commands.listServers(),
+        commands.listSubscriptions(),
       ]);
       setServers(serverList);
       setSubscriptions(subList);
@@ -2363,21 +1891,22 @@ export function App() {
       setAddServerError('Вставь vless:// ссылку или https:// подписку');
       return;
     }
+    if (value.toLowerCase().startsWith('http://')) {
+      setAddServerError('Подписка должна использовать HTTPS');
+      return;
+    }
     setAddServerLoading(true);
     setAddServerError('');
     try {
-      if (value.toLowerCase().startsWith('https://') || value.toLowerCase().startsWith('http://')) {
-        const summary = await invoke<ImportSummaryDto>('add_subscription', {
-          url: value,
-          name: null,
-        });
+      if (value.toLowerCase().startsWith('https://')) {
+        const summary = await commands.addSubscription(value);
         if (summary.error) {
           setAddServerError(summary.error);
           return;
         }
         const [serverList, subList] = await Promise.all([
-          invoke<ServerDto[]>('list_servers'),
-          invoke<SubscriptionDto[]>('list_subscriptions'),
+          commands.listServers(),
+          commands.listSubscriptions(),
         ]);
         setServers(serverList);
         setSubscriptions(subList);
@@ -2387,7 +1916,7 @@ export function App() {
         setSelectedServerId(importedServer?.id ?? serverList[0]?.id ?? '');
         setImportMessage(`Импортировано ${summary.imported} сервер(ов)`);
       } else {
-        const srv = await invoke<ServerDto>('add_manual_link', { vlessUri: value });
+        const srv = await commands.addManualLink(value);
         setServers((prev) => [srv, ...prev.filter((s) => s.id !== srv.id)]);
         setSelectedServerId(srv.id);
       }
@@ -2404,10 +1933,10 @@ export function App() {
     if (refreshAllLoading) return;
     setRefreshAllLoading(true);
     try {
-      await invoke<ImportSummaryDto[]>('refresh_all_subscriptions');
+      await commands.refreshAllSubscriptions();
       const [serverList, subList] = await Promise.all([
-        invoke<ServerDto[]>('list_servers'),
-        invoke<SubscriptionDto[]>('list_subscriptions'),
+        commands.listServers(),
+        commands.listSubscriptions(),
       ]);
       setServers(serverList);
       setSubscriptions(subList);
@@ -2451,21 +1980,24 @@ export function App() {
   };
 
   const handleSetAutoRefreshMode = async (m: AutoRefreshMode) => {
-    setAutoRefreshMode(m);
     const modeStr = m === 'Auto' ? 'auto' : m === 'Off' ? 'off' : 'every_hours';
     try {
-      await invoke('set_auto_refresh_settings', { mode: modeStr, hours: null });
-    } catch {
-      // Settings persistence errors are intentionally deferred to the correctness pass.
+      await commands.setAutoRefreshSettings(modeStr, null);
+      setAutoRefreshMode(m);
+      setAppError('');
+    } catch (error) {
+      setAppError(getErrorMessage(error));
     }
   };
 
   const handleSetAutoRefreshHours = async (h: number) => {
-    setAutoRefreshHours(h);
     try {
-      await invoke('set_auto_refresh_settings', { mode: 'every_hours', hours: h });
-    } catch {
-      // Settings persistence errors are intentionally deferred to the correctness pass.
+      await commands.setAutoRefreshSettings('every_hours', h);
+      setAutoRefreshHours(h);
+      setAutoRefreshMode('EveryHours');
+      setAppError('');
+    } catch (error) {
+      setAppError(getErrorMessage(error));
     }
   };
 
@@ -2473,7 +2005,7 @@ export function App() {
     setLogsLoading(true);
     setLogsError('');
     try {
-      setLogs(await invoke<LogEntryDto[]>('list_logs'));
+      setLogs(await commands.listLogs());
     } catch (err) {
       setLogsError(getErrorMessage(err));
     } finally {
@@ -2503,7 +2035,7 @@ export function App() {
     setLogsLoading(true);
     setLogsError('');
     try {
-      await invoke('clear_logs');
+      await commands.clearLogs();
       setLogs([]);
       showToast('Логи очищены');
     } catch (err) {

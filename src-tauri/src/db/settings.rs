@@ -36,7 +36,7 @@ pub fn set_setting(connection: &Connection, key: &str, value: &str) -> AppResult
 pub fn get_auto_refresh_mode(connection: &Connection) -> AppResult<AutoRefreshMode> {
     let value = get_setting(connection, AUTO_REFRESH_MODE_KEY)?
         .unwrap_or_else(|| AutoRefreshMode::Off.as_str().to_string());
-    AutoRefreshMode::try_from(value.as_str())
+    Ok(AutoRefreshMode::try_from(value.as_str()).unwrap_or(AutoRefreshMode::Off))
 }
 
 pub fn set_auto_refresh_mode(connection: &Connection, value: AutoRefreshMode) -> AppResult<()> {
@@ -46,11 +46,11 @@ pub fn set_auto_refresh_mode(connection: &Connection, value: AutoRefreshMode) ->
 pub fn get_auto_refresh_hours(connection: &Connection) -> AppResult<u64> {
     let value =
         get_setting(connection, AUTO_REFRESH_HOURS_KEY)?.unwrap_or_else(|| "24".to_string());
-    value
+    Ok(value
         .parse::<u64>()
         .ok()
         .filter(|hours| *hours > 0)
-        .ok_or_else(|| AppError::InvalidInput("auto refresh hours must be positive".to_string()))
+        .unwrap_or(24))
 }
 
 pub fn set_auto_refresh_hours(connection: &Connection, hours: u64) -> AppResult<()> {

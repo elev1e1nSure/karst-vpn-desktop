@@ -4,14 +4,19 @@ use std::time::Duration;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use tauri::async_runtime::JoinHandle;
+use tauri::{AppHandle, Manager};
 use tokio::sync::watch;
 
+use crate::app_log::AppLog;
 use crate::db::lock_pool;
 use crate::db::settings;
-use crate::db::subscriptions;
+use crate::db::subscriptions::{self, SubscriptionRecord};
 use crate::db::DbPool;
 use crate::error::{AppError, AppResult};
-use crate::subscription::refresh::refresh_all;
+use crate::subscription::refresh::refresh;
+
+const DEFAULT_REFRESH_HOURS: u64 = 24;
+const RETRY_DELAY_SECONDS: u64 = 15 * 60;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum AutoRefreshMode {
@@ -66,9 +71,9 @@ impl Drop for ScheduleHandle {
     }
 }
 
-pub fn spawn(pool: DbPool, client: reqwest::Client) -> ScheduleHandle {
+pub fn spawn(pool: DbPool, client: reqwest::Client, app: AppHandle) -> ScheduleHandle {
     let (sender, receiver) = watch::channel(());
-    let task = tauri::async_runtime::spawn(run_scheduler(pool, client, receiver));
+    let task = tauri::async_runtime::spawn(run_scheduler(pool, client, app, receiver));
 
     ScheduleHandle {
         sender,
@@ -76,7 +81,12 @@ pub fn spawn(pool: DbPool, client: reqwest::Client) -> ScheduleHandle {
     }
 }
 
-async fn run_scheduler(pool: DbPool, client: reqwest::Client, mut receiver: watch::Receiver<()>) {
+async fn run_scheduler(
+    pool: DbPool,
+    client: reqwest::Client,
+    app: AppHandle,
+    mut receiver: watch::Receiver<()>,
+) {
     loop {
         let delay = match next_delay(&pool) {
             Ok(Some(delay)) => delay,
@@ -86,7 +96,13 @@ async fn run_scheduler(pool: DbPool, client: reqwest::Client, mut receiver: watc
                 }
                 continue;
             }
-            Err(_) => Duration::from_secs(60 * 60),
+            Err(error) => {
+                app.state::<AppLog>().error(format!(
+                    "subscription scheduler failed kind={} message={error}",
+                    error.kind()
+                ));
+                Duration::from_secs(60 * 60)
+            }
         };
 
         tokio::select! {
@@ -96,7 +112,12 @@ async fn run_scheduler(pool: DbPool, client: reqwest::Client, mut receiver: watc
                 }
             }
             _ = tokio::time::sleep(delay) => {
-                let _ = refresh_all(pool.clone(), client.clone()).await;
+                if let Err(error) = refresh_due(pool.clone(), client.clone(), &app).await {
+                    app.state::<AppLog>().error(format!(
+                        "scheduled subscription refresh failed kind={} message={error}",
+                        error.kind()
+                    ));
+                }
             }
         }
     }
@@ -108,30 +129,90 @@ fn next_delay(pool: &DbPool) -> AppResult<Option<Duration>> {
 
     match mode {
         AutoRefreshMode::Off => Ok(None),
-        AutoRefreshMode::EveryHours => {
-            let hours = settings::get_auto_refresh_hours(&guard)?;
-            Ok(Some(Duration::from_secs(hours * 60 * 60)))
-        }
-        AutoRefreshMode::Auto => {
+        AutoRefreshMode::EveryHours | AutoRefreshMode::Auto => {
             let subscriptions = subscriptions::list_subscriptions(&guard)?;
+            let configured_hours = settings::get_auto_refresh_hours(&guard)?;
             let now = Utc::now();
-            let mut min_seconds = 24 * 60 * 60;
-
-            for subscription in subscriptions {
-                if let Some(hours) = subscription.profile_update_interval_hours {
-                    let interval_seconds = hours.max(1) * 60 * 60;
-                    let ttl_seconds = subscription
-                        .last_refresh_at
-                        .map(|last| {
-                            let due_at = last + chrono::Duration::seconds(interval_seconds as i64);
-                            (due_at - now).num_seconds().max(60) as u64
-                        })
-                        .unwrap_or(interval_seconds);
-                    min_seconds = min_seconds.min(ttl_seconds);
-                }
-            }
-
+            let min_seconds = subscriptions
+                .iter()
+                .map(|subscription| seconds_until_due(subscription, &mode, configured_hours, now))
+                .min()
+                .unwrap_or(DEFAULT_REFRESH_HOURS * 60 * 60)
+                .max(60);
             Ok(Some(Duration::from_secs(min_seconds)))
         }
     }
+}
+
+async fn refresh_due(pool: DbPool, client: reqwest::Client, app: &AppHandle) -> AppResult<()> {
+    let due_ids = {
+        let guard = lock_pool(&pool)?;
+        let mode = settings::get_auto_refresh_mode(&guard)?;
+        if mode == AutoRefreshMode::Off {
+            return Ok(());
+        }
+        let configured_hours = settings::get_auto_refresh_hours(&guard)?;
+        let now = Utc::now();
+        subscriptions::list_subscriptions(&guard)?
+            .into_iter()
+            .filter(|subscription| {
+                seconds_until_due(subscription, &mode, configured_hours, now) == 0
+            })
+            .map(|subscription| subscription.id)
+            .collect::<Vec<_>>()
+    };
+
+    for subscription_id in due_ids {
+        match refresh(pool.clone(), client.clone(), subscription_id.clone()).await {
+            Ok(summary) if summary.error.is_none() => app.state::<AppLog>().info(format!(
+                "scheduled subscription refresh finished id={} imported={} failed={}",
+                summary.subscription_id, summary.imported, summary.failed
+            )),
+            Ok(summary) => app.state::<AppLog>().warn(format!(
+                "scheduled subscription refresh completed with error id={} error={}",
+                summary.subscription_id,
+                summary.error.as_deref().unwrap_or("unknown")
+            )),
+            Err(error) => app.state::<AppLog>().error(format!(
+                "scheduled subscription refresh failed id={subscription_id} kind={} message={error}",
+                error.kind()
+            )),
+        }
+    }
+    Ok(())
+}
+
+fn seconds_until_due(
+    subscription: &SubscriptionRecord,
+    mode: &AutoRefreshMode,
+    configured_hours: u64,
+    now: chrono::DateTime<Utc>,
+) -> u64 {
+    let interval_seconds = match mode {
+        AutoRefreshMode::Off => return u64::MAX,
+        AutoRefreshMode::EveryHours => configured_hours.max(1) * 60 * 60,
+        AutoRefreshMode::Auto => {
+            subscription
+                .profile_update_interval_hours
+                .unwrap_or(DEFAULT_REFRESH_HOURS)
+                .max(1)
+                * 60
+                * 60
+        }
+    };
+    let (last_attempt, delay_seconds) = if subscription.last_refresh_error.is_some() {
+        (
+            subscription.updated_at,
+            RETRY_DELAY_SECONDS.min(interval_seconds),
+        )
+    } else {
+        (
+            subscription
+                .last_refresh_at
+                .unwrap_or(subscription.created_at),
+            interval_seconds,
+        )
+    };
+    let due_at = last_attempt + chrono::Duration::seconds(delay_seconds as i64);
+    (due_at - now).num_seconds().max(0) as u64
 }

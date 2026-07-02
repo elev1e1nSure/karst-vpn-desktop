@@ -30,11 +30,13 @@ pub fn set_auto_refresh_settings(
     let mode = AutoRefreshMode::try_from(mode.as_str())?;
     let mode_label = mode.as_str();
     {
-        let guard = db::lock_pool(pool.inner())?;
-        settings::set_auto_refresh_mode(&guard, mode)?;
+        let mut guard = db::lock_pool(pool.inner())?;
+        let transaction = guard.transaction()?;
+        settings::set_auto_refresh_mode(&transaction, mode)?;
         if let Some(hours) = hours {
-            settings::set_auto_refresh_hours(&guard, hours)?;
+            settings::set_auto_refresh_hours(&transaction, hours)?;
         }
+        transaction.commit()?;
     }
     schedule.notify_settings_changed();
     logs.info(format!(
