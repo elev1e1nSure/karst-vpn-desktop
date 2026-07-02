@@ -482,7 +482,7 @@ a, img {
   background-color: var(--theme-border) !important;
 }
 .settings-btn:active {
-  transform: scale(0.92);
+  transform: none;
 }
 
 /* ─── Connect button ─────────────────────────────────────────────────────── */
@@ -498,7 +498,7 @@ a, img {
   filter: brightness(1.06);
 }
 .connect-btn:active {
-  transform: scale(0.97) !important;
+  transform: none !important;
 }
 
 /* ─── Connecting pulse ring ──────────────────────────────────────────────── */
@@ -520,7 +520,7 @@ a, img {
   filter: brightness(1.06);
 }
 .location-chip:active {
-  transform: scale(0.985);
+  transform: none;
 }
 
 /* ─── Server sheet list items ────────────────────────────────────────────── */
@@ -532,7 +532,7 @@ a, img {
   background-color: var(--card-bg);
 }
 .server-item:active {
-  transform: scale(0.99);
+  transform: none;
 }
 
 .server-checkmark {
@@ -550,7 +550,7 @@ a, img {
   stroke: var(--theme-danger) !important;
 }
 .remove-server-btn:active {
-  transform: scale(0.9);
+  transform: none;
 }
 
 /* ─── Add server form/trigger ────────────────────────────────────────────── */
@@ -561,7 +561,7 @@ a, img {
   background-color: var(--card-bg);
 }
 .add-server-trigger:active {
-  transform: scale(0.99);
+  transform: none;
 }
 
 .add-server-panel {
@@ -588,7 +588,7 @@ a, img {
   background-color: var(--theme-border) !important;
 }
 .btn-cancel:active {
-  transform: scale(0.97);
+  transform: none;
 }
 
 .btn-submit {
@@ -598,7 +598,7 @@ a, img {
   filter: brightness(1.08);
 }
 .btn-submit:active {
-  transform: scale(0.97);
+  transform: none;
 }
 
 /* ─── Refresh all button ─────────────────────────────────────────────────── */
@@ -658,7 +658,7 @@ a, img {
   background-color: var(--card-bg);
 }
 .settings-row:active {
-  transform: scale(0.98);
+  transform: none;
 }
 
 .settings-choice-row {
@@ -668,7 +668,7 @@ a, img {
   background-color: var(--card-bg);
 }
 .settings-choice-row:active {
-  transform: scale(0.98);
+  transform: none;
 }
 
 /* ─── Mini switch ────────────────────────────────────────────────────────── */
@@ -726,7 +726,7 @@ a, img {
   filter: brightness(1.06);
 }
 .confirm-delete-btn:active {
-  transform: scale(0.97);
+  transform: none;
 }
 
 /* ─── Logs screen ────────────────────────────────────────────────────────── */
