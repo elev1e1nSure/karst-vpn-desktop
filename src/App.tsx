@@ -660,7 +660,6 @@ type ServerSheetProps = {
   addServerLoading: boolean;
   importMessage: string;
   refreshAllLoading: boolean;
-  pingSlideStates: Record<string, { oldLabel: string; newLabel: string }>;
   subscriptionMenuId: string | null;
   theme: Theme;
   accent: string;
@@ -677,7 +676,7 @@ type ServerSheetProps = {
 };
 
 function ServerSheet(props: ServerSheetProps) {
-  const { groups, selectedServerId, theme, accent, subscriptionMenuId, pingSlideStates } = props;
+  const { groups, selectedServerId, theme, accent, subscriptionMenuId } = props;
 
   const subscriptionMenu = groups.find((g) => g.id === subscriptionMenuId) ?? null;
   const latchRef = useRef(subscriptionMenu);
@@ -952,34 +951,12 @@ function ServerSheet(props: ServerSheetProps) {
                         {srv.latencyLabel && (
                           <span
                             style={{
-                              display: 'inline-grid',
                               font: "400 13px/1.3 'Inter', sans-serif",
                               color: theme.mutedInk,
                             }}
                           >
-                            {pingSlideStates[srv.id] ? (
-                              <>
-                                <span
-                                  className="ping-slide-out"
-                                  style={{ gridArea: '1/1' }}
-                                >
-                                  {' '}
-                                  {pingSlideStates[srv.id].oldLabel}
-                                </span>
-                                <span
-                                  className="ping-slide-in"
-                                  style={{ gridArea: '1/1' }}
-                                >
-                                  {' '}
-                                  {pingSlideStates[srv.id].newLabel}
-                                </span>
-                              </>
-                            ) : (
-                              <span style={{ gridArea: '1/1' }}>
-                                {' '}
-                                {srv.latencyLabel}
-                              </span>
-                            )}
+                            {' '}
+                            {srv.latencyLabel}
                           </span>
                         )}
                       </div>
@@ -1661,12 +1638,6 @@ export function App() {
   const [servers, setServers] = useState<ServerDto[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionDto[]>([]);
   const [pingMap, setPingMap] = useState<Record<string, number | null>>({});
-  const pingMapRef = useRef(pingMap);
-  pingMapRef.current = pingMap;
-  const [pingSlideStates, setPingSlideStates] = useState<
-    Record<string, { oldLabel: string; newLabel: string }>
-  >({});
-  const pingSlideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [selectedServerId, setSelectedServerId] = useState('');
   const { phase, setPhase, elapsed, applyStatus } = useConnectionStatus(
     setSelectedServerId,
@@ -1778,30 +1749,11 @@ export function App() {
         const results = await commands.pingServers();
         if (cancelled) return;
 
-        const oldPing = pingMapRef.current;
-        const slides: Record<string, { oldLabel: string; newLabel: string }> = {};
-
-        for (const r of results) {
-          const oldVal = oldPing[r.id];
-          const newVal = r.latency_ms ?? null;
-
-          slides[r.id] = {
-            oldLabel: oldVal !== undefined ? formatPingLabel(oldVal) : '',
-            newLabel: formatPingLabel(newVal),
-          };
-        }
-
         setPingMap((prev) => {
           const next = { ...prev };
           for (const r of results) next[r.id] = r.latency_ms ?? null;
           return next;
         });
-
-        if (Object.keys(slides).length > 0) {
-          setPingSlideStates(slides);
-          if (pingSlideTimerRef.current) clearTimeout(pingSlideTimerRef.current);
-          pingSlideTimerRef.current = setTimeout(() => setPingSlideStates({}), 350);
-        }
       } catch {
         // non-critical: ping display just stays blank
       }
@@ -2323,7 +2275,6 @@ export function App() {
                 addServerLoading={addServerLoading}
                 importMessage={importMessage}
                 refreshAllLoading={refreshAllLoading}
-                pingSlideStates={pingSlideStates}
                 subscriptionMenuId={subscriptionMenuId}
                 theme={theme}
                 accent={ACCENT}

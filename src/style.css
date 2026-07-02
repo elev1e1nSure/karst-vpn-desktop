@@ -1092,36 +1092,6 @@ img {
 }
 
 /* ─── Ping refresh animation ───────────────────────────────────────────── */
-@keyframes pingSlideOut {
-  0% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(14px);
-  }
-}
-
-@keyframes pingSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-14px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.ping-slide-out {
-  animation: pingSlideOut 0.22s ease forwards;
-}
-
-.ping-slide-in {
-  animation: pingSlideIn 0.22s ease forwards;
-}
-
 /* ─── Custom tooltip ───────────────────────────────────────────────────── */
 @keyframes tooltipInTop {
   0% {
