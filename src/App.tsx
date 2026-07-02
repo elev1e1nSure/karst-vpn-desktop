@@ -964,11 +964,11 @@ function SettingsPickerDialog({ theme, title, onDismiss, children }: {
             borderRadius: 22,
             background: theme.appBg,
             border: `1px solid ${theme.border}`,
-            padding: '4px 0',
+            padding: '4px 16px',
             ...themeVars(theme),
           }}
         >
-        <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, padding: '18px 18px 13px' }}>{title}</div>
+        <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, padding: '18px 0 13px' }}>{title}</div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>{children}</div>
         <div style={{ height: 14 }} />
       </div>
