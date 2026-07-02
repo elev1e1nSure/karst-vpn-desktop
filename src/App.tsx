@@ -486,25 +486,7 @@ function SubscriptionMenuContent({ sub, theme, accent, onBack, onDelete }: {
           <DetailRow icon="globe" label="Страница профиля" value={sub.profileWebPageUrl} monospace theme={theme} />
         )}
         <DetailRow icon="clock" label="Обновление профиля" value={formatUpdateInterval(sub.profileUpdateIntervalHours)} theme={theme} />
-        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: sub.routingEnabled ? theme.ink : theme.border, flexShrink: 0 }} />
-          <div style={{ font: "400 12.5px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>Роутинг профиля</div>
-          <div style={{ font: "400 12px/1 'Inter', sans-serif", color: theme.mutedInk }}>{formatOptionalBoolean(sub.routingEnabled)}</div>
-        </div>
       </div>
-
-      {/* Last refreshed */}
-      {sub.lastRefreshedAt && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 2px' }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-            <path d="M12 8v4l3 3" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" />
-            <circle cx="12" cy="12" r="9" stroke={theme.mutedInk} strokeWidth="1.8" />
-          </svg>
-          <div style={{ font: "400 11px/1 'Inter', sans-serif", color: theme.mutedInk }}>
-            Обновлено {formatEpochStr(sub.lastRefreshedAt)}
-          </div>
-        </div>
-      )}
 
       {/* Last refresh error */}
       {sub.lastRefreshError && (
