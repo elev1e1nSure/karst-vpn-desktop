@@ -49,7 +49,10 @@ mod platform {
                 return Err(last_error("configure sing-box job object"));
             }
 
-            let process = open_process(pid, PROCESS_SET_QUOTA | PROCESS_TERMINATE)?;
+            let process =
+                open_process(pid, PROCESS_SET_QUOTA | PROCESS_TERMINATE)?.ok_or_else(|| {
+                    AppError::Singbox("sing-box exited before job object attachment".to_string())
+                })?;
             let assigned = unsafe { AssignProcessToJobObject(job.raw(), process.raw()) };
             if assigned == 0 {
                 return Err(last_error("assign sing-box to job object"));
@@ -60,13 +63,12 @@ mod platform {
     }
 
     pub fn terminate_stale_process(pid: u32, expected_directory: &Path) -> AppResult<()> {
-        let process = match open_process(
+        let Some(process) = open_process(
             pid,
             PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_TERMINATE | SYNCHRONIZE_ACCESS,
-        ) {
-            Ok(process) => process,
-            Err(AppError::Io(error)) if error.raw_os_error() == Some(87) => return Ok(()),
-            Err(error) => return Err(error),
+        )?
+        else {
+            return Ok(());
         };
 
         let executable = process_image_path(process.raw())?;
@@ -85,9 +87,18 @@ mod platform {
         Ok(())
     }
 
-    fn open_process(pid: u32, access: u32) -> AppResult<OwnedHandle> {
+    fn open_process(pid: u32, access: u32) -> AppResult<Option<OwnedHandle>> {
         let handle = unsafe { OpenProcess(access, 0, pid) };
-        OwnedHandle::new(handle, "open sing-box process")
+        if handle.is_null() {
+            let error = std::io::Error::last_os_error();
+            if error.raw_os_error() == Some(87) {
+                return Ok(None);
+            }
+            return Err(AppError::Io(std::io::Error::other(format!(
+                "open sing-box process: {error}"
+            ))));
+        }
+        Ok(Some(OwnedHandle(handle)))
     }
 
     fn process_image_path(process: HANDLE) -> AppResult<PathBuf> {
