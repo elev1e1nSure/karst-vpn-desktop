@@ -515,18 +515,6 @@ img {
   }
 }
 
-/* Add server form entry */
-@keyframes addServerExpand {
-  0% {
-    opacity: 0;
-    transform: scaleY(0.88) translateY(-8px);
-  }
-  100% {
-    opacity: 1;
-    transform: scaleY(1) translateY(0);
-  }
-}
-
 /* Checkmark scale-in */
 @keyframes scaleIn {
   0% {
@@ -734,8 +722,6 @@ img {
 }
 
 .add-server-panel {
-  animation: addServerExpand 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
-  transform-origin: top center;
   overflow: hidden;
 }
 
