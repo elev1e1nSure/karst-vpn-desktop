@@ -119,11 +119,31 @@ const phaseFromStatus = (status: ConnectionStatusDto): Phase => {
   return 'off';
 };
 
+function countryCodeToFlag(code: string): string {
+  if (code.length !== 2) return code;
+  const a = code.toUpperCase().charCodeAt(0) - 65;
+  const b = code.toUpperCase().charCodeAt(1) - 65;
+  if (a < 0 || a > 25 || b < 0 || b > 25) return code;
+  return String.fromCodePoint(0x1F1E6 + a) + String.fromCodePoint(0x1F1E6 + b);
+}
+
+function emojifyName(name: string): string {
+  const m = name.match(/^([A-Za-z]{2})([ \-–—])(.*)/);
+  if (m) {
+    return countryCodeToFlag(m[1]) + m[2] + m[3];
+  }
+  const m2 = name.match(/^([A-Za-z]{2})$/);
+  if (m2) {
+    return countryCodeToFlag(m2[1]);
+  }
+  return name;
+}
+
 function serverToUi(dto: ServerDto): UiServer {
   const flow = dto.flow ? ` · ${dto.flow}` : '';
   return {
     id: dto.id,
-    name: dto.name,
+    name: emojifyName(dto.name),
     tag: `VLESS · ${dto.host}:${dto.port}${flow}`,
     latencyLabel: '',
     isCustom: !dto.subscription_id,
