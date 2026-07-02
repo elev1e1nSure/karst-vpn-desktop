@@ -762,6 +762,10 @@ a, img {
   justify-content: center;
   transition: color 0.15s ease, background-color 0.15s ease;
 }
+
+.log-header-btn:hover {
+  background-color: var(--card-bg);
+}
 .log-icon-button:hover:not(:disabled) {
   color: var(--theme-ink);
   background: var(--card-bg);

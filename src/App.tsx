@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { invoke } from '@tauri-apps/api/core';
 import './style.css';
 
@@ -57,6 +58,11 @@ type SettingsDto = {
   auto_refresh_hours: number;
 };
 
+type ServerPingDto = {
+  id: string;
+  latency_ms?: number | null;
+};
+
 // ─── UI models (Android parity) ────────────────────────────────────────────
 
 type UiServer = {
@@ -99,6 +105,12 @@ const formatElapsed = (s: number): string => {
   const m = Math.floor(s / 60).toString().padStart(2, '0');
   const sec = (s % 60).toString().padStart(2, '0');
   return `${m}:${sec}`;
+};
+
+const formatPingLabel = (ms: number | null | undefined): string => {
+  if (ms === undefined) return '';
+  if (ms === null) return 'нет ответа';
+  return `${ms} мс`;
 };
 
 const phaseFromStatus = (status: ConnectionStatusDto): Phase => {
@@ -614,11 +626,21 @@ function ServerSheet(props: ServerSheetProps) {
   const allServers = groups.flatMap((g) => g.servers);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', position: 'relative' }}>
+    // Grid stacks both panels in the same cell: the sheet's height auto-sizes to
+    // whichever panel is tallest, instead of being capped by the main list (which
+    // used to clip/force-scroll the drill panel when its content was taller).
+    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gridTemplateRows: '1fr', flex: 1, minHeight: 0, overflowX: 'hidden', overflowY: 'auto' }}>
       {/* Main list */}
       <div
         className={drillVisible ? (drillClosing ? 'drill-in-back' : 'drill-out-forward') : ''}
-        style={{ display: drillVisible && !drillClosing ? 'none' : 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden', gap: 0 }}
+        style={{
+          gridColumn: 1, gridRow: 1, minWidth: 0, minHeight: 0,
+          display: 'flex', flexDirection: 'column', overflow: 'hidden', gap: 0,
+          // stays in-flow (display:none would zero out the sheet's auto-height, since the
+          // grid cell sizing is based on the natural size of in-flow items)
+          visibility: drillVisible && !drillClosing ? 'hidden' : 'visible',
+          pointerEvents: drillVisible && !drillClosing ? 'none' : 'auto',
+        }}
       >
         {/* Title row */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -690,9 +712,11 @@ function ServerSheet(props: ServerSheetProps) {
                     style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'default' }}
                   >
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: isSelected ? accent : theme.border, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{srv.name}</div>
-                      <div style={{ font: "400 13px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>{srv.latencyLabel || ''}</div>
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                      <span style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink }}>{srv.name}</span>
+                      {srv.latencyLabel && (
+                        <span style={{ font: "400 13px/1.3 'Inter', sans-serif", color: theme.mutedInk }}> {srv.latencyLabel}</span>
+                      )}
                     </div>
                     {isSelected && (
                       <svg className="server-checkmark" width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -776,8 +800,8 @@ function ServerSheet(props: ServerSheetProps) {
       {/* Drill-in: subscription menu */}
       {(drillVisible || drillClosing) && latchRef.current && (
         <div
-          className={drillClosing ? 'drill-in-back' : 'drill-in-forward'}
-          style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', background: theme.appBg }}
+          className={drillClosing ? 'drill-out-back' : 'drill-in-forward'}
+          style={{ gridColumn: 1, gridRow: 1, minWidth: 0, minHeight: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: theme.appBg }}
         >
           <SubscriptionMenuContent
             sub={latchRef.current}
@@ -920,7 +944,12 @@ function SettingsPickerDialog({ theme, title, onDismiss, children }: {
     closeTimeoutRef.current = setTimeout(onDismiss, 180);
   };
 
-  return (
+  // Portaled to <body>: rendered inside the (transform-animated, overflow:hidden)
+  // settings sheet, `position: fixed` here would be contained by that ancestor
+  // instead of the viewport — clipping the dialog toward the bottom and letting
+  // clicks outside the clipped area fall through to the settings sheet's own
+  // backdrop, closing both at once.
+  return createPortal(
     <>
       <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, animation: `${closing ? 'backdropOut' : 'backdropIn'} 0.2s cubic-bezier(0.4,0,0.2,1) both` }} />
       <div
@@ -940,7 +969,8 @@ function SettingsPickerDialog({ theme, title, onDismiss, children }: {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>{children}</div>
         <div style={{ height: 14 }} />
       </div>
-    </>
+    </>,
+    document.body
   );
 }
 
@@ -1036,17 +1066,21 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
         <div style={{ flex: 1, font: "500 18px/1.2 'Source Serif 4', serif", color: theme.ink }}>
           Логи
         </div>
-        <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={0.88} style={{ padding: 4 }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.mutedInk} strokeWidth="1.8" />
-            <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
+        <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1}>
+          <div className="log-header-btn" style={{ padding: 6, borderRadius: 10, transition: 'background-color 0.15s ease' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.mutedInk} strokeWidth="2" />
+              <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" />
+            </svg>
+          </div>
         </Pressable>
-        <div style={{ width: 14, flexShrink: 0 }} />
-        <Pressable onClick={logs.length > 0 ? onClear : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={0.88} style={{ padding: 4 }}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-            <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <div style={{ width: 6, flexShrink: 0 }} />
+        <Pressable onClick={logs.length > 0 ? onClear : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1}>
+          <div className="log-header-btn" style={{ padding: 6, borderRadius: 10, transition: 'background-color 0.15s ease' }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+              <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
         </Pressable>
       </div>
 
@@ -1092,6 +1126,7 @@ export function App() {
 
   const [servers, setServers] = useState<ServerDto[]>([]);
   const [subscriptions, setSubscriptions] = useState<SubscriptionDto[]>([]);
+  const [pingMap, setPingMap] = useState<Record<string, number | null>>({});
   const [selectedServerId, setSelectedServerId] = useState('');
 
   const [menuVisible, setMenuVisible] = useState(false);
@@ -1176,12 +1211,36 @@ export function App() {
     return () => { cancelled = true; };
   }, []);
 
+  // ── Ping ───────────────────────────────────────────────────────────────────
+  // Re-runs whenever the server list changes, so it also refreshes on "Обновить".
+  useEffect(() => {
+    if (servers.length === 0) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const results = await invoke<ServerPingDto[]>('ping_servers');
+        if (cancelled) return;
+        setPingMap((prev) => {
+          const next = { ...prev };
+          for (const r of results) next[r.id] = r.latency_ms ?? null;
+          return next;
+        });
+      } catch {
+        // non-critical: ping display just stays blank
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [servers]);
+
   // ── Computed ───────────────────────────────────────────────────────────────
   const isConnecting = phase === 'connecting' || (isBusy && phase === 'off');
   const isConnected = phase === 'on';
   const theme = darkModeOn ? DARK_THEME : LIGHT_THEME;
 
-  const groups = buildGroups(servers, subscriptions);
+  const groups = buildGroups(servers, subscriptions).map((g) => ({
+    ...g,
+    servers: g.servers.map((s) => ({ ...s, latencyLabel: formatPingLabel(pingMap[s.id]) })),
+  }));
   const allServers = groups.flatMap((g) => g.servers);
   const selectedServer = allServers.find((s) => s.id === selectedServerId) ?? allServers[0] ?? null;
 
