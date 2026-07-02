@@ -869,3 +869,8 @@ a, img {
   from { opacity: 1; transform: translateX(-50%) scale(1); }
   to { opacity: 0; transform: translateX(-50%) scale(0.96); }
 }
+
+/* ─── Disable transitions during theme switch ──────────────────────────── */
+.no-transitions * {
+  transition: none !important;
+}

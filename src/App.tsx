@@ -450,7 +450,7 @@ function LocationChip({ server, theme, onClick }: {
         <div style={{ width: 14, height: 14, borderRadius: '50%', border: `2px solid ${theme.mutedInk}` }} />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ font: "500 14px/1.3 'Inter', sans-serif", color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ font: "500 14px/1.3 \"Twemoji Country Flags\", 'Inter', sans-serif", color: theme.ink, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
           {server ? server.name : 'Добавить сервер'}
         </div>
         <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -741,7 +741,7 @@ function ServerSheet(props: ServerSheetProps) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', cursor: 'default' }}>
                     <div style={{ width: 8, height: 8, borderRadius: '50%', background: isSelected ? accent : theme.mutedInk, flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
-                      <span style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink }}>{srv.name}</span>
+                      <span style={{ font: "500 16px/1.3 \"Twemoji Country Flags\", 'Inter', sans-serif", color: theme.ink }}>{srv.name}</span>
                       {srv.latencyLabel && (
                         <span style={{ font: "400 13px/1.3 'Inter', sans-serif", color: theme.mutedInk }}> {srv.latencyLabel}</span>
                       )}
@@ -1394,8 +1394,12 @@ export function App() {
     settingsCloseTimeoutRef.current = setTimeout(() => { setSettingsVisible(false); setSettingsClosing(false); }, 320);
   };
 
+  const [themeBusy, setThemeBusy] = useState(false);
+
   const onToggleDarkMode = () => {
+    setThemeBusy(true);
     setDarkModeOn((prev) => { const next = !prev; localStorage.setItem('karst-dark-mode', String(next)); return next; });
+    requestAnimationFrame(() => setThemeBusy(false));
   };
 
   const handleSetRoutingMode = (m: RoutingMode) => {
@@ -1473,7 +1477,7 @@ export function App() {
 
   return (
     /* Root: fills the entire window, provides the theme background */
-    <div style={{ width: '100%', height: '100%', background: theme.appBg, position: 'relative', overflow: 'hidden', ...themeVars(theme) }}>
+    <div className={themeBusy ? 'no-transitions' : ''} style={{ width: '100%', height: '100%', background: theme.appBg, position: 'relative', overflow: 'hidden', ...themeVars(theme) }}>
 
       {/* ── Main screen ───────────────────────────────────────────── */}
       <div
