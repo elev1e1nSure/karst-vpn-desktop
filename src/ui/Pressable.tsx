@@ -72,11 +72,11 @@ export function Pressable({
       onPointerLeave={() => setPressed(false)}
       onClick={disabled ? undefined : onClick}
     >
+      {children}
       {ripple &&
         ripples.map((item) => (
           <span key={item.id} className="touch-ripple" style={{ left: item.x, top: item.y }} />
         ))}
-      {children}
     </div>
   );
 }

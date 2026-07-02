@@ -928,6 +928,7 @@ function ServerSheet(props: ServerSheetProps) {
                     className="server-item"
                     onClick={() => props.onSelect(srv.id)}
                     borderRadius={14}
+                    ripple={false}
                   >
                     <div
                       style={{
