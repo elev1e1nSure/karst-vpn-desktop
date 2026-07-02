@@ -1065,7 +1065,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
           </div>
         </Pressable>
         <div style={{ width: 14, flexShrink: 0 }} />
-        <div style={{ flex: 1, font: "500 18px/1.2 'Source Serif 4', serif", color: theme.ink }}>
+        <div style={{ flex: 1, font: "500 22px/1.2 'Source Serif 4', serif", color: theme.ink }}>
           Логи
         </div>
         <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1} ripple={true}>
