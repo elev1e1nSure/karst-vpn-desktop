@@ -16,15 +16,15 @@ export const DARK_THEME = {
 };
 
 export const LIGHT_THEME = {
-  pageBg: '#DFDCD7',
-  appBg: '#EDEAE5',
-  cardBg: '#F9F8F5',
-  ink: '#352E27',
-  mutedInk: '#847D74',
-  border: '#DAD6CF',
-  buttonOffBg: '#F9F8F5',
-  buttonOffBorder: '#D1CDC5',
-  buttonOffIcon: '#675F56',
+  pageBg: '#E4E0D6',
+  appBg: '#E4E0D6',
+  cardBg: '#F3F1EA',
+  ink: '#332E26',
+  mutedInk: '#7E7669',
+  border: '#D5CFC0',
+  buttonOffBg: '#F3F1EA',
+  buttonOffBorder: '#CDC6B5',
+  buttonOffIcon: '#665F53',
   danger: '#A56060',
 };
 
