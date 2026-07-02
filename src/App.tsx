@@ -1055,24 +1055,22 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
     >
-      {/* Header: back arrow | Логи (flex) | copy | delete */}
+      {/* Header: back arrow + Назад | copy | delete */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10, flexShrink: 0 }}>
         <Pressable onClick={onBack} pressedScale={1}>
-          <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <div className="log-header-btn" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '6px 12px 6px 8px', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+            <div style={{ font: "500 14px/1 'Inter', sans-serif", color: theme.ink }}>Назад</div>
           </div>
         </Pressable>
-        <div style={{ width: 14, flexShrink: 0 }} />
-        <div style={{ flex: 1, font: "500 22px/1.2 'Source Serif 4', serif", color: theme.ink }}>
-          Логи
-        </div>
+        <div style={{ flex: 1 }} />
         <Pressable onClick={logs.length > 0 ? onCopy : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1} ripple={true}>
           <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.mutedInk} strokeWidth="2" />
-              <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" />
+              <rect x="9" y="9" width="10" height="10" rx="2" stroke={theme.ink} strokeWidth="2" />
+              <path d="M15 9V7C15 5.9 14.1 5 13 5H7C5.9 5 5 5.9 5 7V13C5 14.1 5.9 15 7 15H9" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" />
             </svg>
           </div>
         </Pressable>
@@ -1080,7 +1078,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
         <Pressable onClick={logs.length > 0 ? onClear : undefined} disabled={logs.length === 0 || logsLoading} pressedScale={1} ripple={true}>
           <div className="log-header-btn" style={{ width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-              <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.mutedInk} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </div>
         </Pressable>
