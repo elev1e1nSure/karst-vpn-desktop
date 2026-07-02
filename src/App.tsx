@@ -251,6 +251,7 @@ function Pressable({
   disabled = false,
   pressedScale = 1,
   ripple = true,
+  borderRadius,
   style,
   className = '',
   children,
@@ -259,6 +260,7 @@ function Pressable({
   disabled?: boolean;
   pressedScale?: number;
   ripple?: boolean;
+  borderRadius?: number;
   style?: React.CSSProperties;
   className?: string;
   children: React.ReactNode;
@@ -282,6 +284,7 @@ function Pressable({
         ...style,
         position: 'relative',
         overflow: ripple ? 'hidden' : undefined,
+        borderRadius: borderRadius ?? style?.borderRadius,
         transform: pressed && !disabled ? `scale(${pressedScale})` : undefined,
         opacity: disabled ? 0.55 : 1,
         cursor: 'default',
@@ -522,12 +525,12 @@ function SubscriptionMenuContent({ sub, theme, accent, onBack, onDelete }: {
         <div style={{ padding: 12, borderRadius: 14, background: theme.cardBg, border: `1px solid color-mix(in oklch, ${theme.danger} 45%, transparent)`, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div style={{ font: "500 14px/1.4 'Inter', sans-serif", color: theme.ink }}>Удалить подписку и все её серверы?</div>
           <div style={{ display: 'flex', gap: 8 }}>
-            <Pressable onClick={() => setConfirmDelete(false)} style={{ flex: 1 }}>
+            <Pressable onClick={() => setConfirmDelete(false)} style={{ flex: 1, borderRadius: 10 }}>
               <div className="btn-cancel" style={{ textAlign: 'center', padding: '10px', borderRadius: 10, border: `1px solid ${theme.border}`, font: "500 13px/1 'Inter', sans-serif", color: theme.mutedInk }}>
                 Отмена
               </div>
             </Pressable>
-            <Pressable onClick={onDelete} style={{ flex: 1 }}>
+            <Pressable onClick={onDelete} style={{ flex: 1, borderRadius: 10 }}>
               <div className="btn-submit" style={{ textAlign: 'center', padding: '10px', borderRadius: 10, background: theme.danger, font: "500 13px/1 'Inter', sans-serif", color: '#fff' }}>
                 Удалить
               </div>
@@ -535,7 +538,7 @@ function SubscriptionMenuContent({ sub, theme, accent, onBack, onDelete }: {
           </div>
         </div>
       ) : (
-        <Pressable onClick={() => setConfirmDelete(true)}>
+        <Pressable onClick={() => setConfirmDelete(true)} borderRadius={14}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '13px 12px', borderRadius: 14, border: `1px solid color-mix(in oklch, ${theme.danger} 45%, transparent)` }}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
               <path d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7" stroke={theme.danger} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -651,6 +654,7 @@ function ServerSheet(props: ServerSheetProps) {
               onClick={props.onRefreshAll}
               disabled={props.refreshAllLoading}
               pressedScale={1}
+              borderRadius={10}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `color-mix(in oklch, ${accent} 10%, transparent)`, borderRadius: 10, padding: '8px 12px' }}>
                 {props.refreshAllLoading ? (
@@ -781,12 +785,12 @@ function ServerSheet(props: ServerSheetProps) {
                 <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.danger }}>{props.addServerError}</div>
               )}
               <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                <Pressable onClick={props.onCancelAddServer} disabled={props.addServerLoading} style={{ flex: 1 }}>
+                <Pressable onClick={props.onCancelAddServer} disabled={props.addServerLoading} style={{ flex: 1, borderRadius: 10 }}>
                   <div className="btn-cancel" style={{ textAlign: 'center', padding: 10, borderRadius: 10, border: `1px solid ${theme.border}`, font: "500 13px/1 'Inter', sans-serif", color: theme.mutedInk }}>
                     Отмена
                   </div>
                 </Pressable>
-                <Pressable onClick={props.onSubmitAddServer} disabled={props.addServerLoading} style={{ flex: 1 }}>
+                <Pressable onClick={props.onSubmitAddServer} disabled={props.addServerLoading} style={{ flex: 1, borderRadius: 10 }}>
                   <div className="btn-submit" style={{ textAlign: 'center', padding: 10, borderRadius: 10, background: `color-mix(in oklch, ${accent} ${props.addServerLoading ? 60 : 100}%, transparent)`, font: "500 13px/1 'Inter', sans-serif", color: '#fff' }}>
                     {props.addServerLoading ? 'Добавляем...' : 'Добавить'}
                   </div>
@@ -1057,7 +1061,7 @@ function LogsScreen({ theme, accent, logs, logsLoading, logsError, onBack, onCle
     >
       {/* Header: back arrow + Назад | copy | delete */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10, flexShrink: 0 }}>
-        <Pressable onClick={onBack} pressedScale={1}>
+        <Pressable onClick={onBack} pressedScale={1} borderRadius={10}>
           <div className="log-header-btn" style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px 10px 10px', borderRadius: 10, transition: 'background-color 0.15s ease' }}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={theme.ink} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
