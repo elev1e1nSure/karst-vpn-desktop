@@ -1115,33 +1115,33 @@ img {
 }
 
 .ping-slide-out {
-  animation: pingSlideOut 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: pingSlideOut 0.22s ease forwards;
 }
 
 .ping-slide-in {
-  animation: pingSlideIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation: pingSlideIn 0.22s ease forwards;
 }
 
 /* ─── Custom tooltip ───────────────────────────────────────────────────── */
 @keyframes tooltipInTop {
   0% {
     opacity: 0;
-    transform: translate(-50%, -100%) translateY(4px) scale(0.92);
+    transform: translate(calc(-50% + var(--tt-shift, 0px)), -100%) translateY(4px) scale(0.92);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, -100%) translateY(0) scale(1);
+    transform: translate(calc(-50% + var(--tt-shift, 0px)), -100%) translateY(0) scale(1);
   }
 }
 
 @keyframes tooltipInBottom {
   0% {
     opacity: 0;
-    transform: translate(-50%, 0) translateY(-4px) scale(0.92);
+    transform: translate(calc(-50% + var(--tt-shift, 0px)), 0) translateY(-4px) scale(0.92);
   }
   100% {
     opacity: 1;
-    transform: translate(-50%, 0) translateY(0) scale(1);
+    transform: translate(calc(-50% + var(--tt-shift, 0px)), 0) translateY(0) scale(1);
   }
 }
 

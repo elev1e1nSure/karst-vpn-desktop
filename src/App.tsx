@@ -950,37 +950,41 @@ function ServerSheet(props: ServerSheetProps) {
                           {srv.name}
                         </span>
                         {srv.latencyLabel && (
-                          <>
+                          <span
+                            style={{
+                              position: 'relative',
+                              font: "400 13px/1.3 'Inter', sans-serif",
+                              color: theme.mutedInk,
+                            }}
+                          >
                             {pingSlideStates[srv.id] ? (
-                              <span
-                                style={{
-                                  display: 'inline-flex',
-                                  position: 'relative',
-                                  font: "400 13px/1.3 'Inter', sans-serif",
-                                  color: theme.mutedInk,
-                                }}
-                              >
-                                <span className="ping-slide-out" style={{ position: 'absolute', left: 0 }}>
-                                  {' '}
-                                  {pingSlideStates[srv.id].oldLabel}
-                                </span>
-                                <span className="ping-slide-in">
+                              <>
+                                <span style={{ visibility: 'hidden' }}>
                                   {' '}
                                   {pingSlideStates[srv.id].newLabel}
                                 </span>
-                              </span>
+                                <span
+                                  className="ping-slide-out"
+                                  style={{ position: 'absolute', left: 0 }}
+                                >
+                                  {' '}
+                                  {pingSlideStates[srv.id].oldLabel}
+                                </span>
+                                <span
+                                  className="ping-slide-in"
+                                  style={{ position: 'absolute', left: 0 }}
+                                >
+                                  {' '}
+                                  {pingSlideStates[srv.id].newLabel}
+                                </span>
+                              </>
                             ) : (
-                              <span
-                                style={{
-                                  font: "400 13px/1.3 'Inter', sans-serif",
-                                  color: theme.mutedInk,
-                                }}
-                              >
+                              <>
                                 {' '}
                                 {srv.latencyLabel}
-                              </span>
+                              </>
                             )}
-                          </>
+                          </span>
                         )}
                       </div>
                       {isSelected && (
@@ -1693,8 +1697,8 @@ export function App() {
   const [logs, setLogs] = useState<LogEntryDto[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
   const [logsError, setLogsError] = useState('');
-  const [, setToastMessage] = useState('');
-  const [, setToastClosing] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastClosing, setToastClosing] = useState(false);
   const toastTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [darkModeOn, setDarkModeOn] = useState(true);
@@ -2414,6 +2418,13 @@ export function App() {
           />
         </div>
       )}
+
+      {/* ── Toast ────────────────────────────────────────────────────────── */}
+      {toastMessage &&
+        createPortal(
+          <div className={`toast ${toastClosing ? 'toast-out' : 'toast-in'}`}>{toastMessage}</div>,
+          document.body,
+        )}
     </div>
   );
 }
