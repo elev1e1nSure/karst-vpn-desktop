@@ -1173,14 +1173,14 @@ function ServerSheet(props: ServerSheetProps) {
 // ─── Settings Sheet ───────────────────────────────────────────────────────────
 
 const ROUTING_LABELS: Record<RoutingMode, string> = {
-  Full: 'Полный VPN',
-  BypassLocal: 'Обход локалки',
-  BypassRu: 'Обход RU и локалки',
+  Full: 'Весь трафик',
+  BypassLocal: 'Обход локальной сети',
+  BypassRu: 'Обход РФ и локальной сети',
 };
 const ROUTING_SUBTITLES: Record<RoutingMode, string> = {
-  Full: 'Весь трафик через выбранный сервер',
-  BypassLocal: 'Локальные сети и private IP идут напрямую',
-  BypassRu: 'RU-домены и локальные сети идут напрямую',
+  Full: 'Весь трафик идёт через сервер, без исключений',
+  BypassLocal: 'Локальная сеть — напрямую, остальное через VPN',
+  BypassRu: 'Российские сайты и локальная сеть — напрямую',
 };
 const REFRESH_LABELS: Record<AutoRefreshMode, string> = {
   Auto: 'Авто',
@@ -1188,9 +1188,9 @@ const REFRESH_LABELS: Record<AutoRefreshMode, string> = {
   EveryHours: 'Каждые N часов',
 };
 const REFRESH_SUBTITLES: Record<AutoRefreshMode, string> = {
-  Auto: 'По Profile-Update-Interval, иначе раз в 24 часа',
+  Auto: 'По расписанию подписки, а если его нет — раз в сутки',
   Off: 'Обновлять только вручную',
-  EveryHours: 'Фиксированный интервал для всех подписок',
+  EveryHours: 'Один и тот же интервал для всех подписок',
 };
 
 function SettingsSheet({
@@ -1230,14 +1230,14 @@ function SettingsSheet({
         <SettingsActionRow
           theme={theme}
           title="Логи"
-          subtitle="Открыть журнал sing-box"
+          subtitle="Технические логи подключения"
           onClick={onOpenLogs}
         />
         <ToggleRow
           theme={theme}
           accent={accent}
           title="Тёмная тема"
-          subtitle="Спокойнее для глаз вечером"
+          subtitle="Тёмное оформление интерфейса"
           checked={darkModeOn}
           onToggle={onToggleDarkMode}
         />
