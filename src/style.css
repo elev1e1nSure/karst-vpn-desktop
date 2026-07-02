@@ -529,7 +529,7 @@ a, img {
   border-radius: 14px;
 }
 .server-item:hover {
-  background-color: var(--card-bg);
+  background-color: var(--theme-border);
 }
 .server-item:active {
   transform: none;
