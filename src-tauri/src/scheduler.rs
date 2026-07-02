@@ -76,11 +76,7 @@ pub fn spawn(pool: DbPool, client: reqwest::Client) -> ScheduleHandle {
     }
 }
 
-async fn run_scheduler(
-    pool: DbPool,
-    client: reqwest::Client,
-    mut receiver: watch::Receiver<()>,
-) {
+async fn run_scheduler(pool: DbPool, client: reqwest::Client, mut receiver: watch::Receiver<()>) {
     loop {
         let delay = match next_delay(&pool) {
             Ok(Some(delay)) => delay,

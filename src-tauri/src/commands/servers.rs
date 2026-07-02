@@ -67,7 +67,8 @@ pub async fn ping_servers(pool: State<'_, DbPool>) -> AppResult<Vec<ServerPingDt
     let mut set = JoinSet::new();
     for record in records {
         set.spawn(async move {
-            let latency_ms = measure_latency(&record.host, record.port, Duration::from_secs(4)).await;
+            let latency_ms =
+                measure_latency(&record.host, record.port, Duration::from_secs(4)).await;
             ServerPingDto {
                 id: record.id,
                 latency_ms,

@@ -46,13 +46,12 @@ fn parse_metadata(headers: &HeaderMap) -> SubscriptionMetadata {
             .and_then(|value| value.parse::<u64>().ok())
             .filter(|value| *value > 0),
         profile_web_page_url: header_text(headers, "Profile-Web-Page-Url"),
-        routing_enable: header_text(headers, "Routing-Enable").and_then(|value| match value
-            .to_ascii_lowercase()
-            .as_str()
-        {
-            "1" | "true" | "yes" => Some(true),
-            "0" | "false" | "no" => Some(false),
-            _ => None,
+        routing_enable: header_text(headers, "Routing-Enable").and_then(|value| {
+            match value.to_ascii_lowercase().as_str() {
+                "1" | "true" | "yes" => Some(true),
+                "0" | "false" | "no" => Some(false),
+                _ => None,
+            }
         }),
         subscription_userinfo: header_text(headers, "Subscription-Userinfo"),
     }

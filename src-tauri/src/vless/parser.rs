@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use url::Url;
 use uuid::Uuid;
 
-use super::model::{
-    Flow, ParseError, ParseFailure, ParsedBatch, Security, Transport, VlessLink,
-};
+use super::model::{Flow, ParseError, ParseFailure, ParsedBatch, Security, Transport, VlessLink};
 
 pub fn parse_vless_uri(input: &str) -> Result<VlessLink, ParseError> {
     let raw = input.trim();
@@ -175,7 +173,8 @@ fn percent_decode(value: &str) -> String {
 
     while index < bytes.len() {
         if bytes[index] == b'%' && index + 2 < bytes.len() {
-            if let (Some(high), Some(low)) = (hex_value(bytes[index + 1]), hex_value(bytes[index + 2]))
+            if let (Some(high), Some(low)) =
+                (hex_value(bytes[index + 1]), hex_value(bytes[index + 2]))
             {
                 output.push((high << 4) | low);
                 index += 3;

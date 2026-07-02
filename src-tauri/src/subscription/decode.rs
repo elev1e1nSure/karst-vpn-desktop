@@ -8,7 +8,10 @@ pub fn decode_subscription(input: &str) -> String {
         return trimmed.to_string();
     }
 
-    let compact: String = trimmed.chars().filter(|char| !char.is_whitespace()).collect();
+    let compact: String = trimmed
+        .chars()
+        .filter(|char| !char.is_whitespace())
+        .collect();
     if compact.is_empty() {
         return String::new();
     }

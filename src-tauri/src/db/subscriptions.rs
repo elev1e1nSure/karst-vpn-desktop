@@ -84,7 +84,9 @@ pub fn update_subscription_metadata(
             id,
             metadata.profile_title,
             metadata.announce,
-            metadata.profile_update_interval_hours.map(|value| value as i64),
+            metadata
+                .profile_update_interval_hours
+                .map(|value| value as i64),
             metadata.profile_web_page_url,
             metadata.routing_enable.map(i64::from),
             metadata.subscription_userinfo,
