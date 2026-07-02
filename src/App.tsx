@@ -274,7 +274,7 @@ function Pressable({
     const rect = e.currentTarget.getBoundingClientRect();
     const id = ++rippleIdRef.current;
     setRipples((prev) => [...prev, { id, x: e.clientX - rect.left, y: e.clientY - rect.top }]);
-    setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 600);
+    setTimeout(() => setRipples((prev) => prev.filter((r) => r.id !== id)), 400);
   };
 
   return (
@@ -656,7 +656,7 @@ function ServerSheet(props: ServerSheetProps) {
               pressedScale={1}
               borderRadius={10}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `color-mix(in oklch, ${accent} ${props.refreshAllLoading ? '5%' : '10%'}, transparent)`, borderRadius: 10, padding: '8px 12px', opacity: props.refreshAllLoading ? 0.55 : 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: `color-mix(in oklch, ${accent} 10%, transparent)`, borderRadius: 10, padding: '8px 12px' }}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
                     <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     <path d="M21 3v5h-5" stroke={accent} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -943,7 +943,7 @@ function SettingsPickerDialog({ theme, title, onDismiss, children }: {
   const close = () => {
     if (closing) return;
     setClosing(true);
-    closeTimeoutRef.current = setTimeout(onDismiss, 180);
+    closeTimeoutRef.current = setTimeout(onDismiss, 160);
   };
 
   // Portaled to <body>: rendered inside the (transform-animated, overflow:hidden)
@@ -954,19 +954,20 @@ function SettingsPickerDialog({ theme, title, onDismiss, children }: {
   return createPortal(
     <>
       <div onClick={close} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 100, animation: `${closing ? 'backdropOut' : 'backdropIn'} 0.2s cubic-bezier(0.4,0,0.2,1) both` }} />
-      <div
-        style={{
-          position: 'fixed', top: '50%', left: '50%',
-          width: 'min(400px, calc(100vw - 64px))',
-          zIndex: 101,
-          animation: `${closing ? 'dialogOut' : 'dialogIn'} ${closing ? '0.18s' : '0.22s'} cubic-bezier(0.4,0,0.2,1) both`,
-          boxSizing: 'border-box',
-          borderRadius: 22,
-          background: theme.appBg,
-          border: `1px solid ${theme.border}`,
-          padding: '4px 0',
-        }}
-      >
+        <div
+          style={{
+            position: 'fixed', top: '50%', left: '50%',
+            width: 'min(400px, calc(100vw - 64px))',
+            zIndex: 101,
+            animation: `${closing ? 'dialogOut' : 'dialogIn'} ${closing ? '0.16s' : '0.22s'} cubic-bezier(0.4,0,0.2,1) both`,
+            boxSizing: 'border-box',
+            borderRadius: 22,
+            background: theme.appBg,
+            border: `1px solid ${theme.border}`,
+            padding: '4px 0',
+            ...themeVars(theme),
+          }}
+        >
         <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, padding: '18px 18px 13px' }}>{title}</div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>{children}</div>
         <div style={{ height: 14 }} />

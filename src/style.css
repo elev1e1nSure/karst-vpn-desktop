@@ -814,7 +814,7 @@ a, img {
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
   transform: translate(-50%, -50%) scale(0);
-  animation: rippleExpand 0.5s ease-out forwards;
+  animation: rippleExpand 0.35s ease-out forwards;
   pointer-events: none;
   width: 44px;
   height: 44px;
@@ -822,7 +822,7 @@ a, img {
 
 @keyframes rippleExpand {
   to {
-    transform: translate(-50%, -50%) scale(3);
+    transform: translate(-50%, -50%) scale(2.5);
     opacity: 0;
   }
 }
