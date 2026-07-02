@@ -302,7 +302,16 @@ function SubscriptionMenuContent({
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   return (
-    <div style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div
+      style={{
+        flex: 1,
+        minHeight: 0,
+        overflow: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 14,
+      }}
+    >
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Tooltip label="Назад" theme={theme} placement="bottom">
@@ -801,7 +810,14 @@ function ServerSheet(props: ServerSheetProps) {
 
         {/* Server groups list */}
         <div
-          style={{ flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 12,
+          }}
         >
           {groups.length === 0 && (
             <div
