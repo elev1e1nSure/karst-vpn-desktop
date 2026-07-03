@@ -22,6 +22,8 @@ pub fn open(path: &std::path::Path) -> AppResult<DbPool> {
     }
 
     let connection = Connection::open(path)?;
+    connection.pragma_update(None, "journal_mode", "WAL")?;
+    connection.pragma_update(None, "busy_timeout", "5000")?;
     schema::run_migrations(&connection)?;
     Ok(Arc::new(Mutex::new(connection)))
 }
