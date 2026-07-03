@@ -1870,7 +1870,7 @@ export function App() {
   const onTapButton = async () => {
     if (isBusy || phase === 'connecting' || phase === 'disconnecting') return;
     if (phase === 'off') {
-      if (!selectedServerId) {
+      if (!selectedServer) {
         setAppError('Добавь VLESS-сервер перед подключением');
         return;
       }
@@ -1878,7 +1878,7 @@ export function App() {
       setAppError('');
       setPhase('connecting');
       try {
-        const status = await commands.connect(selectedServerId);
+        const status = await commands.connect(selectedServer.id);
         applyStatus(status);
       } catch (err) {
         setPhase('off');
@@ -2046,7 +2046,7 @@ export function App() {
             s.host === prev.host &&
             s.port === prev.port,
         );
-        return match?.id ?? current;
+        return match?.id ?? serverList[0]?.id ?? '';
       });
     } catch (err) {
       setAppError(getErrorMessage(err));
