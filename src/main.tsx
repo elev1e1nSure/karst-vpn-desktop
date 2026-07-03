@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill';
 import twemojiCountryFlagsUrl from './assets/fonts/TwemojiCountryFlags.woff2?url';
 import { App } from './App';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 
 // WebView2 on Windows renders regional-indicator flag emoji as raw letters instead of
 // a flag glyph. The font is bundled locally — not fetched from the polyfill's default CDN —
@@ -34,6 +35,8 @@ if (!rootElement) {
 
 ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
-    <App />
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </React.StrictMode>,
 );
