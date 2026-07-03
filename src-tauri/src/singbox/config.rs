@@ -98,16 +98,34 @@ fn dns_block(routing_mode: RoutingMode, dns_doh_url: &str) -> Value {
         }));
     }
 
+    let mut remote_server = json!({
+        "type": "https",
+        "tag": "remote-doh",
+    });
+
+    if let Ok(parsed) = url::Url::parse(dns_doh_url) {
+        if let Some(host) = parsed.host_str() {
+            remote_server["server"] = json!(host);
+        }
+        if let Some(port) = parsed.port() {
+            remote_server["server_port"] = json!(port);
+        }
+        let path = parsed.path();
+        if path != "/dns-query" && !path.is_empty() {
+            remote_server["path"] = json!(path);
+        }
+    }
+
+    if remote_server.get("server").is_none() {
+        remote_server["server"] = json!("1.1.1.1");
+    }
+
     json!({
         "servers": [
+            remote_server,
             {
-                "tag": "remote-doh",
-                "address": dns_doh_url,
-                "detour": "direct",
-            },
-            {
+                "type": "local",
                 "tag": "local-dns",
-                "address": "local",
             },
         ],
         "rules": rules,
