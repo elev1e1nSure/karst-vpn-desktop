@@ -8,6 +8,8 @@ use crate::singbox::route_rules::RoutingMode;
 pub const AUTO_REFRESH_MODE_KEY: &str = "auto_refresh_mode";
 pub const AUTO_REFRESH_HOURS_KEY: &str = "auto_refresh_hours";
 pub const ROUTING_MODE_KEY: &str = "routing_mode";
+pub const DNS_DOH_URL_KEY: &str = "dns_doh_url";
+pub const DEFAULT_DNS_DOH_URL: &str = "https://1.1.1.1/dns-query";
 
 pub fn get_setting(connection: &Connection, key: &str) -> AppResult<Option<String>> {
     connection
@@ -79,4 +81,12 @@ pub fn get_routing_mode(connection: &Connection) -> AppResult<RoutingMode> {
 
 pub fn set_routing_mode(connection: &Connection, value: RoutingMode) -> AppResult<()> {
     set_setting(connection, ROUTING_MODE_KEY, value.as_str())
+}
+
+pub fn get_dns_doh_url(connection: &Connection) -> AppResult<String> {
+    Ok(get_setting(connection, DNS_DOH_URL_KEY)?.unwrap_or_else(|| DEFAULT_DNS_DOH_URL.to_string()))
+}
+
+pub fn set_dns_doh_url(connection: &Connection, value: &str) -> AppResult<()> {
+    set_setting(connection, DNS_DOH_URL_KEY, value)
 }

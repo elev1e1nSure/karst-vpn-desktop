@@ -48,6 +48,7 @@ pub struct SettingsDto {
     pub auto_refresh_mode: String,
     pub auto_refresh_hours: u64,
     pub routing_mode: String,
+    pub dns_doh_url: String,
 }
 
 #[derive(Debug, Clone, Serialize)]

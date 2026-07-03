@@ -49,9 +49,11 @@ pub fn route_rules(mode: RoutingMode) -> Vec<Value> {
         RoutingMode::Full => {}
         RoutingMode::BypassLocal => {
             rules.push(local_network_rule());
+            rules.push(local_domain_rule());
         }
         RoutingMode::BypassRu => {
             rules.push(local_network_rule());
+            rules.push(local_domain_rule());
             rules.push(ru_domain_rule());
         }
     }
@@ -67,9 +69,26 @@ fn local_network_rule() -> Value {
     })
 }
 
+pub fn local_domain_suffixes() -> [&'static str; 5] {
+    [".local", ".lan", ".localdomain", ".home.arpa", ".arpa"]
+}
+
+fn local_domain_rule() -> Value {
+    json!({
+        "domain": ["localhost"],
+        "domain_suffix": local_domain_suffixes(),
+        "action": "route",
+        "outbound": "direct",
+    })
+}
+
+pub fn ru_domain_suffixes() -> [&'static str; 3] {
+    ["ru", "su", "xn--p1ai"]
+}
+
 fn ru_domain_rule() -> Value {
     json!({
-        "domain_suffix": ["ru", "su", "рф"],
+        "domain_suffix": ru_domain_suffixes(),
         "action": "route",
         "outbound": "direct",
     })

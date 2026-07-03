@@ -18,6 +18,7 @@ pub fn get_settings(pool: State<'_, DbPool>) -> AppResult<SettingsDto> {
             .to_string(),
         auto_refresh_hours: settings::get_auto_refresh_hours(&guard)?,
         routing_mode: settings::get_routing_mode(&guard)?.as_str().to_string(),
+        dns_doh_url: settings::get_dns_doh_url(&guard)?,
     })
 }
 
@@ -69,6 +70,23 @@ pub fn set_routing_mode(
     logs.info(
         app_log::Category::Service,
         format!("settings updated routing_mode={mode_label}"),
+    );
+    get_settings(pool)
+}
+
+#[tauri::command]
+pub fn set_dns_doh_url(
+    pool: State<'_, DbPool>,
+    logs: State<'_, AppLog>,
+    url: String,
+) -> AppResult<SettingsDto> {
+    {
+        let guard = db::lock_pool(pool.inner())?;
+        settings::set_dns_doh_url(&guard, &url)?;
+    }
+    logs.info(
+        app_log::Category::Service,
+        format!("settings updated dns_doh_url={url}"),
     );
     get_settings(pool)
 }

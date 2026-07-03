@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use serde_json::{json, Value};
 
-use super::route_rules::{route_rules, RoutingMode};
+use super::route_rules::{
+    local_domain_suffixes, route_rules, ru_domain_suffixes, RoutingMode,
+};
 
 #[derive(Debug, Clone)]
 pub struct TunOptions {
@@ -27,41 +29,18 @@ impl TunOptions {
     }
 }
 
-pub fn build_config(outbound: Value, tun: &TunOptions, routing_mode: RoutingMode) -> Value {
+pub fn build_config(
+    outbound: Value,
+    tun: &TunOptions,
+    routing_mode: RoutingMode,
+    dns_doh_url: &str,
+) -> Value {
     json!({
         "log": {
             "level": "info",
             "timestamp": true,
         },
-        "dns": {
-            "servers": [
-                {
-                    "type": "https",
-                    "tag": "cloudflare",
-                    "server": "1.1.1.1",
-                    "server_port": 443,
-                    "path": "/dns-query",
-                    "tls": {
-                        "enabled": true,
-                        "server_name": "cloudflare-dns.com",
-                    },
-                    "detour": "quad9",
-                },
-                {
-                    "type": "https",
-                    "tag": "quad9",
-                    "server": "9.9.9.9",
-                    "server_port": 443,
-                    "path": "/dns-query",
-                    "tls": {
-                        "enabled": true,
-                        "server_name": "dns.quad9.net",
-                    },
-                },
-            ],
-            "final": "quad9",
-            "strategy": "ipv4_only",
-        },
+        "dns": dns_block(routing_mode, dns_doh_url),
         "inbounds": [
             {
                 "type": "tun",
@@ -90,7 +69,7 @@ pub fn build_config(outbound: Value, tun: &TunOptions, routing_mode: RoutingMode
             "rule_set": [],
             "final": "proxy",
             "auto_detect_interface": true,
-            "default_domain_resolver": "quad9",
+            "default_domain_resolver": "remote-doh",
         },
         "experimental": {
             "cache_file": {
@@ -98,5 +77,41 @@ pub fn build_config(outbound: Value, tun: &TunOptions, routing_mode: RoutingMode
                 "path": tun.cache_file,
             },
         },
+    })
+}
+
+fn dns_block(routing_mode: RoutingMode, dns_doh_url: &str) -> Value {
+    let mut rules: Vec<Value> = Vec::new();
+    if matches!(routing_mode, RoutingMode::BypassLocal | RoutingMode::BypassRu) {
+        rules.push(json!({
+            "domain": ["localhost"],
+            "domain_suffix": local_domain_suffixes(),
+            "action": "route",
+            "server": "local-dns",
+        }));
+    }
+    if routing_mode == RoutingMode::BypassRu {
+        rules.push(json!({
+            "domain_suffix": ru_domain_suffixes(),
+            "action": "route",
+            "server": "local-dns",
+        }));
+    }
+
+    json!({
+        "servers": [
+            {
+                "tag": "remote-doh",
+                "address": dns_doh_url,
+                "detour": "direct",
+            },
+            {
+                "tag": "local-dns",
+                "address": "local",
+            },
+        ],
+        "rules": rules,
+        "final": "remote-doh",
+        "strategy": "ipv4_only",
     })
 }

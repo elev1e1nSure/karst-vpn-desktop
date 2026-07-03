@@ -38,6 +38,7 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
   const [routingMode, setRoutingMode] = useState<RoutingMode>('BypassRu');
   const [autoRefreshMode, setAutoRefreshMode] = useState<AutoRefreshMode>('Auto');
   const [autoRefreshHours, setAutoRefreshHours] = useState(24);
+  const [dnsDohUrl, setDnsDohUrl] = useState('https://1.1.1.1/dns-query');
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(
@@ -55,6 +56,7 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     (settings: SettingsDto) => {
       setAutoRefreshMode(AUTO_REFRESH_MODE_BY_DTO[settings.auto_refresh_mode] ?? 'Auto');
       setAutoRefreshHours(settings.auto_refresh_hours);
+      setDnsDohUrl(settings.dns_doh_url);
       const savedTheme = localStorage.getItem('karst-dark-mode');
       if (savedTheme !== null) setDarkModeOn(savedTheme === 'true');
       const savedRouting = localStorage.getItem('karst-routing-mode');
@@ -133,6 +135,16 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     }
   };
 
+  const setDnsDohUrlValue = async (url: string) => {
+    try {
+      await commands.setDnsDohUrl(url);
+      setDnsDohUrl(url);
+      setAppError('');
+    } catch (error) {
+      setAppError(getErrorMessage(error));
+    }
+  };
+
   return {
     visible,
     closing,
@@ -142,6 +154,7 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     routingMode,
     autoRefreshMode,
     autoRefreshHours,
+    dnsDohUrl,
     hydrate,
     open,
     close,
@@ -150,5 +163,6 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     setRouting,
     setAutoRefresh,
     setAutoRefreshHours: setAutoRefreshHoursValue,
+    setDnsDohUrl: setDnsDohUrlValue,
   };
 }

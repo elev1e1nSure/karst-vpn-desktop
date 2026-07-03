@@ -28,6 +28,7 @@ export const commands = {
   setAutoRefreshSettings: (mode: string, hours: number | null) =>
     invoke<SettingsDto>('set_auto_refresh_settings', { mode, hours }),
   setRoutingMode: (mode: string) => invoke<SettingsDto>('set_routing_mode', { mode }),
+  setDnsDohUrl: (url: string) => invoke<SettingsDto>('set_dns_doh_url', { url }),
   listLogs: () => invoke<LogEntryDto[]>('list_logs'),
   clearLogs: () => invoke<void>('clear_logs'),
 };

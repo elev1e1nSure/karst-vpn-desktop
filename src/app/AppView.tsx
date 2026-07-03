@@ -63,12 +63,14 @@ export function AppView({ controller }: AppViewProps) {
     routingMode,
     autoRefreshMode,
     autoRefreshHours,
+    dnsDohUrl,
     open: onOpenSettings,
     close: onCloseSettings,
     toggleDarkMode: onToggleDarkMode,
     setRouting: handleSetRoutingMode,
     setAutoRefresh: handleSetAutoRefreshMode,
     setAutoRefreshHours: handleSetAutoRefreshHours,
+    setDnsDohUrl: handleSetDnsDohUrl,
   } = preferences;
   const {
     screen: appScreen,
@@ -352,10 +354,12 @@ export function AppView({ controller }: AppViewProps) {
                 routingMode={routingMode}
                 autoRefreshMode={autoRefreshMode}
                 autoRefreshHours={autoRefreshHours}
+                dnsDohUrl={dnsDohUrl}
                 onToggleDarkMode={onToggleDarkMode}
                 onSetRoutingMode={(m) => void handleSetRoutingMode(m)}
                 onSetAutoRefreshMode={(m) => void handleSetAutoRefreshMode(m)}
                 onSetAutoRefreshHours={(h) => void handleSetAutoRefreshHours(h)}
+                onSetDnsDohUrl={(url) => void handleSetDnsDohUrl(url)}
                 onOpenLogs={onOpenLogs}
               />
             </div>

@@ -50,6 +50,7 @@ export type SettingsDto = {
   auto_refresh_mode: string;
   auto_refresh_hours: number;
   routing_mode: string;
+  dns_doh_url: string;
 };
 
 export type ServerPingDto = {

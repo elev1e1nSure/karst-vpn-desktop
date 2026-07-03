@@ -79,10 +79,12 @@ export function SettingsSheet({
   routingMode,
   autoRefreshMode,
   autoRefreshHours,
+  dnsDohUrl,
   onToggleDarkMode,
   onSetRoutingMode,
   onSetAutoRefreshMode,
   onSetAutoRefreshHours,
+  onSetDnsDohUrl,
   onOpenLogs,
 }: {
   theme: Theme;
@@ -91,10 +93,12 @@ export function SettingsSheet({
   routingMode: RoutingMode;
   autoRefreshMode: AutoRefreshMode;
   autoRefreshHours: number;
+  dnsDohUrl: string;
   onToggleDarkMode: () => void;
   onSetRoutingMode: (m: RoutingMode) => void;
   onSetAutoRefreshMode: (m: AutoRefreshMode) => void;
   onSetAutoRefreshHours: (h: number) => void;
+  onSetDnsDohUrl: (url: string) => void;
   onOpenLogs: () => void;
 }) {
   return (
@@ -134,6 +138,7 @@ export function SettingsSheet({
           onSetMode={onSetAutoRefreshMode}
           onSetHours={onSetAutoRefreshHours}
         />
+        <DnsSection theme={theme} url={dnsDohUrl} onSetUrl={onSetDnsDohUrl} />
       </div>
     </div>
   );
@@ -302,6 +307,83 @@ function AutoRefreshSection({
               }}
             />
           </div>
+        </SettingsPickerDialog>
+      )}
+    </>
+  );
+}
+
+function DnsSection({
+  theme,
+  url,
+  onSetUrl,
+}: {
+  theme: Theme;
+  url: string;
+  onSetUrl: (url: string) => void;
+}) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogClosing, setDialogClosing] = useState(false);
+  const [urlText, setUrlText] = useState(url);
+  const closeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const dismissDialog = () => {
+    if (dialogClosing) return;
+    setDialogClosing(true);
+    closeRef.current = setTimeout(() => {
+      setDialogOpen(false);
+      setDialogClosing(false);
+    }, 160);
+  };
+
+  useEffect(() => {
+    setUrlText(url);
+  }, [url]);
+  useEffect(() => {
+    return () => {
+      if (closeRef.current) clearTimeout(closeRef.current);
+    };
+  }, []);
+
+  return (
+    <>
+      <SettingsActionRow
+        theme={theme}
+        title="DNS-сервер"
+        subtitle={url}
+        onClick={() => {
+          setDialogOpen(true);
+          setDialogClosing(false);
+        }}
+      />
+      {dialogOpen && (
+        <SettingsPickerDialog
+          theme={theme}
+          title="DNS-сервер"
+          isClosing={dialogClosing}
+          onDismiss={dismissDialog}
+        >
+          <input
+            className="hours-input"
+            type="text"
+            value={urlText}
+            onChange={(e) => setUrlText(e.target.value)}
+            onBlur={() => {
+              const trimmed = urlText.trim();
+              if (trimmed && trimmed !== url) onSetUrl(trimmed);
+            }}
+            placeholder="https://1.1.1.1/dns-query"
+            style={{
+              font: "400 14px/1 'Inter', sans-serif",
+              color: theme.ink,
+              background: theme.pageBg,
+              border: `1px solid ${theme.border}`,
+              borderRadius: 10,
+              padding: '10px 12px',
+              width: '100%',
+              boxSizing: 'border-box',
+            }}
+          />
         </SettingsPickerDialog>
       )}
     </>

@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
 use crate::app_log::{self, AppLog};
-use crate::connection::killswitch::KillSwitch;
 use crate::db::DbPool;
 use crate::db::{lock_pool, servers, settings};
 use crate::error::{AppError, AppResult};
@@ -40,7 +39,6 @@ pub struct ConnectionManager {
 
 struct ConnectionState {
     process: Option<SingboxProcess>,
-    kill_switch: Option<KillSwitch>,
     status: ConnectionStatus,
     generation: u64,
 }
@@ -51,7 +49,6 @@ impl Default for ConnectionManager {
             operation: tokio::sync::Mutex::new(()),
             inner: Arc::new(Mutex::new(ConnectionState {
                 process: None,
-                kill_switch: None,
                 status: ConnectionStatus::Disconnected,
                 generation: 0,
             })),
@@ -103,11 +100,12 @@ impl ConnectionManager {
         pool: DbPool,
         server_id: String,
     ) -> AppResult<ConnectionStatus> {
-        let (server, routing_mode) = {
+        let (server, routing_mode, dns_doh_url) = {
             let guard = lock_pool(&pool)?;
             (
                 servers::get_server(&guard, &server_id)?,
                 settings::get_routing_mode(&guard)?,
+                settings::get_dns_doh_url(&guard)?,
             )
         };
         let link = parse_vless_uri(&server.vless_uri)
@@ -132,45 +130,22 @@ impl ConnectionManager {
 
         self.stop_current_process().await?;
 
-        let ks_host = link.host.clone();
-        let ks_port = link.port;
-        let mut kill_switch =
-            tokio::task::spawn_blocking(move || KillSwitch::enable(&ks_host, ks_port))
-                .await
-                .map_err(|_| {
-                    AppError::Connection("kill switch setup panicked".to_string())
-                })??;
-        app.state::<AppLog>().info(
-            app_log::Category::Vpn,
-            format!(
-                "kill switch enabled host={}:{}",
-                link.host, link.port
-            ),
-        );
-
         let app_data_dir = app
             .path()
             .app_data_dir()
             .map_err(|error| AppError::Io(std::io::Error::other(error)))?;
         let tun_options = TunOptions::new(app_data_dir.join("sing-box-cache.db"));
         let outbound = vless_to_outbound(&link);
-        let config = build_config(outbound, &tun_options, routing_mode);
+        let config = build_config(outbound, &tun_options, routing_mode, &dns_doh_url);
 
         app.state::<AppLog>().info(
             app_log::Category::Core,
             format!("sing-box spawning routing_mode={}", routing_mode.as_str()),
         );
-        let mut process = match SingboxProcess::spawn(app, &config, &app_data_dir).await {
-            Ok(process) => process,
-            Err(error) => {
-                kill_switch.disable();
-                return Err(error);
-            }
-        };
+        let mut process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
         let stable_result = process.ensure_stable().await;
         if let Err(error) = stable_result {
             let _ = process.stop().await;
-            kill_switch.disable();
             return Err(error);
         }
         app.state::<AppLog>().info(
@@ -179,7 +154,6 @@ impl ConnectionManager {
         );
         if let Err(error) = Self::ensure_not_shutting_down(app) {
             let _ = process.stop().await;
-            kill_switch.disable();
             return Err(error);
         }
         let exit = process.exit_receiver();
@@ -196,7 +170,6 @@ impl ConnectionManager {
             let mut inner = self.lock_inner()?;
             inner.generation = inner.generation.wrapping_add(1);
             inner.process = Some(process);
-            inner.kill_switch = Some(kill_switch);
             inner.status = status.clone();
             inner.generation
         };
@@ -248,17 +221,14 @@ impl ConnectionManager {
     }
 
     pub fn shutdown_now(&self, app: &AppHandle) -> AppResult<()> {
-        let (process, kill_switch) = {
+        let process = {
             let mut inner = self.lock_inner()?;
             inner.generation = inner.generation.wrapping_add(1);
             inner.status = ConnectionStatus::Disconnected;
-            (inner.process.take(), inner.kill_switch.take())
+            inner.process.take()
         };
         if let Some(mut process) = process {
             process.terminate_now()?;
-        }
-        if let Some(mut ks) = kill_switch {
-            ks.disable();
         }
         crate::tray::update_connection_status(app, &ConnectionStatus::Disconnected);
         Ok(())
@@ -269,19 +239,13 @@ impl ConnectionManager {
     }
 
     async fn stop_current_process(&self) -> AppResult<()> {
-        let (process, kill_switch) = {
+        let process = {
             let mut inner = self.lock_inner()?;
             inner.generation = inner.generation.wrapping_add(1);
-            (inner.process.take(), inner.kill_switch.take())
+            inner.process.take()
         };
         if let Some(mut process) = process {
             process.stop().await?;
-        }
-        if let Some(mut ks) = kill_switch {
-            let _ = tokio::task::spawn_blocking(move || {
-                ks.disable();
-            })
-            .await;
         }
         Ok(())
     }
@@ -341,7 +305,7 @@ impl ConnectionManager {
                 process_exit
             };
 
-            let kill_to_disable = {
+            {
                 let mut state = match inner.lock() {
                     Ok(state) => state,
                     Err(_) => return,
@@ -350,19 +314,11 @@ impl ConnectionManager {
                     return;
                 }
                 state.process.take();
-                let ks = state.kill_switch.take();
                 state.status = ConnectionStatus::Error {
                     message: process_exit.message.clone(),
                 };
-                ks
-            };
-
-            if let Some(mut ks) = kill_to_disable {
-                let _ = tokio::task::spawn_blocking(move || {
-                    ks.disable();
-                })
-                .await;
             }
+
             crate::tray::update_connection_status(
                 &app,
                 &ConnectionStatus::Error {
