@@ -5,26 +5,23 @@ use tauri::{AppHandle, Manager, Wry};
 use crate::app_log::AppLog;
 use crate::connection::manager::{ConnectionManager, ConnectionStatus};
 
-const MENU_STATUS: &str = "connection-status";
 const MENU_OPEN: &str = "open";
 const MENU_DISCONNECT: &str = "disconnect";
 const MENU_QUIT: &str = "quit";
 
 pub struct TrayController {
     _icon: TrayIcon<Wry>,
-    status: MenuItem<Wry>,
     disconnect: MenuItem<Wry>,
     open: MenuItem<Wry>,
     quit: MenuItem<Wry>,
 }
 
 pub fn create(app: &AppHandle) -> tauri::Result<TrayController> {
-    let status = MenuItem::with_id(app, MENU_STATUS, "VPN отключён", false, None::<&str>)?;
     let open = MenuItem::with_id(app, MENU_OPEN, "Открыть Karst VPN", true, None::<&str>)?;
     let disconnect = MenuItem::with_id(app, MENU_DISCONNECT, "Отключить VPN", false, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, MENU_QUIT, "Выйти", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&status, &open, &disconnect, &separator, &quit])?;
+    let menu = Menu::with_items(app, &[&open, &disconnect, &separator, &quit])?;
 
     let mut builder = TrayIconBuilder::new()
         .tooltip("Karst VPN")
@@ -56,7 +53,6 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayController> {
 
     Ok(TrayController {
         _icon: icon,
-        status,
         disconnect,
         open,
         quit,
@@ -88,18 +84,10 @@ pub fn update_connection_status(app: &AppHandle, status: &ConnectionStatus) {
     let Some(controller) = app.try_state::<TrayController>() else {
         return;
     };
-    let (label, can_disconnect) = match status {
-        ConnectionStatus::Disconnected => ("VPN отключён", false),
-        ConnectionStatus::Connecting { .. } => ("VPN подключается…", true),
-        ConnectionStatus::Connected { .. } => ("VPN подключён", true),
-        ConnectionStatus::Disconnecting { .. } => ("VPN отключается…", false),
-        ConnectionStatus::Error { .. } => ("Ошибка VPN", false),
-    };
-
-    if let Err(error) = controller.status.set_text(label) {
-        app.state::<AppLog>()
-            .error(format!("failed to update tray status: {error}"));
-    }
+    let can_disconnect = matches!(
+        status,
+        ConnectionStatus::Connecting { .. } | ConnectionStatus::Connected { .. }
+    );
     if let Err(error) = controller.disconnect.set_enabled(can_disconnect) {
         app.state::<AppLog>()
             .error(format!("failed to update tray disconnect action: {error}"));
@@ -110,7 +98,6 @@ pub fn set_shutting_down(app: &AppHandle) {
     let Some(controller) = app.try_state::<TrayController>() else {
         return;
     };
-    let _ = controller.status.set_text("Завершение…");
     let _ = controller.disconnect.set_enabled(false);
     let _ = controller.open.set_enabled(false);
     let _ = controller.quit.set_enabled(false);
