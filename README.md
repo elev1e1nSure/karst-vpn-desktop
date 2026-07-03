@@ -6,9 +6,9 @@
   <img src="https://github.com/elev1e1nSure/karst-vpn-desktop/actions/workflows/release.yml/badge.svg" alt="Build">
 </p>
 
-Karst — приложение для подключения к VLESS-серверам и подпискам на Windows. Добавляешь ссылку/подписку, выбираешь сервер из списка и подключаешься через системный TUN-туннель на sing-box. Подписки обновляются автоматически, есть проверка задержки серверов и три режима роутинга.
+Karst — приложение для подключения к VLESS-серверам и подпискам на Windows. Добавляешь ссылку/подписку, выбираешь сервер из списка и подключаешься через системный TUN-туннель на sing-box. Подписки обновляются автоматически, есть проверка задержки серверов и три режима маршрутизации.
 
-Десктопная версия [Karst VPN для Android](https://github.com/elev1e1nSure/karst-vpn).
+Десктопная версия [Karst VPN для Android](https://github.com/elev1e1nSure/karst-vpn). Также есть [лендинг](https://github.com/elev1e1nSure/karst-site).
 
 ## Установка
 
