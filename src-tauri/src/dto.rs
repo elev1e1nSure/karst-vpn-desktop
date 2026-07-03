@@ -143,6 +143,12 @@ impl From<ConnectionStatus> for ConnectionStatusDto {
                 server_name: Some(server_name),
                 message: None,
             },
+            ConnectionStatus::Disconnecting { server_id } => Self {
+                state: "disconnecting".to_string(),
+                server_id,
+                server_name: None,
+                message: None,
+            },
             ConnectionStatus::Error { message } => Self {
                 state: "error".to_string(),
                 server_id: None,

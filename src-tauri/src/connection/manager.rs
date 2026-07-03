@@ -24,6 +24,9 @@ pub enum ConnectionStatus {
         server_id: String,
         server_name: String,
     },
+    Disconnecting {
+        server_id: Option<String>,
+    },
     Error {
         message: String,
     },
@@ -61,15 +64,24 @@ impl ConnectionManager {
         server_id: String,
     ) -> AppResult<ConnectionStatus> {
         let _operation = self.operation.lock().await;
-        self.set_status(ConnectionStatus::Connecting {
-            server_id: server_id.clone(),
-        })?;
+        Self::ensure_not_shutting_down(app)?;
+        self.set_status(
+            app,
+            ConnectionStatus::Connecting {
+                server_id: server_id.clone(),
+            },
+        )?;
 
         match self.connect_inner(app, pool, server_id).await {
             Ok(status) => Ok(status),
             Err(error) => {
                 let _ = self.stop_current_process().await;
-                let _ = self.set_status(ConnectionStatus::Disconnected);
+                let _ = self.set_status(
+                    app,
+                    ConnectionStatus::Error {
+                        message: error.to_string(),
+                    },
+                );
                 Err(error)
             }
         }
@@ -89,6 +101,7 @@ impl ConnectionManager {
             .map_err(|error| AppError::Vless(error.to_string()))?;
 
         tcp_check(&link.host, link.port, Duration::from_secs(5)).await?;
+        Self::ensure_not_shutting_down(app)?;
 
         self.stop_current_process().await?;
 
@@ -101,6 +114,10 @@ impl ConnectionManager {
         let config = build_config(outbound, &tun_options);
         let mut process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
         process.ensure_stable().await?;
+        if let Err(error) = Self::ensure_not_shutting_down(app) {
+            let _ = process.stop().await;
+            return Err(error);
+        }
         let exit = process.exit_receiver();
 
         let status = ConnectionStatus::Connected {
@@ -114,24 +131,45 @@ impl ConnectionManager {
             inner.status = status.clone();
             inner.generation
         };
+        crate::tray::update_connection_status(app, &status);
         Self::monitor_exit(app.clone(), self.inner.clone(), generation, exit);
         Ok(status)
     }
 
-    pub async fn disconnect(&self) -> AppResult<ConnectionStatus> {
+    pub async fn disconnect(&self, app: &AppHandle) -> AppResult<ConnectionStatus> {
         let _operation = self.operation.lock().await;
-        self.stop_current_process().await?;
-        self.set_status(ConnectionStatus::Disconnected)?;
+        let server_id = self.active_server_id()?;
+        self.set_status(app, ConnectionStatus::Disconnecting { server_id })?;
+        if let Err(error) = self.stop_current_process().await {
+            let _ = self.set_status(
+                app,
+                ConnectionStatus::Error {
+                    message: error.to_string(),
+                },
+            );
+            return Err(error);
+        }
+        self.set_status(app, ConnectionStatus::Disconnected)?;
         Ok(ConnectionStatus::Disconnected)
     }
 
-    pub async fn shutdown(&self) -> AppResult<()> {
+    pub async fn shutdown(&self, app: &AppHandle) -> AppResult<()> {
         let _operation = self.operation.lock().await;
-        self.stop_current_process().await?;
-        self.set_status(ConnectionStatus::Disconnected)
+        let server_id = self.active_server_id()?;
+        self.set_status(app, ConnectionStatus::Disconnecting { server_id })?;
+        if let Err(error) = self.stop_current_process().await {
+            let _ = self.set_status(
+                app,
+                ConnectionStatus::Error {
+                    message: error.to_string(),
+                },
+            );
+            return Err(error);
+        }
+        self.set_status(app, ConnectionStatus::Disconnected)
     }
 
-    pub fn shutdown_now(&self) -> AppResult<()> {
+    pub fn shutdown_now(&self, app: &AppHandle) -> AppResult<()> {
         let process = {
             let mut inner = self.lock_inner()?;
             inner.generation = inner.generation.wrapping_add(1);
@@ -141,6 +179,7 @@ impl ConnectionManager {
         if let Some(mut process) = process {
             process.terminate_now()?;
         }
+        crate::tray::update_connection_status(app, &ConnectionStatus::Disconnected);
         Ok(())
     }
 
@@ -160,8 +199,31 @@ impl ConnectionManager {
         Ok(())
     }
 
-    fn set_status(&self, status: ConnectionStatus) -> AppResult<()> {
-        self.lock_inner()?.status = status;
+    fn set_status(&self, app: &AppHandle, status: ConnectionStatus) -> AppResult<()> {
+        self.lock_inner()?.status = status.clone();
+        crate::tray::update_connection_status(app, &status);
+        Ok(())
+    }
+
+    fn active_server_id(&self) -> AppResult<Option<String>> {
+        let server_id = match &self.lock_inner()?.status {
+            ConnectionStatus::Connecting { server_id }
+            | ConnectionStatus::Connected { server_id, .. } => Some(server_id.clone()),
+            ConnectionStatus::Disconnecting { server_id } => server_id.clone(),
+            ConnectionStatus::Disconnected | ConnectionStatus::Error { .. } => None,
+        };
+        Ok(server_id)
+    }
+
+    fn ensure_not_shutting_down(app: &AppHandle) -> AppResult<()> {
+        if app
+            .state::<crate::lifecycle::LifecycleState>()
+            .shutdown_started()
+        {
+            return Err(AppError::Connection(
+                "connection cancelled because application is shutting down".to_string(),
+            ));
+        }
         Ok(())
     }
 
@@ -203,6 +265,12 @@ impl ConnectionManager {
                 _ => false,
             };
             if updated {
+                crate::tray::update_connection_status(
+                    &app,
+                    &ConnectionStatus::Error {
+                        message: process_exit.message.clone(),
+                    },
+                );
                 app.state::<AppLog>()
                     .error(format!("connection lost: {}", process_exit.message));
             }

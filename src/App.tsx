@@ -110,15 +110,17 @@ function ConnectButton({
   onClick: () => void;
 }) {
   const isConnecting = phase === 'connecting';
+  const isDisconnecting = phase === 'disconnecting';
+  const isTransitioning = isConnecting || isDisconnecting;
   const isConnected = phase === 'on';
 
   const buttonBg = isConnected ? accent : theme.buttonOffBg;
-  const borderColor = isConnected ? accent : isConnecting ? accent : theme.buttonOffBorder;
-  const iconColor = isConnected ? '#fff' : isConnecting ? accent : theme.buttonOffIcon;
+  const borderColor = isConnected ? accent : isTransitioning ? accent : theme.buttonOffBorder;
+  const iconColor = isConnected ? '#fff' : isTransitioning ? accent : theme.buttonOffIcon;
 
   const ringClass = isConnected
     ? 'pulse-ring-connected'
-    : isConnecting
+    : isTransitioning
       ? 'pulse-ring-connecting'
       : 'pulse-ring-off';
 
@@ -149,7 +151,7 @@ function ConnectButton({
         type="button"
         className="connect-btn"
         aria-label="Подключить VPN"
-        onClick={enabled && !isConnecting ? onClick : undefined}
+        onClick={enabled && !isTransitioning ? onClick : undefined}
         style={{
           position: 'relative',
           zIndex: 2,
@@ -166,7 +168,7 @@ function ConnectButton({
           opacity: enabled ? 1 : 0.55,
         }}
       >
-        {isConnecting ? (
+        {isTransitioning ? (
           <div
             style={{
               width: 30,
@@ -1702,7 +1704,7 @@ export function App() {
   const [subscriptions, setSubscriptions] = useState<SubscriptionDto[]>([]);
   const [pingMap, setPingMap] = useState<Record<string, number | null>>({});
   const [selectedServerId, setSelectedServerId] = useState('');
-  const { phase, setPhase, elapsed, applyStatus } = useConnectionStatus(
+  const { phase, setPhase, elapsed, applyStatus, refreshStatus } = useConnectionStatus(
     setSelectedServerId,
     setAppError,
   );
@@ -1824,11 +1826,12 @@ export function App() {
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [servers]);
 
   // ── Computed ───────────────────────────────────────────────────────────────
   const isConnecting = phase === 'connecting' || (isBusy && phase === 'off');
+  const isDisconnecting = phase === 'disconnecting';
+  const isTransitioning = isConnecting || isDisconnecting;
   const isConnected = phase === 'on';
   const theme = darkModeOn ? DARK_THEME : LIGHT_THEME;
 
@@ -1846,18 +1849,26 @@ export function App() {
   const allServers = groups.flatMap((g) => g.servers);
   const selectedServer = allServers.find((s) => s.id === selectedServerId) ?? allServers[0] ?? null;
 
-  const statusLabel = isConnected ? 'Подключено' : isConnecting ? 'Подключаемся…' : 'Не подключено';
+  const statusLabel = isConnected
+    ? 'Подключено'
+    : isDisconnecting
+      ? 'Отключаемся…'
+      : isConnecting
+        ? 'Подключаемся…'
+        : 'Не подключено';
   const subLabel =
     appError ||
     (servers.length === 0
       ? 'Добавь VLESS-ссылку или подписку'
-      : isConnecting
-        ? mood.subConnecting
-        : mood.subOff);
+      : isDisconnecting
+        ? 'Завершаем VPN-туннель'
+        : isConnecting
+          ? mood.subConnecting
+          : mood.subOff);
 
   // ── Handlers ───────────────────────────────────────────────────────────────
   const onTapButton = async () => {
-    if (isBusy || phase === 'connecting') return;
+    if (isBusy || phase === 'connecting' || phase === 'disconnecting') return;
     if (phase === 'off') {
       if (!selectedServerId) {
         setAppError('Добавь VLESS-сервер перед подключением');
@@ -1878,13 +1889,17 @@ export function App() {
     } else if (phase === 'on') {
       setIsBusy(true);
       setAppError('');
-      setPhase('off');
+      setPhase('disconnecting');
       try {
         const status = await commands.disconnect();
         applyStatus(status);
       } catch (err) {
-        setPhase('on');
         setAppError(getErrorMessage(err));
+        try {
+          await refreshStatus();
+        } catch {
+          setPhase('off');
+        }
       } finally {
         setIsBusy(false);
       }
@@ -2165,9 +2180,7 @@ export function App() {
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
-  const renderDragHandle = (
-    drag: ReturnType<typeof useSheetDrag>,
-  ) => (
+  const renderDragHandle = (drag: ReturnType<typeof useSheetDrag>) => (
     <div
       {...drag.handlers}
       style={{
@@ -2282,7 +2295,7 @@ export function App() {
           }}
         >
           <ConnectButton
-            phase={isConnecting ? 'connecting' : phase}
+            phase={isTransitioning && phase === 'off' ? 'connecting' : phase}
             enabled={selectedServer !== null || isConnected}
             theme={theme}
             accent={ACCENT}

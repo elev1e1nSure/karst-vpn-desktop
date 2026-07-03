@@ -37,11 +37,15 @@ pub async fn connect(
 
 #[tauri::command]
 pub async fn disconnect(
+    app: AppHandle,
     manager: State<'_, ConnectionManager>,
     logs: State<'_, AppLog>,
 ) -> AppResult<ConnectionStatusDto> {
     logs.info("disconnect requested");
-    let result = manager.disconnect().await.map(ConnectionStatusDto::from);
+    let result = manager
+        .disconnect(&app)
+        .await
+        .map(ConnectionStatusDto::from);
     match &result {
         Ok(status) => logs.info(format!("disconnect finished state={}", status.state)),
         Err(error) => logs.error(format!(

@@ -1,4 +1,4 @@
-export type Phase = 'off' | 'connecting' | 'on';
+export type Phase = 'off' | 'connecting' | 'on' | 'disconnecting';
 
 export type ServerDto = {
   id: string;
@@ -35,7 +35,7 @@ export type ImportSummaryDto = {
 };
 
 export type ConnectionStatusDto = {
-  state: 'disconnected' | 'connecting' | 'connected' | 'error';
+  state: 'disconnected' | 'connecting' | 'connected' | 'disconnecting' | 'error';
   server_id?: string | null;
   server_name?: string | null;
   message?: string | null;

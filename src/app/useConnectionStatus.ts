@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 
 import { commands, getErrorMessage } from './commands';
 import type { ConnectionStatusDto, Phase } from './types';
@@ -7,6 +8,7 @@ import type { ConnectionStatusDto, Phase } from './types';
 const phaseFromStatus = (status: ConnectionStatusDto): Phase => {
   if (status.state === 'connected') return 'on';
   if (status.state === 'connecting') return 'connecting';
+  if (status.state === 'disconnecting') return 'disconnecting';
   return 'off';
 };
 
@@ -16,8 +18,9 @@ export function useConnectionStatus(
 ) {
   const [phase, setPhase] = useState<Phase>('off');
   const [elapsed, setElapsed] = useState(0);
+  const statusRequestRef = useRef(0);
 
-  const applyStatus = useCallback(
+  const applyStatusValue = useCallback(
     (status: ConnectionStatusDto) => {
       setPhase(phaseFromStatus(status));
       if (status.server_id) setSelectedServerId(status.server_id);
@@ -27,6 +30,21 @@ export function useConnectionStatus(
     },
     [setAppError, setSelectedServerId],
   );
+
+  const applyStatus = useCallback(
+    (status: ConnectionStatusDto) => {
+      statusRequestRef.current += 1;
+      applyStatusValue(status);
+    },
+    [applyStatusValue],
+  );
+
+  const refreshStatus = useCallback(async () => {
+    const requestId = ++statusRequestRef.current;
+    const status = await commands.connectionStatus();
+    if (requestId === statusRequestRef.current) applyStatusValue(status);
+    return status;
+  }, [applyStatusValue]);
 
   useEffect(() => {
     if (phase !== 'on') {
@@ -59,5 +77,29 @@ export function useConnectionStatus(
     };
   }, [applyStatus, phase, setAppError]);
 
-  return { phase, setPhase, elapsed, applyStatus };
+  useEffect(() => {
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    void getCurrentWindow()
+      .onFocusChanged(({ payload: focused }) => {
+        if (!focused) return;
+        void refreshStatus().catch((error) => {
+          if (!disposed) setAppError(getErrorMessage(error));
+        });
+      })
+      .then((removeListener) => {
+        if (disposed) removeListener();
+        else unlisten = removeListener;
+      })
+      .catch((error) => {
+        if (!disposed) setAppError(getErrorMessage(error));
+      });
+
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, [refreshStatus, setAppError]);
+
+  return { phase, setPhase, elapsed, applyStatus, refreshStatus };
 }

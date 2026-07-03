@@ -5,13 +5,13 @@ pub mod db;
 pub mod dto;
 pub mod error;
 pub mod healthcheck;
+pub mod lifecycle;
 pub mod scheduler;
 pub mod singbox;
 pub mod subscription;
+pub mod tray;
 pub mod vless;
 
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Arc;
 use std::time::Duration;
 
 use tauri::Manager;
@@ -19,13 +19,19 @@ use tauri::Manager;
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            tray::show_main_window(app);
+        }))
         .plugin(tauri_plugin_shell::init())
         .setup(|app| {
             let app_data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&app_data_dir)?;
             let logs = app_log::AppLog::new(app_data_dir.clone());
+            app.manage(lifecycle::LifecycleState::default());
+            app.manage(logs);
+
             if let Err(error) = singbox::process::recover_stale_process(&app_data_dir) {
-                logs.error(format!(
+                app.state::<app_log::AppLog>().error(format!(
                     "stale sing-box recovery failed kind={} message={error}",
                     error.kind()
                 ));
@@ -37,15 +43,41 @@ pub fn run() {
                 .connect_timeout(Duration::from_secs(10))
                 .timeout(Duration::from_secs(30))
                 .build()?;
-            logs.info("application startup");
+            app.state::<app_log::AppLog>().info("application startup");
             let connection_manager = connection::manager::ConnectionManager::default();
-            app.manage(logs);
             let schedule = scheduler::spawn(pool.clone(), client.clone(), app.handle().clone());
 
             app.manage(pool);
             app.manage(client);
             app.manage(connection_manager);
             app.manage(schedule);
+
+            match tray::create(app.handle()) {
+                Ok(controller) => {
+                    app.manage(controller);
+                    app.state::<lifecycle::LifecycleState>().mark_tray_ready();
+                    let status = app
+                        .state::<connection::manager::ConnectionManager>()
+                        .status()?;
+                    tray::update_connection_status(app.handle(), &status);
+                }
+                Err(error) => app
+                    .state::<app_log::AppLog>()
+                    .error(format!("system tray initialization failed: {error}")),
+            }
+
+            let main_window = app
+                .get_webview_window("main")
+                .ok_or_else(|| std::io::Error::other("main window is unavailable"))?;
+            let app_handle = app.handle().clone();
+            let window_for_event = main_window.clone();
+            main_window.on_window_event(move |event| {
+                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                    if lifecycle::handle_close_requested(&app_handle, &window_for_event) {
+                        api.prevent_close();
+                    }
+                }
+            });
 
             Ok(())
         })
@@ -70,32 +102,21 @@ pub fn run() {
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    let shutdown_started = Arc::new(AtomicBool::new(false));
     app.run(move |app_handle, event| match event {
         tauri::RunEvent::ExitRequested { code, api, .. } => {
-            if shutdown_started.swap(true, Ordering::SeqCst) {
+            if app_handle
+                .state::<lifecycle::LifecycleState>()
+                .shutdown_started()
+            {
                 return;
             }
 
             api.prevent_exit();
-            let app_handle = app_handle.clone();
-            tauri::async_runtime::spawn(async move {
-                let logs = app_handle.state::<app_log::AppLog>();
-                logs.info("application shutdown requested");
-                let manager = app_handle.state::<connection::manager::ConnectionManager>();
-                match manager.shutdown().await {
-                    Ok(()) => logs.info("application shutdown completed"),
-                    Err(error) => logs.error(format!(
-                        "application shutdown failed kind={} message={error}",
-                        error.kind()
-                    )),
-                }
-                app_handle.exit(code.unwrap_or(0));
-            });
+            lifecycle::request_exit(app_handle, code.unwrap_or(0));
         }
         tauri::RunEvent::Exit => {
             let manager = app_handle.state::<connection::manager::ConnectionManager>();
-            let _ = manager.shutdown_now();
+            lifecycle::force_tunnel_shutdown(app_handle, &manager);
         }
         _ => {}
     });
