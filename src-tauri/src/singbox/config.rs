@@ -45,9 +45,21 @@ pub fn build_config(outbound: Value, tun: &TunOptions, routing_mode: RoutingMode
                         "enabled": true,
                         "server_name": "cloudflare-dns.com",
                     },
-                }
+                    "detour": "quad9",
+                },
+                {
+                    "type": "https",
+                    "tag": "quad9",
+                    "server": "9.9.9.9",
+                    "server_port": 443,
+                    "path": "/dns-query",
+                    "tls": {
+                        "enabled": true,
+                        "server_name": "dns.quad9.net",
+                    },
+                },
             ],
-            "final": "cloudflare",
+            "final": "quad9",
             "strategy": "ipv4_only",
         },
         "inbounds": [
@@ -78,7 +90,7 @@ pub fn build_config(outbound: Value, tun: &TunOptions, routing_mode: RoutingMode
             "rule_set": [],
             "final": "proxy",
             "auto_detect_interface": true,
-            "default_domain_resolver": "cloudflare",
+            "default_domain_resolver": "quad9",
         },
         "experimental": {
             "cache_file": {
