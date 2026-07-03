@@ -12,7 +12,7 @@ Karst — приложение для подключения к VLESS-серве
 
 ## Установка
 
-Установщики `.exe` доступен в [Releases](https://github.com/elev1e1nSure/karst-vpn-desktop/releases)
+Установщик `.exe` доступен в [Releases](https://github.com/elev1e1nSure/karst-vpn-desktop/releases)
 
 ## Разработка
 
