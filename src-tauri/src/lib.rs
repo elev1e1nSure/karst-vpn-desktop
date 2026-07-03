@@ -31,10 +31,13 @@ pub fn run() {
             app.manage(logs);
 
             if let Err(error) = singbox::process::recover_stale_process(&app_data_dir) {
-                app.state::<app_log::AppLog>().error(format!(
-                    "stale sing-box recovery failed kind={} message={error}",
-                    error.kind()
-                ));
+                app.state::<app_log::AppLog>().error(
+                    app_log::Category::Service,
+                    format!(
+                        "stale sing-box recovery failed kind={} message={error}",
+                        error.kind()
+                    ),
+                );
                 return Err(error.into());
             }
             let pool = db::open(&app_data_dir.join("karst.sqlite3"))?;
@@ -43,7 +46,10 @@ pub fn run() {
                 .connect_timeout(Duration::from_secs(10))
                 .timeout(Duration::from_secs(30))
                 .build()?;
-            app.state::<app_log::AppLog>().info("application startup");
+            app.state::<app_log::AppLog>().info(
+                app_log::Category::Service,
+                "application startup",
+            );
             let connection_manager = connection::manager::ConnectionManager::default();
             let schedule = scheduler::spawn(pool.clone(), client.clone(), app.handle().clone());
 
@@ -61,9 +67,10 @@ pub fn run() {
                         .status()?;
                     tray::update_connection_status(app.handle(), &status);
                 }
-                Err(error) => app
-                    .state::<app_log::AppLog>()
-                    .error(format!("system tray initialization failed: {error}")),
+                Err(error) => app.state::<app_log::AppLog>().error(
+                    app_log::Category::Service,
+                    format!("system tray initialization failed: {error}"),
+                ),
             }
 
             let main_window = app

@@ -1,7 +1,7 @@
 use tauri::State;
 use uuid::Uuid;
 
-use crate::app_log::{redact_url, AppLog};
+use crate::app_log::{self, redact_url, AppLog};
 use crate::db;
 use crate::db::subscriptions::{self, NewSubscription};
 use crate::db::DbPool;
@@ -24,10 +24,10 @@ pub async fn add_subscription(
     url: String,
     name: Option<String>,
 ) -> AppResult<ImportSummaryDto> {
-    logs.info(format!(
-        "subscription add requested url={}",
-        redact_url(&url)
-    ));
+    logs.info(
+        app_log::Category::Net,
+        format!("subscription add requested url={}", redact_url(&url)),
+    );
     let id = Uuid::new_v4().to_string();
     let subscription = NewSubscription {
         id: id.clone(),
@@ -39,19 +39,33 @@ pub async fn add_subscription(
         subscriptions::insert_subscription(&guard, &subscription)?;
     }
 
-    let result = refresh(pool.inner().clone(), client.inner().clone(), id)
-        .await
-        .map(ImportSummaryDto::from);
+    let result = refresh(
+        pool.inner().clone(),
+        client.inner().clone(),
+        id,
+        &*logs,
+    )
+    .await
+    .map(ImportSummaryDto::from);
     match &result {
-        Ok(summary) if summary.error.is_none() => logs.info(format!(
-            "subscription import finished id={} imported={} failed={}",
-            summary.subscription_id, summary.imported, summary.failed
-        )),
-        Ok(summary) => logs.warn(format!(
-            "subscription import completed with error id={} imported={} failed={}",
-            summary.subscription_id, summary.imported, summary.failed
-        )),
-        Err(error) => logs.error(format!("subscription import failed kind={}", error.kind())),
+        Ok(summary) if summary.error.is_none() => logs.info(
+            app_log::Category::Net,
+            format!(
+                "subscription import finished id={} imported={} failed={}",
+                summary.subscription_id, summary.imported, summary.failed
+            ),
+        ),
+        Ok(summary) => logs.warn(
+            app_log::Category::Net,
+            format!(
+                "subscription import completed with error id={} imported={} failed={}",
+                summary.subscription_id, summary.imported, summary.failed
+            ),
+        ),
+        Err(error) => logs.error(
+            app_log::Category::Net,
+            format!("subscription import failed kind={}", error.kind()),
+        ),
     }
     result
 }
@@ -63,25 +77,33 @@ pub async fn refresh_subscription(
     logs: State<'_, AppLog>,
     subscription_id: String,
 ) -> AppResult<ImportSummaryDto> {
-    logs.info(format!(
-        "subscription refresh requested id={subscription_id}"
-    ));
+    logs.info(
+        app_log::Category::Net,
+        format!("subscription refresh requested id={subscription_id}"),
+    );
     let result = refresh(
         pool.inner().clone(),
         client.inner().clone(),
         subscription_id,
+        &*logs,
     )
     .await
     .map(ImportSummaryDto::from);
     match &result {
-        Ok(summary) => logs.info(format!(
-            "subscription refresh finished id={} imported={} failed={} has_error={}",
-            summary.subscription_id,
-            summary.imported,
-            summary.failed,
-            summary.error.is_some()
-        )),
-        Err(error) => logs.error(format!("subscription refresh failed kind={}", error.kind())),
+        Ok(summary) => logs.info(
+            app_log::Category::Net,
+            format!(
+                "subscription refresh finished id={} imported={} failed={} has_error={}",
+                summary.subscription_id,
+                summary.imported,
+                summary.failed,
+                summary.error.is_some()
+            ),
+        ),
+        Err(error) => logs.error(
+            app_log::Category::Net,
+            format!("subscription refresh failed kind={}", error.kind()),
+        ),
     }
     result
 }
@@ -92,8 +114,11 @@ pub async fn refresh_all_subscriptions(
     client: State<'_, reqwest::Client>,
     logs: State<'_, AppLog>,
 ) -> AppResult<Vec<ImportSummaryDto>> {
-    logs.info("subscription refresh all requested");
-    let result = refresh_all(pool.inner().clone(), client.inner().clone())
+    logs.info(
+        app_log::Category::Net,
+        "subscription refresh all requested",
+    );
+    let result = refresh_all(pool.inner().clone(), client.inner().clone(), &*logs)
         .await
         .map(|items| {
             items
@@ -102,14 +127,14 @@ pub async fn refresh_all_subscriptions(
                 .collect::<Vec<_>>()
         });
     match &result {
-        Ok(items) => logs.info(format!(
-            "subscription refresh all finished count={}",
-            items.len()
-        )),
-        Err(error) => logs.error(format!(
-            "subscription refresh all failed kind={}",
-            error.kind()
-        )),
+        Ok(items) => logs.info(
+            app_log::Category::Net,
+            format!("subscription refresh all finished count={}", items.len()),
+        ),
+        Err(error) => logs.error(
+            app_log::Category::Net,
+            format!("subscription refresh all failed kind={}", error.kind()),
+        ),
     }
     result
 }
@@ -123,13 +148,17 @@ pub fn delete_subscription(
     let guard = db::lock_pool(pool.inner())?;
     let result = subscriptions::delete_subscription(&guard, &subscription_id);
     match &result {
-        Ok(deleted) => logs.info(format!(
-            "subscription delete requested id={subscription_id} deleted={deleted}"
-        )),
-        Err(error) => logs.error(format!(
-            "subscription delete failed kind={} message={error}",
-            error.kind()
-        )),
+        Ok(deleted) => logs.info(
+            app_log::Category::Net,
+            format!("subscription delete requested id={subscription_id} deleted={deleted}"),
+        ),
+        Err(error) => logs.error(
+            app_log::Category::Net,
+            format!(
+                "subscription delete failed kind={} message={error}",
+                error.kind()
+            ),
+        ),
     }
     result
 }

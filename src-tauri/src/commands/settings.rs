@@ -1,6 +1,6 @@
 use tauri::State;
 
-use crate::app_log::AppLog;
+use crate::app_log::{self, AppLog};
 use crate::db;
 use crate::db::settings;
 use crate::db::DbPool;
@@ -39,12 +39,15 @@ pub fn set_auto_refresh_settings(
         transaction.commit()?;
     }
     schedule.notify_settings_changed();
-    logs.info(format!(
-        "settings updated auto_refresh_mode={} auto_refresh_hours={}",
-        mode_label,
-        hours
-            .map(|value| value.to_string())
-            .unwrap_or_else(|| "unchanged".to_string())
-    ));
+    logs.info(
+        app_log::Category::Service,
+        format!(
+            "settings updated auto_refresh_mode={} auto_refresh_hours={}",
+            mode_label,
+            hours
+                .map(|value| value.to_string())
+                .unwrap_or_else(|| "unchanged".to_string())
+        ),
+    );
     get_settings(pool)
 }

@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use tauri::{AppHandle, Manager, WebviewWindow};
 
-use crate::app_log::AppLog;
+use crate::app_log::{self, AppLog};
 use crate::connection::manager::ConnectionManager;
 
 const GRACEFUL_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(12);
@@ -37,13 +37,17 @@ pub fn handle_close_requested(app: &AppHandle, window: &WebviewWindow) -> bool {
     }
 
     if let Err(error) = window.hide() {
-        app.state::<AppLog>()
-            .error(format!("failed to hide main window: {error}"));
+        app.state::<AppLog>().error(
+            app_log::Category::Service,
+            format!("failed to hide main window: {error}"),
+        );
         return false;
     }
 
-    app.state::<AppLog>()
-        .info("main window hidden to system tray");
+    app.state::<AppLog>().info(
+        app_log::Category::Service,
+        "main window hidden to system tray",
+    );
     true
 }
 
@@ -57,20 +61,29 @@ pub fn request_exit(app: &AppHandle, code: i32) {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         let logs = app.state::<AppLog>();
-        logs.info("application shutdown requested");
+        logs.info(app_log::Category::Service, "application shutdown requested");
 
         let manager = app.state::<ConnectionManager>();
         match tokio::time::timeout(GRACEFUL_SHUTDOWN_TIMEOUT, manager.shutdown(&app)).await {
-            Ok(Ok(())) => logs.info("application shutdown completed"),
+            Ok(Ok(())) => logs.info(
+                app_log::Category::Service,
+                "application shutdown completed",
+            ),
             Ok(Err(error)) => {
-                logs.error(format!(
-                    "application shutdown failed kind={} message={error}",
-                    error.kind()
-                ));
+                logs.error(
+                    app_log::Category::Service,
+                    format!(
+                        "application shutdown failed kind={} message={error}",
+                        error.kind()
+                    ),
+                );
                 force_tunnel_shutdown(&app, &manager);
             }
             Err(_) => {
-                logs.error("application shutdown timed out");
+                logs.error(
+                    app_log::Category::Service,
+                    "application shutdown timed out",
+                );
                 force_tunnel_shutdown(&app, &manager);
             }
         }
@@ -81,9 +94,12 @@ pub fn request_exit(app: &AppHandle, code: i32) {
 
 pub fn force_tunnel_shutdown(app: &AppHandle, manager: &ConnectionManager) {
     if let Err(error) = manager.shutdown_now(app) {
-        app.state::<AppLog>().error(format!(
-            "forced tunnel shutdown failed kind={} message={error}",
-            error.kind()
-        ));
+        app.state::<AppLog>().error(
+            app_log::Category::Service,
+            format!(
+                "forced tunnel shutdown failed kind={} message={error}",
+                error.kind()
+            ),
+        );
     }
 }

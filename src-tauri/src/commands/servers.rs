@@ -4,7 +4,7 @@ use futures_util::stream::{self, StreamExt};
 use tauri::State;
 use uuid::Uuid;
 
-use crate::app_log::AppLog;
+use crate::app_log::{self, AppLog};
 use crate::db;
 use crate::db::servers::{self, NewServer};
 use crate::db::DbPool;
@@ -45,14 +45,20 @@ pub fn add_manual_link(
     let guard = db::lock_pool(pool.inner())?;
     let result = servers::insert_server(&guard, &server).map(ServerDto::from);
     match &result {
-        Ok(server) => logs.info(format!(
-            "manual server added id={} host={}:{}",
-            server.id, server.host, server.port
-        )),
-        Err(error) => logs.error(format!(
-            "manual server add failed kind={} message={error}",
-            error.kind()
-        )),
+        Ok(server) => logs.info(
+            app_log::Category::Link,
+            format!(
+                "manual server added id={} host={}:{}",
+                server.id, server.host, server.port
+            ),
+        ),
+        Err(error) => logs.error(
+            app_log::Category::Link,
+            format!(
+                "manual server add failed kind={} message={error}",
+                error.kind()
+            ),
+        ),
     }
     result
 }
@@ -88,13 +94,17 @@ pub fn delete_server(
     let guard = db::lock_pool(pool.inner())?;
     let result = servers::delete_server(&guard, &server_id);
     match &result {
-        Ok(deleted) => logs.info(format!(
-            "server delete requested id={server_id} deleted={deleted}"
-        )),
-        Err(error) => logs.error(format!(
-            "server delete failed kind={} message={error}",
-            error.kind()
-        )),
+        Ok(deleted) => logs.info(
+            app_log::Category::Link,
+            format!("server delete requested id={server_id} deleted={deleted}"),
+        ),
+        Err(error) => logs.error(
+            app_log::Category::Link,
+            format!(
+                "server delete failed kind={} message={error}",
+                error.kind()
+            ),
+        ),
     }
     result
 }

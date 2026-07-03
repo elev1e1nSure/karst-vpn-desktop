@@ -27,6 +27,7 @@ base64 = "0.22"
 url = "2"
 thiserror = "2"
 chrono = { version = "0.4", features = ["serde"] }
+regex = "1"
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.61", features = [

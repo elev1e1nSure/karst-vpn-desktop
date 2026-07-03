@@ -2,6 +2,7 @@ use std::collections::HashSet;
 
 use uuid::Uuid;
 
+use crate::app_log::{self, AppLog};
 use crate::db::servers::{self, NewServer};
 use crate::db::subscriptions::{self, SubscriptionRecord};
 use crate::db::{lock_pool, DbPool};
@@ -24,11 +25,36 @@ pub async fn refresh(
     pool: DbPool,
     client: reqwest::Client,
     sub_id: String,
+    logs: &AppLog,
 ) -> AppResult<ImportSummary> {
     let subscription = get_subscription(&pool, &sub_id)?;
+
+    logs.info(
+        app_log::Category::Net,
+        format!(
+            "fetching subscription id={} name={}",
+            sub_id, subscription.name
+        ),
+    );
     let fetched = match fetch_subscription(&client, &subscription.url).await {
-        Ok(fetched) => fetched,
+        Ok(fetched) => {
+            logs.info(
+                app_log::Category::Net,
+                format!(
+                    "subscription fetched id={} size={}",
+                    sub_id,
+                    fetched.body.len()
+                ),
+            );
+            fetched
+        }
         Err(error) => {
+            logs.error(
+                app_log::Category::Net,
+                format!(
+                    "subscription fetch failed id={sub_id} message={error}",
+                ),
+            );
             set_refresh_error(&pool, &sub_id, &error.to_string())?;
             return Ok(ImportSummary {
                 subscription_id: sub_id,
@@ -40,8 +66,6 @@ pub async fn refresh(
     };
 
     let decoded = decode_subscription(&fetched.body);
-    // Some panels serve a full Xray JSON client config instead of a vless:// link list;
-    // synthesize link lines from it so the rest of the pipeline stays untouched.
     let source = match extract_vless_uris(&decoded) {
         Some(uris) => uris.join("\n"),
         None => decoded,
@@ -55,6 +79,13 @@ pub async fn refresh(
         .collect::<Vec<_>>();
     let imported = links.len();
     let failed = batch.failures.len();
+
+    logs.info(
+        app_log::Category::Link,
+        format!(
+            "subscription parsed id={sub_id} valid={imported} failed_parse={failed}",
+        ),
+    );
 
     if imported == 0 {
         let error = if failed == 0 {
@@ -82,6 +113,13 @@ pub async fn refresh(
         transaction.commit()?;
     }
 
+    logs.info(
+        app_log::Category::Db,
+        format!(
+            "subscription servers updated id={sub_id} count={imported}",
+        ),
+    );
+
     Ok(ImportSummary {
         subscription_id: sub_id,
         imported,
@@ -90,16 +128,25 @@ pub async fn refresh(
     })
 }
 
-pub async fn refresh_all(pool: DbPool, client: reqwest::Client) -> AppResult<Vec<ImportSummary>> {
+pub async fn refresh_all(
+    pool: DbPool,
+    client: reqwest::Client,
+    logs: &AppLog,
+) -> AppResult<Vec<ImportSummary>> {
     let subscriptions = {
         let guard = lock_pool(&pool)?;
         subscriptions::list_subscriptions(&guard)?
     };
 
+    logs.info(
+        app_log::Category::Net,
+        format!("refreshing {} subscriptions", subscriptions.len()),
+    );
+
     let mut summaries = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions {
         let subscription_id = subscription.id;
-        match refresh(pool.clone(), client.clone(), subscription_id.clone()).await {
+        match refresh(pool.clone(), client.clone(), subscription_id.clone(), logs).await {
             Ok(summary) => summaries.push(summary),
             Err(error) => {
                 let message = error.to_string();

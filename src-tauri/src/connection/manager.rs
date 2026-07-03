@@ -4,7 +4,7 @@ use std::time::Duration;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
-use crate::app_log::AppLog;
+use crate::app_log::{self, AppLog};
 use crate::db::DbPool;
 use crate::db::{lock_pool, servers};
 use crate::error::{AppError, AppResult};
@@ -75,6 +75,13 @@ impl ConnectionManager {
         match self.connect_inner(app, pool, server_id).await {
             Ok(status) => Ok(status),
             Err(error) => {
+                app.state::<AppLog>().error(
+                    app_log::Category::Vpn,
+                    format!(
+                        "connection failed kind={} message={error}",
+                        error.kind()
+                    ),
+                );
                 let _ = self.stop_current_process().await;
                 let _ = self.set_status(
                     app,
@@ -100,7 +107,21 @@ impl ConnectionManager {
         let link = parse_vless_uri(&server.vless_uri)
             .map_err(|error| AppError::Vless(error.to_string()))?;
 
+        app.state::<AppLog>().info(
+            app_log::Category::Net,
+            format!(
+                "TCP healthcheck starting host={}:{}",
+                link.host, link.port
+            ),
+        );
         tcp_check(&link.host, link.port, Duration::from_secs(5)).await?;
+        app.state::<AppLog>().info(
+            app_log::Category::Net,
+            format!(
+                "TCP healthcheck passed host={}:{}",
+                link.host, link.port
+            ),
+        );
         Self::ensure_not_shutting_down(app)?;
 
         self.stop_current_process().await?;
@@ -112,8 +133,17 @@ impl ConnectionManager {
         let tun_options = TunOptions::new(app_data_dir.join("sing-box-cache.db"));
         let outbound = vless_to_outbound(&link);
         let config = build_config(outbound, &tun_options);
+
+        app.state::<AppLog>().info(
+            app_log::Category::Core,
+            "sing-box spawning",
+        );
         let mut process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
         process.ensure_stable().await?;
+        app.state::<AppLog>().info(
+            app_log::Category::Core,
+            "sing-box started and stable",
+        );
         if let Err(error) = Self::ensure_not_shutting_down(app) {
             let _ = process.stop().await;
             return Err(error);
@@ -122,8 +152,12 @@ impl ConnectionManager {
 
         let status = ConnectionStatus::Connected {
             server_id,
-            server_name: server.name,
+            server_name: server.name.clone(),
         };
+        app.state::<AppLog>().info(
+            app_log::Category::Vpn,
+            format!("VPN connected to {}", server.name),
+        );
         let generation = {
             let mut inner = self.lock_inner()?;
             inner.generation = inner.generation.wrapping_add(1);
@@ -140,6 +174,11 @@ impl ConnectionManager {
         let _operation = self.operation.lock().await;
         let server_id = self.active_server_id()?;
         self.set_status(app, ConnectionStatus::Disconnecting { server_id })?;
+
+        app.state::<AppLog>().info(
+            app_log::Category::Vpn,
+            "VPN disconnecting",
+        );
         if let Err(error) = self.stop_current_process().await {
             let _ = self.set_status(
                 app,
@@ -149,6 +188,10 @@ impl ConnectionManager {
             );
             return Err(error);
         }
+        app.state::<AppLog>().info(
+            app_log::Category::Vpn,
+            "VPN disconnected",
+        );
         self.set_status(app, ConnectionStatus::Disconnected)?;
         Ok(ConnectionStatus::Disconnected)
     }
@@ -271,8 +314,10 @@ impl ConnectionManager {
                         message: process_exit.message.clone(),
                     },
                 );
-                app.state::<AppLog>()
-                    .error(format!("connection lost: {}", process_exit.message));
+                app.state::<AppLog>().error(
+                    app_log::Category::Vpn,
+                    format!("connection lost: {}", process_exit.message),
+                );
             }
         });
     }

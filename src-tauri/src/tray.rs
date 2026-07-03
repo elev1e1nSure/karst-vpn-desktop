@@ -2,7 +2,7 @@ use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::{MouseButton, MouseButtonState, TrayIcon, TrayIconBuilder, TrayIconEvent};
 use tauri::{AppHandle, Manager, Wry};
 
-use crate::app_log::AppLog;
+use crate::app_log::{self, AppLog};
 use crate::connection::manager::{ConnectionManager, ConnectionStatus};
 
 const MENU_OPEN: &str = "open";
@@ -18,7 +18,8 @@ pub struct TrayController {
 
 pub fn create(app: &AppHandle) -> tauri::Result<TrayController> {
     let open = MenuItem::with_id(app, MENU_OPEN, "Открыть Karst VPN", true, None::<&str>)?;
-    let disconnect = MenuItem::with_id(app, MENU_DISCONNECT, "Отключить VPN", false, None::<&str>)?;
+    let disconnect =
+        MenuItem::with_id(app, MENU_DISCONNECT, "Отключить VPN", false, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, MENU_QUIT, "Выйти", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &disconnect, &separator, &quit])?;
@@ -61,22 +62,31 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayController> {
 
 pub fn show_main_window(app: &AppHandle) {
     let Some(window) = app.get_webview_window("main") else {
-        app.state::<AppLog>().error("main window is unavailable");
+        app.state::<AppLog>().error(
+            app_log::Category::Service,
+            "main window is unavailable",
+        );
         return;
     };
 
     if let Err(error) = window.unminimize() {
-        app.state::<AppLog>()
-            .error(format!("failed to unminimize main window: {error}"));
+        app.state::<AppLog>().error(
+            app_log::Category::Service,
+            format!("failed to unminimize main window: {error}"),
+        );
     }
     if let Err(error) = window.show() {
-        app.state::<AppLog>()
-            .error(format!("failed to show main window: {error}"));
+        app.state::<AppLog>().error(
+            app_log::Category::Service,
+            format!("failed to show main window: {error}"),
+        );
         return;
     }
     if let Err(error) = window.set_focus() {
-        app.state::<AppLog>()
-            .error(format!("failed to focus main window: {error}"));
+        app.state::<AppLog>().error(
+            app_log::Category::Service,
+            format!("failed to focus main window: {error}"),
+        );
     }
 }
 
@@ -89,8 +99,10 @@ pub fn update_connection_status(app: &AppHandle, status: &ConnectionStatus) {
         ConnectionStatus::Connecting { .. } | ConnectionStatus::Connected { .. }
     );
     if let Err(error) = controller.disconnect.set_enabled(can_disconnect) {
-        app.state::<AppLog>()
-            .error(format!("failed to update tray disconnect action: {error}"));
+        app.state::<AppLog>().error(
+            app_log::Category::Service,
+            format!("failed to update tray disconnect action: {error}"),
+        );
     }
 }
 
@@ -107,13 +119,16 @@ fn disconnect_tunnel(app: &AppHandle) {
     let app = app.clone();
     tauri::async_runtime::spawn(async move {
         let logs = app.state::<AppLog>();
-        logs.info("tray disconnect requested");
+        logs.info(app_log::Category::Vpn, "tray disconnect requested");
         let manager = app.state::<ConnectionManager>();
         if let Err(error) = manager.disconnect(&app).await {
-            logs.error(format!(
-                "tray disconnect failed kind={} message={error}",
-                error.kind()
-            ));
+            logs.error(
+                app_log::Category::Vpn,
+                format!(
+                    "tray disconnect failed kind={} message={error}",
+                    error.kind()
+                ),
+            );
         }
     });
 }

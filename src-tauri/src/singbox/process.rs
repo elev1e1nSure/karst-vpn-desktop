@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 
+use chrono::Utc;
 use serde_json::Value;
 use tauri::AppHandle;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
@@ -77,19 +78,8 @@ impl SingboxProcess {
                     }),
                     _ => None,
                 };
-                let line = match event {
-                    CommandEvent::Stdout(bytes) => prefixed_bytes("stdout", bytes),
-                    CommandEvent::Stderr(bytes) => prefixed_bytes("stderr", bytes),
-                    CommandEvent::Error(error) => format!("[shell-error] {error}\n").into_bytes(),
-                    CommandEvent::Terminated(payload) => format!(
-                        "[terminated] code={:?} signal={:?}\n",
-                        payload.code, payload.signal
-                    )
-                    .into_bytes(),
-                    _ => continue,
-                };
-
-                let _ = append_log(&log_path, &line).await;
+                let line = format_event(&event);
+                let _ = append_log(&log_path, line.as_bytes()).await;
                 if let Some(exit) = exit {
                     observed_exit = true;
                     let _ = tokio::fs::remove_file(&task_pid_path).await;
@@ -207,17 +197,42 @@ fn sidecar_working_dir() -> AppResult<PathBuf> {
             .to_path_buf()
     };
 
-    // wintun.dll must be in the sidecar DLL search path when sing-box starts.
     Ok(path)
 }
 
-fn prefixed_bytes(prefix: &str, bytes: Vec<u8>) -> Vec<u8> {
-    let mut output = format!("[{prefix}] ").into_bytes();
-    output.extend(bytes);
-    if !output.ends_with(b"\n") {
-        output.push(b'\n');
+fn format_event(event: &CommandEvent) -> String {
+    let timestamp = Utc::now().format("%Y-%m-%d %H:%M:%S%.3f");
+    match event {
+        CommandEvent::Stdout(bytes) => {
+            let text = String::from_utf8_lossy(bytes);
+            format!(
+                "[{}] [DEBUG] [CORE] stdout: {}",
+                timestamp,
+                text.trim_end()
+            )
+        }
+        CommandEvent::Stderr(bytes) => {
+            let text = String::from_utf8_lossy(bytes);
+            format!(
+                "[{}] [DEBUG] [CORE] stderr: {}",
+                timestamp,
+                text.trim_end()
+            )
+        }
+        CommandEvent::Error(error) => {
+            format!(
+                "[{}] [ERROR] [CORE] shell-error: {}",
+                timestamp, error
+            )
+        }
+        CommandEvent::Terminated(payload) => {
+            format!(
+                "[{}] [INFO] [CORE] terminated code={:?} signal={:?}",
+                timestamp, payload.code, payload.signal
+            )
+        }
+        _ => String::new(),
     }
-    output
 }
 
 async fn append_log(path: &Path, bytes: &[u8]) -> AppResult<()> {
@@ -228,6 +243,7 @@ async fn append_log(path: &Path, bytes: &[u8]) -> AppResult<()> {
         .open(path)
         .await?;
     file.write_all(bytes).await?;
+    file.write_all(b"\n").await?;
     Ok(())
 }
 

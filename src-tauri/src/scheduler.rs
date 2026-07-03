@@ -7,7 +7,7 @@ use tauri::async_runtime::JoinHandle;
 use tauri::{AppHandle, Manager};
 use tokio::sync::watch;
 
-use crate::app_log::AppLog;
+use crate::app_log::{self, AppLog};
 use crate::db::lock_pool;
 use crate::db::settings;
 use crate::db::subscriptions::{self, SubscriptionRecord};
@@ -97,10 +97,13 @@ async fn run_scheduler(
                 continue;
             }
             Err(error) => {
-                app.state::<AppLog>().error(format!(
-                    "subscription scheduler failed kind={} message={error}",
-                    error.kind()
-                ));
+                app.state::<AppLog>().error(
+                    app_log::Category::Service,
+                    format!(
+                        "subscription scheduler failed kind={} message={error}",
+                        error.kind()
+                    ),
+                );
                 Duration::from_secs(60 * 60)
             }
         };
@@ -113,10 +116,13 @@ async fn run_scheduler(
             }
             _ = tokio::time::sleep(delay) => {
                 if let Err(error) = refresh_due(pool.clone(), client.clone(), &app).await {
-                    app.state::<AppLog>().error(format!(
-                        "scheduled subscription refresh failed kind={} message={error}",
-                        error.kind()
-                    ));
+                    app.state::<AppLog>().error(
+                        app_log::Category::Service,
+                        format!(
+                            "scheduled subscription refresh failed kind={} message={error}",
+                            error.kind()
+                        ),
+                    );
                 }
             }
         }
@@ -135,7 +141,9 @@ fn next_delay(pool: &DbPool) -> AppResult<Option<Duration>> {
             let now = Utc::now();
             let min_seconds = subscriptions
                 .iter()
-                .map(|subscription| seconds_until_due(subscription, &mode, configured_hours, now))
+                .map(|subscription| {
+                    seconds_until_due(subscription, &mode, configured_hours, now)
+                })
                 .min()
                 .unwrap_or(DEFAULT_REFRESH_HOURS * 60 * 60)
                 .max(60);
@@ -163,20 +171,30 @@ async fn refresh_due(pool: DbPool, client: reqwest::Client, app: &AppHandle) -> 
     };
 
     for subscription_id in due_ids {
-        match refresh(pool.clone(), client.clone(), subscription_id.clone()).await {
-            Ok(summary) if summary.error.is_none() => app.state::<AppLog>().info(format!(
-                "scheduled subscription refresh finished id={} imported={} failed={}",
-                summary.subscription_id, summary.imported, summary.failed
-            )),
-            Ok(summary) => app.state::<AppLog>().warn(format!(
-                "scheduled subscription refresh completed with error id={} error={}",
-                summary.subscription_id,
-                summary.error.as_deref().unwrap_or("unknown")
-            )),
-            Err(error) => app.state::<AppLog>().error(format!(
-                "scheduled subscription refresh failed id={subscription_id} kind={} message={error}",
-                error.kind()
-            )),
+        let logs = app.state::<AppLog>();
+        match refresh(pool.clone(), client.clone(), subscription_id.clone(), &*logs).await {
+            Ok(summary) if summary.error.is_none() => app.state::<AppLog>().info(
+                app_log::Category::Net,
+                format!(
+                    "scheduled subscription refresh finished id={} imported={} failed={}",
+                    summary.subscription_id, summary.imported, summary.failed
+                ),
+            ),
+            Ok(summary) => app.state::<AppLog>().warn(
+                app_log::Category::Net,
+                format!(
+                    "scheduled subscription refresh completed with error id={} error={}",
+                    summary.subscription_id,
+                    summary.error.as_deref().unwrap_or("unknown")
+                ),
+            ),
+            Err(error) => app.state::<AppLog>().error(
+                app_log::Category::Net,
+                format!(
+                    "scheduled subscription refresh failed id={subscription_id} kind={} message={error}",
+                    error.kind()
+                ),
+            ),
         }
     }
     Ok(())
