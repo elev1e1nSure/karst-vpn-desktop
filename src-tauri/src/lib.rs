@@ -38,7 +38,6 @@ pub fn run() {
                         error.kind()
                     ),
                 );
-                return Err(error.into());
             }
             let pool = db::open(&app_data_dir.join("karst.sqlite3"))?;
             let client = reqwest::Client::builder()
