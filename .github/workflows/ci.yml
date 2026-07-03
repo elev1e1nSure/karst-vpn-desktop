@@ -11,6 +11,10 @@ permissions:
 jobs:
   check:
     runs-on: windows-latest
+    env:
+      # runner image ships a default NPM_CONFIG_REGISTRY pointing at an
+      # internal mirror that has been timing out; force the public registry
+      NPM_CONFIG_REGISTRY: https://registry.npmjs.org/
     steps:
       - uses: actions/checkout@v4
 
