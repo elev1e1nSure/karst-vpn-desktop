@@ -35,6 +35,8 @@ pub struct SingboxProcess {
 
 impl SingboxProcess {
     pub async fn spawn(app: &AppHandle, config: &Value, app_data_dir: &Path) -> AppResult<Self> {
+        verify_sidecar()?;
+
         tokio::fs::create_dir_all(app_data_dir).await?;
         let config_path = app_data_dir.join("sing-box-config.json");
         let config_bytes = serde_json::to_vec_pretty(config)?;
@@ -272,5 +274,47 @@ async fn rotate_log_if_needed(path: &Path) -> AppResult<()> {
         tokio::fs::remove_file(&rotated).await?;
     }
     tokio::fs::rename(path, rotated).await?;
+    Ok(())
+}
+
+fn verify_sidecar() -> AppResult<()> {
+    let expected = env!("SINGBOX_SHA256");
+    let dir = sidecar_working_dir()?;
+    let path = std::fs::read_dir(&dir)
+        .map_err(|error| {
+            AppError::Singbox(format!("cannot read sidecar directory for integrity check: {error}"))
+        })?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .find(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.starts_with("sing-box") && name.ends_with(".exe"))
+        })
+        .ok_or_else(|| AppError::Singbox("sing-box sidecar not found".to_string()))?;
+
+    let mut file = std::fs::File::open(&path).map_err(|error| {
+        AppError::Singbox(format!("cannot open sing-box sidecar for integrity check: {error}"))
+    })?;
+
+    use sha2::Digest;
+    let mut hasher = sha2::Sha256::new();
+    let mut buffer = [0u8; 8192];
+    loop {
+        let count = std::io::Read::read(&mut file, &mut buffer).map_err(|error| {
+            AppError::Singbox(format!("cannot read sing-box sidecar for integrity check: {error}"))
+        })?;
+        if count == 0 {
+            break;
+        }
+        hasher.update(&buffer[..count]);
+    }
+    let actual = hex::encode(hasher.finalize());
+
+    if actual != expected {
+        return Err(AppError::Singbox(format!(
+            "sing-box sidecar integrity check failed (expected {expected})",
+        )));
+    }
     Ok(())
 }
