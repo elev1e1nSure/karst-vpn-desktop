@@ -20,6 +20,8 @@ export function useServerCatalog({ isBusy, setIsBusy, setAppError }: ServerCatal
   const [subscriptionMenuId, setSubscriptionMenuId] = useState<string | null>(null);
   const [addServerOpen, setAddServerOpen] = useState(false);
   const [addServerValue, setAddServerValue] = useState('');
+  const addServerValueRef = useRef(addServerValue);
+  addServerValueRef.current = addServerValue;
   const [addServerError, setAddServerError] = useState('');
   const [addServerLoading, setAddServerLoading] = useState(false);
   const [importMessage, setImportMessage] = useState('');
@@ -165,7 +167,7 @@ export function useServerCatalog({ isBusy, setIsBusy, setAppError }: ServerCatal
   };
 
   const submitAddServer = async () => {
-    const value = addServerValue.trim();
+    const value = addServerValueRef.current.trim();
     if (!value) {
       setAddServerError('Вставь vless:// ссылку или https:// подписку');
       return;
