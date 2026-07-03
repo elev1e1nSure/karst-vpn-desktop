@@ -37,6 +37,8 @@ impl SingboxProcess {
     pub async fn spawn(app: &AppHandle, config: &Value, app_data_dir: &Path) -> AppResult<Self> {
         verify_sidecar()?;
 
+        super::tun_cleanup::remove_adapter_if_exists("Karst VPN");
+
         tokio::fs::create_dir_all(app_data_dir).await?;
         let config_path = app_data_dir.join("sing-box-config.json");
         let config_bytes = serde_json::to_vec_pretty(config)?;
