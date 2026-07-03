@@ -21,6 +21,25 @@ pub fn open(path: &std::path::Path) -> AppResult<DbPool> {
         std::fs::create_dir_all(parent)?;
     }
 
+    match try_open(path) {
+        Ok(pool) => Ok(pool),
+        Err(open_error) => {
+            let backup = path.with_file_name(format!(
+                "karst.sqlite3.corrupt.{}",
+                chrono::Utc::now().format("%Y%m%d_%H%M%S")
+            ));
+            let _ = std::fs::rename(path, &backup);
+            match try_open(path) {
+                Ok(pool) => Ok(pool),
+                Err(error) => Err(AppError::Internal(format!(
+                    "database recreated after corruption (original error: {open_error}), but fresh open also failed: {error}",
+                ))),
+            }
+        }
+    }
+}
+
+fn try_open(path: &std::path::Path) -> AppResult<DbPool> {
     let connection = Connection::open(path)?;
     connection.pragma_update(None, "journal_mode", "WAL")?;
     connection.pragma_update(None, "busy_timeout", "5000")?;
