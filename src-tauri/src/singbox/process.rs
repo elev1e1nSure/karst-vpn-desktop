@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use chrono::Utc;
+use chrono::Local;
 use serde_json::Value;
 use tauri::AppHandle;
 use tauri_plugin_shell::process::{CommandChild, CommandEvent};
@@ -201,7 +201,7 @@ fn sidecar_working_dir() -> AppResult<PathBuf> {
 }
 
 fn format_event(event: &CommandEvent) -> String {
-    let timestamp = Utc::now().format("%Y-%m-%d %H:%M:%S%.3f");
+    let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
     match event {
         CommandEvent::Stdout(bytes) => {
             let text = String::from_utf8_lossy(bytes);

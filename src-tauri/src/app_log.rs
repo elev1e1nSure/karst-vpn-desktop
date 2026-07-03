@@ -3,7 +3,7 @@ use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex};
 
-use chrono::Utc;
+use chrono::Local;
 use regex::Regex;
 use url::Url;
 
@@ -138,7 +138,7 @@ impl AppLog {
         self.rotate_if_needed()?;
 
         let sanitized = sanitize(message);
-        let timestamp = Utc::now().format("%Y-%m-%d %H:%M:%S%.3f");
+        let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S%.3f");
         let line = format!(
             "[{}] [{}] [{}] {}",
             timestamp,
