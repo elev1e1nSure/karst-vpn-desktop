@@ -15,7 +15,9 @@ use crate::db::DbPool;
 use crate::error::{AppError, AppResult};
 use crate::subscription::refresh::refresh;
 
-const DEFAULT_REFRESH_HOURS: u64 = 24;
+pub const MIN_REFRESH_HOURS: u64 = 1;
+pub const MAX_REFRESH_HOURS: u64 = 24 * 365;
+pub const DEFAULT_REFRESH_HOURS: u64 = 24;
 const RETRY_DELAY_SECONDS: u64 = 15 * 60;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -208,15 +210,12 @@ fn seconds_until_due(
 ) -> u64 {
     let interval_seconds = match mode {
         AutoRefreshMode::Off => return u64::MAX,
-        AutoRefreshMode::EveryHours => configured_hours.max(1) * 60 * 60,
-        AutoRefreshMode::Auto => {
+        AutoRefreshMode::EveryHours => hours_to_seconds(configured_hours),
+        AutoRefreshMode::Auto => hours_to_seconds(
             subscription
                 .profile_update_interval_hours
-                .unwrap_or(DEFAULT_REFRESH_HOURS)
-                .max(1)
-                * 60
-                * 60
-        }
+                .unwrap_or(DEFAULT_REFRESH_HOURS),
+        ),
     };
     let (last_attempt, delay_seconds) = if subscription.last_refresh_error.is_some() {
         (
@@ -233,4 +232,12 @@ fn seconds_until_due(
     };
     let due_at = last_attempt + chrono::Duration::seconds(delay_seconds as i64);
     (due_at - now).num_seconds().max(0) as u64
+}
+
+pub fn normalize_refresh_hours(hours: u64) -> u64 {
+    hours.clamp(MIN_REFRESH_HOURS, MAX_REFRESH_HOURS)
+}
+
+fn hours_to_seconds(hours: u64) -> u64 {
+    normalize_refresh_hours(hours) * 60 * 60
 }

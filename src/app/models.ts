@@ -32,7 +32,7 @@ function formatBytes(bytes: number): string {
   return `${value >= 10 || exponent === 0 ? Math.round(value) : value.toFixed(1)} ${units[exponent]}`;
 }
 
-// Parses the standard "Subscription-Userinfo" header format:
+// `Subscription-Userinfo` response header format:
 // "upload=123; download=456; total=789; expire=1735689600"
 function parseSubscriptionUserinfo(raw: string): Partial<Record<string, number>> {
   const fields: Partial<Record<string, number>> = {};

@@ -6,6 +6,30 @@ import { isRoutingMode } from '../../app/presentation';
 import type { AutoRefreshMode, RoutingMode, SettingsDto } from '../../app/types';
 import { DARK_THEME, LIGHT_THEME } from '../../ui/theme';
 
+const AUTO_REFRESH_MODE_BY_DTO: Record<string, AutoRefreshMode> = {
+  auto: 'Auto',
+  off: 'Off',
+  every_hours: 'EveryHours',
+};
+
+const ROUTING_MODE_BY_DTO: Record<string, RoutingMode> = {
+  full: 'Full',
+  bypass_local: 'BypassLocal',
+  bypass_ru: 'BypassRu',
+};
+
+const AUTO_REFRESH_MODE_TO_DTO: Record<AutoRefreshMode, string> = {
+  Auto: 'auto',
+  Off: 'off',
+  EveryHours: 'every_hours',
+};
+
+const ROUTING_MODE_TO_DTO: Record<RoutingMode, string> = {
+  Full: 'full',
+  BypassLocal: 'bypass_local',
+  BypassRu: 'bypass_ru',
+};
+
 export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
   const [visible, setVisible] = useState(false);
   const [closing, setClosing] = useState(false);
@@ -27,19 +51,24 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     void getCurrentWindow().setTheme(darkModeOn ? 'dark' : 'light');
   }, [darkModeOn]);
 
-  const hydrate = useCallback((settings: SettingsDto) => {
-    const modeMap: Record<string, AutoRefreshMode> = {
-      auto: 'Auto',
-      off: 'Off',
-      every_hours: 'EveryHours',
-    };
-    setAutoRefreshMode(modeMap[settings.auto_refresh_mode] ?? 'Auto');
-    setAutoRefreshHours(settings.auto_refresh_hours);
-    const savedTheme = localStorage.getItem('karst-dark-mode');
-    if (savedTheme !== null) setDarkModeOn(savedTheme === 'true');
-    const savedRouting = localStorage.getItem('karst-routing-mode');
-    if (savedRouting && isRoutingMode(savedRouting)) setRoutingMode(savedRouting);
-  }, []);
+  const hydrate = useCallback(
+    (settings: SettingsDto) => {
+      setAutoRefreshMode(AUTO_REFRESH_MODE_BY_DTO[settings.auto_refresh_mode] ?? 'Auto');
+      setAutoRefreshHours(settings.auto_refresh_hours);
+      const savedTheme = localStorage.getItem('karst-dark-mode');
+      if (savedTheme !== null) setDarkModeOn(savedTheme === 'true');
+      const savedRouting = localStorage.getItem('karst-routing-mode');
+      const backendRouting = ROUTING_MODE_BY_DTO[settings.routing_mode] ?? 'BypassRu';
+      const routing = savedRouting && isRoutingMode(savedRouting) ? savedRouting : backendRouting;
+      setRoutingMode(routing);
+      if (routing !== backendRouting) {
+        void commands.setRoutingMode(ROUTING_MODE_TO_DTO[routing]).catch((error) => {
+          setAppError(getErrorMessage(error));
+        });
+      }
+    },
+    [setAppError],
+  );
 
   const open = () => {
     if (visible) return;
@@ -72,15 +101,20 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     requestAnimationFrame(() => setThemeBusy(false));
   };
 
-  const setRouting = (mode: RoutingMode) => {
-    setRoutingMode(mode);
-    localStorage.setItem('karst-routing-mode', mode);
+  const setRouting = async (mode: RoutingMode) => {
+    try {
+      await commands.setRoutingMode(ROUTING_MODE_TO_DTO[mode]);
+      setRoutingMode(mode);
+      localStorage.setItem('karst-routing-mode', mode);
+      setAppError('');
+    } catch (error) {
+      setAppError(getErrorMessage(error));
+    }
   };
 
   const setAutoRefresh = async (mode: AutoRefreshMode) => {
-    const commandMode = mode === 'Auto' ? 'auto' : mode === 'Off' ? 'off' : 'every_hours';
     try {
-      await commands.setAutoRefreshSettings(commandMode, null);
+      await commands.setAutoRefreshSettings(AUTO_REFRESH_MODE_TO_DTO[mode], null);
       setAutoRefreshMode(mode);
       setAppError('');
     } catch (error) {

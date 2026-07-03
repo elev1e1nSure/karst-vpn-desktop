@@ -3,9 +3,11 @@ use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::error::{AppError, AppResult};
 use crate::scheduler::AutoRefreshMode;
+use crate::singbox::route_rules::RoutingMode;
 
 pub const AUTO_REFRESH_MODE_KEY: &str = "auto_refresh_mode";
 pub const AUTO_REFRESH_HOURS_KEY: &str = "auto_refresh_hours";
+pub const ROUTING_MODE_KEY: &str = "routing_mode";
 
 pub fn get_setting(connection: &Connection, key: &str) -> AppResult<Option<String>> {
     connection
@@ -46,18 +48,35 @@ pub fn set_auto_refresh_mode(connection: &Connection, value: AutoRefreshMode) ->
 pub fn get_auto_refresh_hours(connection: &Connection) -> AppResult<u64> {
     let value =
         get_setting(connection, AUTO_REFRESH_HOURS_KEY)?.unwrap_or_else(|| "24".to_string());
-    Ok(value
-        .parse::<u64>()
-        .ok()
-        .filter(|hours| *hours > 0)
-        .unwrap_or(24))
+    Ok(crate::scheduler::normalize_refresh_hours(
+        value
+            .parse::<u64>()
+            .ok()
+            .unwrap_or(crate::scheduler::DEFAULT_REFRESH_HOURS),
+    ))
 }
 
 pub fn set_auto_refresh_hours(connection: &Connection, hours: u64) -> AppResult<()> {
-    if hours == 0 {
+    if !(crate::scheduler::MIN_REFRESH_HOURS..=crate::scheduler::MAX_REFRESH_HOURS)
+        .contains(&hours)
+    {
         return Err(AppError::InvalidInput(
-            "auto refresh hours must be positive".to_string(),
+            format!(
+                "auto refresh hours must be between {} and {}",
+                crate::scheduler::MIN_REFRESH_HOURS,
+                crate::scheduler::MAX_REFRESH_HOURS
+            ),
         ));
     }
     set_setting(connection, AUTO_REFRESH_HOURS_KEY, &hours.to_string())
+}
+
+pub fn get_routing_mode(connection: &Connection) -> AppResult<RoutingMode> {
+    let value = get_setting(connection, ROUTING_MODE_KEY)?
+        .unwrap_or_else(|| RoutingMode::BypassRu.as_str().to_string());
+    Ok(RoutingMode::try_from(value.as_str()).unwrap_or(RoutingMode::BypassRu))
+}
+
+pub fn set_routing_mode(connection: &Connection, value: RoutingMode) -> AppResult<()> {
+    set_setting(connection, ROUTING_MODE_KEY, value.as_str())
 }

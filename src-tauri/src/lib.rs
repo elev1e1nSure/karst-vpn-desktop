@@ -108,6 +108,7 @@ pub fn run() {
             commands::servers::ping_servers,
             commands::settings::get_settings,
             commands::settings::set_auto_refresh_settings,
+            commands::settings::set_routing_mode,
             commands::logs::list_logs,
             commands::logs::clear_logs,
             commands::connection::connect,

@@ -29,6 +29,7 @@ pub struct SingboxProcess {
     log_task: JoinHandle<()>,
     exit: watch::Receiver<Option<ProcessExit>>,
     pid_path: PathBuf,
+    config_path: PathBuf,
     _guard: ProcessGuard,
 }
 
@@ -99,6 +100,7 @@ impl SingboxProcess {
             log_task,
             exit: exit_rx,
             pid_path,
+            config_path,
             _guard: guard,
         })
     }
@@ -134,6 +136,7 @@ impl SingboxProcess {
         }
         self.log_task.abort();
         remove_pid_file(&self.pid_path)?;
+        remove_config_file(&self.config_path);
         Ok(())
     }
 
@@ -145,6 +148,7 @@ impl SingboxProcess {
         }
         self.log_task.abort();
         remove_pid_file(&self.pid_path)?;
+        remove_config_file(&self.config_path);
         Ok(())
     }
 
@@ -171,6 +175,7 @@ impl Drop for SingboxProcess {
 }
 
 pub fn recover_stale_process(app_data_dir: &Path) -> AppResult<()> {
+    let _ = std::fs::remove_file(app_data_dir.join("sing-box-config.json"));
     process_guard::recover_stale_process(&app_data_dir.join(PID_FILE), &sidecar_working_dir()?)
 }
 
@@ -180,6 +185,10 @@ fn remove_pid_file(path: &Path) -> AppResult<()> {
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
         Err(error) => Err(error.into()),
     }
+}
+
+fn remove_config_file(path: &Path) {
+    let _ = std::fs::remove_file(path);
 }
 
 fn sidecar_working_dir() -> AppResult<PathBuf> {

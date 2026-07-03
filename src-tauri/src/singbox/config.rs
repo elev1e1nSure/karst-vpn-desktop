@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use serde_json::{json, Value};
 
-use super::route_rules::default_route_rules;
+use super::route_rules::{route_rules, RoutingMode};
 
 #[derive(Debug, Clone)]
 pub struct TunOptions {
@@ -27,7 +27,7 @@ impl TunOptions {
     }
 }
 
-pub fn build_config(outbound: Value, tun: &TunOptions) -> Value {
+pub fn build_config(outbound: Value, tun: &TunOptions, routing_mode: RoutingMode) -> Value {
     json!({
         "log": {
             "level": "info",
@@ -74,7 +74,7 @@ pub fn build_config(outbound: Value, tun: &TunOptions) -> Value {
             }
         ],
         "route": {
-            "rules": default_route_rules(),
+            "rules": route_rules(routing_mode),
             "rule_set": [],
             "final": "proxy",
             "auto_detect_interface": true,

@@ -4,12 +4,11 @@ import { polyfillCountryFlagEmojis } from 'country-flag-emoji-polyfill';
 import twemojiCountryFlagsUrl from './assets/fonts/TwemojiCountryFlags.woff2?url';
 import { App } from './App';
 
-// WebView2/Chromium on Windows renders regional-indicator flag emoji as raw letters (e.g. "SE")
-// instead of a flag glyph. Font is bundled locally (not fetched from the default CDN) since this
-// is a VPN client — network access at startup isn't guaranteed.
+// WebView2 on Windows renders regional-indicator flag emoji as raw letters instead of
+// a flag glyph. The font is bundled locally — not fetched from the polyfill's default CDN —
+// because network access at startup isn't guaranteed for a VPN client.
 polyfillCountryFlagEmojis('Twemoji Country Flags', twemojiCountryFlagsUrl);
 
-// Disable right-click context menu and reload/devtools hotkeys for a native desktop feel
 if (typeof window !== 'undefined') {
   document.addEventListener('contextmenu', (e) => e.preventDefault());
   document.addEventListener('keydown', (e) => {

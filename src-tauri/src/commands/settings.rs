@@ -7,6 +7,7 @@ use crate::db::DbPool;
 use crate::dto::SettingsDto;
 use crate::error::AppResult;
 use crate::scheduler::{AutoRefreshMode, ScheduleHandle};
+use crate::singbox::route_rules::RoutingMode;
 
 #[tauri::command]
 pub fn get_settings(pool: State<'_, DbPool>) -> AppResult<SettingsDto> {
@@ -16,6 +17,7 @@ pub fn get_settings(pool: State<'_, DbPool>) -> AppResult<SettingsDto> {
             .as_str()
             .to_string(),
         auto_refresh_hours: settings::get_auto_refresh_hours(&guard)?,
+        routing_mode: settings::get_routing_mode(&guard)?.as_str().to_string(),
     })
 }
 
@@ -48,6 +50,25 @@ pub fn set_auto_refresh_settings(
                 .map(|value| value.to_string())
                 .unwrap_or_else(|| "unchanged".to_string())
         ),
+    );
+    get_settings(pool)
+}
+
+#[tauri::command]
+pub fn set_routing_mode(
+    pool: State<'_, DbPool>,
+    logs: State<'_, AppLog>,
+    mode: String,
+) -> AppResult<SettingsDto> {
+    let mode = RoutingMode::try_from(mode.as_str())?;
+    let mode_label = mode.as_str();
+    {
+        let guard = db::lock_pool(pool.inner())?;
+        settings::set_routing_mode(&guard, mode)?;
+    }
+    logs.info(
+        app_log::Category::Service,
+        format!("settings updated routing_mode={mode_label}"),
     );
     get_settings(pool)
 }

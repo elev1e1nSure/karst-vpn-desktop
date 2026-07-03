@@ -42,5 +42,3 @@ export function useSheetDrag(onClose: () => void) {
     },
   };
 }
-
-// ─── Main App ─────────────────────────────────────────────────────────────────

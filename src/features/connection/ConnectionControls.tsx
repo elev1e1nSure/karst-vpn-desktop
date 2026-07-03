@@ -4,8 +4,6 @@ import type { Phase } from '../../app/types';
 import { mood } from '../../app/presentation';
 import type { Theme } from '../../ui/theme';
 
-// ─── Connect Button ───────────────────────────────────────────────────────────
-
 export function ConnectButton({
   phase,
   enabled,
@@ -45,7 +43,6 @@ export function ConnectButton({
         justifyContent: 'center',
       }}
     >
-      {/* pulse ring */}
       <div
         className={ringClass}
         style={{
@@ -111,8 +108,6 @@ export function ConnectButton({
     </div>
   );
 }
-
-// ─── Location Chip ────────────────────────────────────────────────────────────
 
 export function LocationChip({
   server,

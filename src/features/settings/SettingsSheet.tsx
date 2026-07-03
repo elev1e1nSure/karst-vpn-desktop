@@ -59,7 +59,7 @@ const ROUTING_LABELS: Record<RoutingMode, string> = {
 const ROUTING_SUBTITLES: Record<RoutingMode, string> = {
   Full: 'Весь трафик идёт через сервер, без исключений',
   BypassLocal: 'Локальная сеть — напрямую, остальное через VPN',
-  BypassRu: 'Российские сайты и локальная сеть — напрямую',
+  BypassRu: 'Домены .ru, .su, .рф и локальная сеть — напрямую',
 };
 const REFRESH_LABELS: Record<AutoRefreshMode, string> = {
   Auto: 'Авто',
@@ -507,6 +507,4 @@ function ToggleRow({
   );
 }
 
-// ─── Draggable bottom sheet ───────────────────────────────────────────────────
-// Lets a bottom sheet be dragged down (from its handle) to dismiss it, snapping
-// back if released before the close threshold.
+// Dragged-down bottom sheet: snaps back if released before the close threshold.

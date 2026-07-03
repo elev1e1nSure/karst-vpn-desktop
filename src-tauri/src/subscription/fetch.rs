@@ -68,7 +68,10 @@ fn parse_metadata(headers: &HeaderMap) -> SubscriptionMetadata {
         announce: header_text(headers, "Announce"),
         profile_update_interval_hours: header_text(headers, "Profile-Update-Interval")
             .and_then(|value| value.parse::<u64>().ok())
-            .filter(|value| *value > 0),
+            .filter(|value| {
+                (crate::scheduler::MIN_REFRESH_HOURS..=crate::scheduler::MAX_REFRESH_HOURS)
+                    .contains(value)
+            }),
         profile_web_page_url: header_text(headers, "Profile-Web-Page-Url"),
         routing_enable: header_text(headers, "Routing-Enable").and_then(|value| {
             match value.to_ascii_lowercase().as_str() {

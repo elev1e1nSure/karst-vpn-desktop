@@ -7,7 +7,7 @@ use tauri::{AppHandle, Manager};
 use crate::app_log::{self, AppLog};
 use crate::connection::killswitch::KillSwitch;
 use crate::db::DbPool;
-use crate::db::{lock_pool, servers};
+use crate::db::{lock_pool, servers, settings};
 use crate::error::{AppError, AppResult};
 use crate::healthcheck::tcp_check;
 use crate::singbox::config::{build_config, TunOptions};
@@ -103,9 +103,12 @@ impl ConnectionManager {
         pool: DbPool,
         server_id: String,
     ) -> AppResult<ConnectionStatus> {
-        let server = {
+        let (server, routing_mode) = {
             let guard = lock_pool(&pool)?;
-            servers::get_server(&guard, &server_id)?
+            (
+                servers::get_server(&guard, &server_id)?,
+                settings::get_routing_mode(&guard)?,
+            )
         };
         let link = parse_vless_uri(&server.vless_uri)
             .map_err(|error| AppError::Vless(error.to_string()))?;
@@ -151,11 +154,11 @@ impl ConnectionManager {
             .map_err(|error| AppError::Io(std::io::Error::other(error)))?;
         let tun_options = TunOptions::new(app_data_dir.join("sing-box-cache.db"));
         let outbound = vless_to_outbound(&link);
-        let config = build_config(outbound, &tun_options);
+        let config = build_config(outbound, &tun_options, routing_mode);
 
         app.state::<AppLog>().info(
             app_log::Category::Core,
-            "sing-box spawning",
+            format!("sing-box spawning routing_mode={}", routing_mode.as_str()),
         );
         let mut process = match SingboxProcess::spawn(app, &config, &app_data_dir).await {
             Ok(process) => process,

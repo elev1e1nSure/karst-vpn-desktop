@@ -27,6 +27,7 @@ export const commands = {
   refreshAllSubscriptions: () => invoke<ImportSummaryDto[]>('refresh_all_subscriptions'),
   setAutoRefreshSettings: (mode: string, hours: number | null) =>
     invoke<SettingsDto>('set_auto_refresh_settings', { mode, hours }),
+  setRoutingMode: (mode: string) => invoke<SettingsDto>('set_routing_mode', { mode }),
   listLogs: () => invoke<LogEntryDto[]>('list_logs'),
   clearLogs: () => invoke<void>('clear_logs'),
 };

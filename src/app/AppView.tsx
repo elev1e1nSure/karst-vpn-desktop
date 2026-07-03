@@ -115,7 +115,6 @@ export function AppView({ controller }: AppViewProps) {
   );
 
   return (
-    /* Root: fills the entire window, provides the theme background */
     <div
       className={themeBusy ? 'no-transitions' : ''}
       style={{
@@ -127,7 +126,6 @@ export function AppView({ controller }: AppViewProps) {
         ...themeVars(theme),
       }}
     >
-      {/* ── Main screen ───────────────────────────────────────────── */}
       <div
         className={
           appScreen === 'main' && screenDir === 'back'
@@ -152,7 +150,6 @@ export function AppView({ controller }: AppViewProps) {
           pointerEvents: appScreen !== 'main' ? 'none' : undefined,
         }}
       >
-        {/* Header */}
         <div
           style={{
             display: 'flex',
@@ -195,7 +192,6 @@ export function AppView({ controller }: AppViewProps) {
           </Tooltip>
         </div>
 
-        {/* Center Stage */}
         <div
           style={{
             flex: 1,
@@ -252,10 +248,8 @@ export function AppView({ controller }: AppViewProps) {
           </div>
         </div>
 
-        {/* Location Chip */}
         <LocationChip server={selectedServer} theme={theme} onClick={onOpenServerMenu} />
 
-        {/* Server Menu Overlay */}
         {menuVisible && (
           <>
             <div
@@ -317,7 +311,6 @@ export function AppView({ controller }: AppViewProps) {
           </>
         )}
 
-        {/* Settings Overlay */}
         {settingsVisible && (
           <>
             <div
@@ -360,7 +353,7 @@ export function AppView({ controller }: AppViewProps) {
                 autoRefreshMode={autoRefreshMode}
                 autoRefreshHours={autoRefreshHours}
                 onToggleDarkMode={onToggleDarkMode}
-                onSetRoutingMode={handleSetRoutingMode}
+                onSetRoutingMode={(m) => void handleSetRoutingMode(m)}
                 onSetAutoRefreshMode={(m) => void handleSetAutoRefreshMode(m)}
                 onSetAutoRefreshHours={(h) => void handleSetAutoRefreshHours(h)}
                 onOpenLogs={onOpenLogs}
@@ -369,9 +362,7 @@ export function AppView({ controller }: AppViewProps) {
           </>
         )}
       </div>
-      {/* end main screen */}
 
-      {/* ── Logs screen ─────────────────────────────────────────────────── */}
       {appScreen === 'logs' && (
         <div
           className={screenDir === 'forward' ? 'route-enter-from-right' : 'route-enter-from-left'}
@@ -388,8 +379,6 @@ export function AppView({ controller }: AppViewProps) {
           />
         </div>
       )}
-
-      {/* ── Toast ────────────────────────────────────────────────────────── */}
       {toastMessage &&
         createPortal(
           <div
