@@ -39,6 +39,15 @@ pub fn run() {
                     ),
                 );
             }
+            if let Err(error) = connection::killswitch::KillSwitch::recover_stale() {
+                app.state::<app_log::AppLog>().error(
+                    app_log::Category::Service,
+                    format!(
+                        "stale kill switch cleanup failed kind={} message={error}",
+                        error.kind()
+                    ),
+                );
+            }
             let pool = db::open(&app_data_dir.join("karst.sqlite3"))?;
             let client = reqwest::Client::builder()
                 .user_agent(concat!("Karst VPN Desktop/", env!("CARGO_PKG_VERSION")))
