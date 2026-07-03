@@ -8,6 +8,7 @@ use tauri::{AppHandle, Manager};
 use tokio::sync::watch;
 
 use crate::app_log::{self, AppLog};
+use crate::connection::manager::{ConnectionManager, ConnectionStatus};
 use crate::db::lock_pool;
 use crate::db::settings;
 use crate::db::subscriptions::{self, SubscriptionRecord};
@@ -171,6 +172,22 @@ async fn refresh_due(pool: DbPool, client: reqwest::Client, app: &AppHandle) -> 
             .map(|subscription| subscription.id)
             .collect::<Vec<_>>()
     };
+
+    if due_ids.is_empty() {
+        return Ok(());
+    }
+
+    let vpn_connected = matches!(
+        app.state::<ConnectionManager>().status(),
+        Ok(ConnectionStatus::Connected { .. })
+    );
+    if vpn_connected {
+        app.state::<AppLog>().info(
+            app_log::Category::Net,
+            "skipping subscription refresh while VPN is connected",
+        );
+        return Ok(());
+    }
 
     for subscription_id in due_ids {
         let logs = app.state::<AppLog>();
