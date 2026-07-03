@@ -99,6 +99,16 @@ impl AppLog {
 
         self.extend_file(
             &mut entries,
+            "app.1",
+            &self.app_data_dir.join("app.log.1"),
+        )?;
+        self.extend_file(
+            &mut entries,
+            "app",
+            &self.path(),
+        )?;
+        self.extend_file(
+            &mut entries,
             "sing-box.1",
             &self.app_data_dir.join(SINGBOX_ROTATED_LOG_FILE),
         )?;
@@ -107,7 +117,6 @@ impl AppLog {
             "sing-box",
             &self.app_data_dir.join(SINGBOX_LOG_FILE),
         )?;
-        self.extend_file(&mut entries, "app", &self.path())?;
 
         if entries.len() > MAX_LINES {
             entries = entries.split_off(entries.len() - MAX_LINES);
@@ -120,6 +129,7 @@ impl AppLog {
         let _guard = self.lock()?;
         for path in [
             self.path(),
+            self.app_data_dir.join("app.log.1"),
             self.app_data_dir.join(SINGBOX_LOG_FILE),
             self.app_data_dir.join(SINGBOX_ROTATED_LOG_FILE),
         ] {
@@ -192,7 +202,11 @@ impl AppLog {
             return Ok(());
         }
 
-        fs::write(path, "")?;
+        let rotated = path.with_file_name("app.log.1");
+        if fs::metadata(&rotated).is_ok() {
+            fs::remove_file(&rotated)?;
+        }
+        fs::rename(&path, rotated)?;
         Ok(())
     }
 
