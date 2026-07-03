@@ -1110,7 +1110,9 @@ img {
 }
 
 .app-tooltip {
-  font: 500 12px/1 'Inter', sans-serif;
+  font:
+    500 12px/1 'Inter',
+    sans-serif;
   padding: 7px 10px;
   border-radius: 8px;
   white-space: nowrap;
