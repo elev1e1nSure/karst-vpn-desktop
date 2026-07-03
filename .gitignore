@@ -34,6 +34,9 @@ logs/
 /vite.config.js
 /vite.config.d.ts
 
+# Tauri (auto-generated)
+src-tauri/gen/
+
 # Rust
 **/*.rs.bk
 *.pdb
