@@ -46,3 +46,4 @@ src-tauri/gen/
 *.tgz
 *.tar.gz
 *.zip
+*.exe
