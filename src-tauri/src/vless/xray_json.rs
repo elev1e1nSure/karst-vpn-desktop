@@ -41,7 +41,11 @@ pub fn extract_vless_uris(body: &str) -> Option<Vec<String>> {
 }
 
 fn vless_uri_from_outbound(outbound: &Value, remarks: Option<&str>) -> Option<String> {
-    let vnext = outbound.get("settings")?.get("vnext")?.as_array()?.first()?;
+    let vnext = outbound
+        .get("settings")?
+        .get("vnext")?
+        .as_array()?
+        .first()?;
     let address = vnext.get("address")?.as_str()?;
     let port = vnext.get("port")?.as_u64()?;
     let user = vnext.get("users")?.as_array()?.first()?;
@@ -55,7 +59,11 @@ fn vless_uri_from_outbound(outbound: &Value, remarks: Option<&str>) -> Option<St
         .and_then(Value::as_str)
         .unwrap_or("tcp");
     // Xray's config schema calls HTTP/2 transport "h2"; our own URI param convention uses "http".
-    let network = if raw_network == "h2" { "http" } else { raw_network };
+    let network = if raw_network == "h2" {
+        "http"
+    } else {
+        raw_network
+    };
     let security = stream
         .and_then(|s| s.get("security"))
         .and_then(Value::as_str)
@@ -81,7 +89,11 @@ fn vless_uri_from_outbound(outbound: &Value, remarks: Option<&str>) -> Option<St
                     .filter_map(Value::as_str)
                     .collect::<Vec<_>>()
                     .join(",");
-                append_optional(&mut query, "alpn", (!joined.is_empty()).then_some(joined.as_str()));
+                append_optional(
+                    &mut query,
+                    "alpn",
+                    (!joined.is_empty()).then_some(joined.as_str()),
+                );
             }
             if tls.get("allowInsecure").and_then(Value::as_bool) == Some(true) {
                 query.append_pair("allowInsecure", "1");
@@ -139,7 +151,10 @@ fn vless_uri_from_outbound(outbound: &Value, remarks: Option<&str>) -> Option<St
 }
 
 fn str_field<'a>(value: &'a Value, key: &str) -> Option<&'a str> {
-    value.get(key).and_then(Value::as_str).filter(|v| !v.is_empty())
+    value
+        .get(key)
+        .and_then(Value::as_str)
+        .filter(|v| !v.is_empty())
 }
 
 fn append_optional(

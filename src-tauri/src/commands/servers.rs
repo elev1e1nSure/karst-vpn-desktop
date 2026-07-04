@@ -100,10 +100,7 @@ pub fn delete_server(
         ),
         Err(error) => logs.error(
             app_log::Category::Link,
-            format!(
-                "server delete failed kind={} message={error}",
-                error.kind()
-            ),
+            format!("server delete failed kind={} message={error}", error.kind()),
         ),
     }
     result

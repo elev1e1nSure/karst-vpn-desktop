@@ -45,10 +45,8 @@ pub fn run() {
                 .connect_timeout(Duration::from_secs(10))
                 .timeout(Duration::from_secs(30))
                 .build()?;
-            app.state::<app_log::AppLog>().info(
-                app_log::Category::Service,
-                "application startup",
-            );
+            app.state::<app_log::AppLog>()
+                .info(app_log::Category::Service, "application startup");
             let connection_manager = connection::manager::ConnectionManager::default();
             let schedule = scheduler::spawn(pool.clone(), client.clone(), app.handle().clone());
 

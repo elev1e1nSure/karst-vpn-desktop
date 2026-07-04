@@ -2,9 +2,7 @@ use std::path::PathBuf;
 
 use serde_json::{json, Value};
 
-use super::route_rules::{
-    local_domain_suffixes, route_rules, ru_domain_suffixes, RoutingMode,
-};
+use super::route_rules::{local_domain_suffixes, route_rules, ru_domain_suffixes, RoutingMode};
 
 #[derive(Debug, Clone)]
 pub struct TunOptions {
@@ -82,7 +80,10 @@ pub fn build_config(
 
 fn dns_block(routing_mode: RoutingMode, dns_doh_url: &str) -> Value {
     let mut rules: Vec<Value> = Vec::new();
-    if matches!(routing_mode, RoutingMode::BypassLocal | RoutingMode::BypassRu) {
+    if matches!(
+        routing_mode,
+        RoutingMode::BypassLocal | RoutingMode::BypassRu
+    ) {
         rules.push(json!({
             "domain": ["localhost"],
             "domain_suffix": local_domain_suffixes(),

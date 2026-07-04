@@ -14,7 +14,10 @@ pub async fn connect(
     logs: State<'_, AppLog>,
     server_id: String,
 ) -> AppResult<ConnectionStatusDto> {
-    logs.info(app_log::Category::Vpn, format!("connect requested server_id={server_id}"));
+    logs.info(
+        app_log::Category::Vpn,
+        format!("connect requested server_id={server_id}"),
+    );
     let result = manager
         .connect(&app, pool.inner().clone(), server_id)
         .await

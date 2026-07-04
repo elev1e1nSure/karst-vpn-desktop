@@ -13,8 +13,7 @@ fn main() {
         })
         .expect("sing-box.exe not found in binaries/");
 
-    let mut file = std::fs::File::open(&singbox_path)
-        .expect("sing-box.exe not found in binaries/");
+    let mut file = std::fs::File::open(&singbox_path).expect("sing-box.exe not found in binaries/");
     let mut hasher = <sha2::Sha256 as sha2::Digest>::new();
     let mut buffer = [0u8; 8192];
     loop {

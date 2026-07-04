@@ -59,16 +59,13 @@ pub fn get_auto_refresh_hours(connection: &Connection) -> AppResult<u64> {
 }
 
 pub fn set_auto_refresh_hours(connection: &Connection, hours: u64) -> AppResult<()> {
-    if !(crate::scheduler::MIN_REFRESH_HOURS..=crate::scheduler::MAX_REFRESH_HOURS)
-        .contains(&hours)
+    if !(crate::scheduler::MIN_REFRESH_HOURS..=crate::scheduler::MAX_REFRESH_HOURS).contains(&hours)
     {
-        return Err(AppError::InvalidInput(
-            format!(
-                "auto refresh hours must be between {} and {}",
-                crate::scheduler::MIN_REFRESH_HOURS,
-                crate::scheduler::MAX_REFRESH_HOURS
-            ),
-        ));
+        return Err(AppError::InvalidInput(format!(
+            "auto refresh hours must be between {} and {}",
+            crate::scheduler::MIN_REFRESH_HOURS,
+            crate::scheduler::MAX_REFRESH_HOURS
+        )));
     }
     set_setting(connection, AUTO_REFRESH_HOURS_KEY, &hours.to_string())
 }
@@ -84,7 +81,10 @@ pub fn set_routing_mode(connection: &Connection, value: RoutingMode) -> AppResul
 }
 
 pub fn get_dns_doh_url(connection: &Connection) -> AppResult<String> {
-    Ok(get_setting(connection, DNS_DOH_URL_KEY)?.unwrap_or_else(|| DEFAULT_DNS_DOH_URL.to_string()))
+    Ok(
+        get_setting(connection, DNS_DOH_URL_KEY)?
+            .unwrap_or_else(|| DEFAULT_DNS_DOH_URL.to_string()),
+    )
 }
 
 pub fn set_dns_doh_url(connection: &Connection, value: &str) -> AppResult<()> {

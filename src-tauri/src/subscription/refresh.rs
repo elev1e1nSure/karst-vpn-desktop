@@ -51,9 +51,7 @@ pub async fn refresh(
         Err(error) => {
             logs.error(
                 app_log::Category::Net,
-                format!(
-                    "subscription fetch failed id={sub_id} message={error}",
-                ),
+                format!("subscription fetch failed id={sub_id} message={error}",),
             );
             set_refresh_error(&pool, &sub_id, &error.to_string())?;
             return Ok(ImportSummary {
@@ -82,9 +80,7 @@ pub async fn refresh(
 
     logs.info(
         app_log::Category::Link,
-        format!(
-            "subscription parsed id={sub_id} valid={imported} failed_parse={failed}",
-        ),
+        format!("subscription parsed id={sub_id} valid={imported} failed_parse={failed}",),
     );
 
     if imported == 0 {
@@ -115,9 +111,7 @@ pub async fn refresh(
 
     logs.info(
         app_log::Category::Db,
-        format!(
-            "subscription servers updated id={sub_id} count={imported}",
-        ),
+        format!("subscription servers updated id={sub_id} count={imported}",),
     );
 
     Ok(ImportSummary {

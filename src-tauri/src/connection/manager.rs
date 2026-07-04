@@ -77,10 +77,7 @@ impl ConnectionManager {
             Err(error) => {
                 app.state::<AppLog>().error(
                     app_log::Category::Vpn,
-                    format!(
-                        "connection failed kind={} message={error}",
-                        error.kind()
-                    ),
+                    format!("connection failed kind={} message={error}", error.kind()),
                 );
                 let _ = self.stop_current_process().await;
                 let _ = self.set_status(
@@ -113,18 +110,12 @@ impl ConnectionManager {
 
         app.state::<AppLog>().info(
             app_log::Category::Net,
-            format!(
-                "TCP healthcheck starting host={}:{}",
-                link.host, link.port
-            ),
+            format!("TCP healthcheck starting host={}:{}", link.host, link.port),
         );
         tcp_check(&link.host, link.port, Duration::from_secs(5)).await?;
         app.state::<AppLog>().info(
             app_log::Category::Net,
-            format!(
-                "TCP healthcheck passed host={}:{}",
-                link.host, link.port
-            ),
+            format!("TCP healthcheck passed host={}:{}", link.host, link.port),
         );
         Self::ensure_not_shutting_down(app)?;
 
@@ -181,10 +172,8 @@ impl ConnectionManager {
         let server_id = self.active_server_id()?;
         self.set_status(app, ConnectionStatus::Disconnecting { server_id })?;
 
-        app.state::<AppLog>().info(
-            app_log::Category::Vpn,
-            "VPN disconnecting",
-        );
+        app.state::<AppLog>()
+            .info(app_log::Category::Vpn, "VPN disconnecting");
         if let Err(error) = self.stop_current_process().await {
             let _ = self.set_status(
                 app,
@@ -194,10 +183,8 @@ impl ConnectionManager {
             );
             return Err(error);
         }
-        app.state::<AppLog>().info(
-            app_log::Category::Vpn,
-            "VPN disconnected",
-        );
+        app.state::<AppLog>()
+            .info(app_log::Category::Vpn, "VPN disconnected");
         self.set_status(app, ConnectionStatus::Disconnected)?;
         Ok(ConnectionStatus::Disconnected)
     }

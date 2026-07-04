@@ -18,8 +18,7 @@ pub struct TrayController {
 
 pub fn create(app: &AppHandle) -> tauri::Result<TrayController> {
     let open = MenuItem::with_id(app, MENU_OPEN, "Открыть Karst VPN", true, None::<&str>)?;
-    let disconnect =
-        MenuItem::with_id(app, MENU_DISCONNECT, "Отключить VPN", false, None::<&str>)?;
+    let disconnect = MenuItem::with_id(app, MENU_DISCONNECT, "Отключить VPN", false, None::<&str>)?;
     let separator = PredefinedMenuItem::separator(app)?;
     let quit = MenuItem::with_id(app, MENU_QUIT, "Выйти", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&open, &disconnect, &separator, &quit])?;
@@ -62,10 +61,8 @@ pub fn create(app: &AppHandle) -> tauri::Result<TrayController> {
 
 pub fn show_main_window(app: &AppHandle) {
     let Some(window) = app.get_webview_window("main") else {
-        app.state::<AppLog>().error(
-            app_log::Category::Service,
-            "main window is unavailable",
-        );
+        app.state::<AppLog>()
+            .error(app_log::Category::Service, "main window is unavailable");
         return;
     };
 

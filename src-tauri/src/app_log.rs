@@ -97,16 +97,8 @@ impl AppLog {
         let _guard = self.lock()?;
         let mut entries = Vec::new();
 
-        self.extend_file(
-            &mut entries,
-            "app.1",
-            &self.app_data_dir.join("app.log.1"),
-        )?;
-        self.extend_file(
-            &mut entries,
-            "app",
-            &self.path(),
-        )?;
+        self.extend_file(&mut entries, "app.1", &self.app_data_dir.join("app.log.1"))?;
+        self.extend_file(&mut entries, "app", &self.path())?;
         self.extend_file(
             &mut entries,
             "sing-box.1",
@@ -165,12 +157,7 @@ impl AppLog {
         Ok(())
     }
 
-    fn extend_file(
-        &self,
-        entries: &mut Vec<LogEntry>,
-        source: &str,
-        path: &Path,
-    ) -> AppResult<()> {
+    fn extend_file(&self, entries: &mut Vec<LogEntry>, source: &str, path: &Path) -> AppResult<()> {
         let text = match read_tail(path, MAX_LIST_BYTES) {
             Ok(text) => text,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
@@ -236,9 +223,7 @@ fn sanitize(message: &str) -> String {
     result = URL_CREDENTIALS_REGEX
         .replace_all(&result, "$1***:***@")
         .to_string();
-    result = QUERY_PARAM_REGEX
-        .replace_all(&result, "$1=***")
-        .to_string();
+    result = QUERY_PARAM_REGEX.replace_all(&result, "$1=***").to_string();
 
     result
 }

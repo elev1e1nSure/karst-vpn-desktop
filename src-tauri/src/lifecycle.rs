@@ -65,10 +65,7 @@ pub fn request_exit(app: &AppHandle, code: i32) {
 
         let manager = app.state::<ConnectionManager>();
         match tokio::time::timeout(GRACEFUL_SHUTDOWN_TIMEOUT, manager.shutdown(&app)).await {
-            Ok(Ok(())) => logs.info(
-                app_log::Category::Service,
-                "application shutdown completed",
-            ),
+            Ok(Ok(())) => logs.info(app_log::Category::Service, "application shutdown completed"),
             Ok(Err(error)) => {
                 logs.error(
                     app_log::Category::Service,
@@ -80,10 +77,7 @@ pub fn request_exit(app: &AppHandle, code: i32) {
                 force_tunnel_shutdown(&app, &manager);
             }
             Err(_) => {
-                logs.error(
-                    app_log::Category::Service,
-                    "application shutdown timed out",
-                );
+                logs.error(app_log::Category::Service, "application shutdown timed out");
                 force_tunnel_shutdown(&app, &manager);
             }
         }

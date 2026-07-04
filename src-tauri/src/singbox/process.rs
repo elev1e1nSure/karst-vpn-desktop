@@ -236,25 +236,14 @@ fn format_event(event: &CommandEvent) -> String {
     match event {
         CommandEvent::Stdout(bytes) => {
             let text = String::from_utf8_lossy(bytes);
-            format!(
-                "[{}] [DEBUG] [CORE] stdout: {}",
-                timestamp,
-                text.trim_end()
-            )
+            format!("[{}] [DEBUG] [CORE] stdout: {}", timestamp, text.trim_end())
         }
         CommandEvent::Stderr(bytes) => {
             let text = String::from_utf8_lossy(bytes);
-            format!(
-                "[{}] [DEBUG] [CORE] stderr: {}",
-                timestamp,
-                text.trim_end()
-            )
+            format!("[{}] [DEBUG] [CORE] stderr: {}", timestamp, text.trim_end())
         }
         CommandEvent::Error(error) => {
-            format!(
-                "[{}] [ERROR] [CORE] shell-error: {}",
-                timestamp, error
-            )
+            format!("[{}] [ERROR] [CORE] shell-error: {}", timestamp, error)
         }
         CommandEvent::Terminated(payload) => {
             format!(
@@ -311,7 +300,9 @@ fn verify_sidecar() -> AppResult<()> {
     let dir = sidecar_working_dir()?;
     let path = std::fs::read_dir(&dir)
         .map_err(|error| {
-            AppError::Singbox(format!("cannot read sidecar directory for integrity check: {error}"))
+            AppError::Singbox(format!(
+                "cannot read sidecar directory for integrity check: {error}"
+            ))
         })?
         .filter_map(|entry| entry.ok())
         .map(|entry| entry.path())
@@ -323,7 +314,9 @@ fn verify_sidecar() -> AppResult<()> {
         .ok_or_else(|| AppError::Singbox("sing-box sidecar not found".to_string()))?;
 
     let mut file = std::fs::File::open(&path).map_err(|error| {
-        AppError::Singbox(format!("cannot open sing-box sidecar for integrity check: {error}"))
+        AppError::Singbox(format!(
+            "cannot open sing-box sidecar for integrity check: {error}"
+        ))
     })?;
 
     use sha2::Digest;
@@ -331,7 +324,9 @@ fn verify_sidecar() -> AppResult<()> {
     let mut buffer = [0u8; 8192];
     loop {
         let count = std::io::Read::read(&mut file, &mut buffer).map_err(|error| {
-            AppError::Singbox(format!("cannot read sing-box sidecar for integrity check: {error}"))
+            AppError::Singbox(format!(
+                "cannot read sing-box sidecar for integrity check: {error}"
+            ))
         })?;
         if count == 0 {
             break;

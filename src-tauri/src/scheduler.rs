@@ -144,9 +144,7 @@ fn next_delay(pool: &DbPool) -> AppResult<Option<Duration>> {
             let now = Utc::now();
             let min_seconds = subscriptions
                 .iter()
-                .map(|subscription| {
-                    seconds_until_due(subscription, &mode, configured_hours, now)
-                })
+                .map(|subscription| seconds_until_due(subscription, &mode, configured_hours, now))
                 .min()
                 .unwrap_or(DEFAULT_REFRESH_HOURS * 60 * 60)
                 .max(60);
