@@ -17,7 +17,8 @@ const LOG_FILE: &str = "sing-box.log";
 const ROTATED_LOG_FILE: &str = "sing-box.log.1";
 const PID_FILE: &str = "sing-box.pid";
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
-const STARTUP_STABILITY_DELAY: std::time::Duration = std::time::Duration::from_millis(750);
+const STARTUP_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
+const STARTUP_READY_MARKER: &str = "sing-box started";
 
 #[derive(Debug, Clone)]
 pub struct ProcessExit {
@@ -28,6 +29,7 @@ pub struct SingboxProcess {
     child: Option<CommandChild>,
     log_task: JoinHandle<()>,
     exit: watch::Receiver<Option<ProcessExit>>,
+    ready: watch::Receiver<bool>,
     pid_path: PathBuf,
     config_path: PathBuf,
     _guard: ProcessGuard,
@@ -36,8 +38,6 @@ pub struct SingboxProcess {
 impl SingboxProcess {
     pub async fn spawn(app: &AppHandle, config: &Value, app_data_dir: &Path) -> AppResult<Self> {
         verify_sidecar()?;
-
-        super::tun_cleanup::remove_adapter_if_exists("Karst VPN");
 
         tokio::fs::create_dir_all(app_data_dir).await?;
         let config_path = app_data_dir.join("sing-box-config.json");
@@ -70,6 +70,7 @@ impl SingboxProcess {
         tokio::fs::write(&pid_path, pid.to_string()).await?;
 
         let (exit_tx, exit_rx) = watch::channel(None);
+        let (ready_tx, ready_rx) = watch::channel(false);
         let task_pid_path = pid_path.clone();
         let log_task = tokio::spawn(async move {
             let mut observed_exit = false;
@@ -85,6 +86,9 @@ impl SingboxProcess {
                 };
                 let line = format_event(&event);
                 let _ = append_log(&log_path, line.as_bytes()).await;
+                if event_contains(&event, STARTUP_READY_MARKER) {
+                    ready_tx.send_replace(true);
+                }
                 if let Some(exit) = exit {
                     observed_exit = true;
                     let _ = tokio::fs::remove_file(&task_pid_path).await;
@@ -103,6 +107,7 @@ impl SingboxProcess {
             child: Some(child),
             log_task,
             exit: exit_rx,
+            ready: ready_rx,
             pid_path,
             config_path,
             _guard: guard,
@@ -113,21 +118,34 @@ impl SingboxProcess {
         self.exit.clone()
     }
 
-    pub async fn ensure_stable(&mut self) -> AppResult<()> {
+    pub async fn ensure_ready(&mut self) -> AppResult<()> {
+        if *self.ready.borrow() {
+            return Ok(());
+        }
         if let Some(exit) = self.exit.borrow().clone() {
             return Err(AppError::Singbox(exit.message));
         }
 
-        tokio::select! {
-            _ = tokio::time::sleep(STARTUP_STABILITY_DELAY) => Ok(()),
-            changed = self.exit.changed() => {
-                changed.map_err(|_| AppError::Singbox("sing-box exit monitor closed during startup".to_string()))?;
-                let message = self.exit.borrow().as_ref()
-                    .map(|exit| exit.message.clone())
-                    .unwrap_or_else(|| "sing-box terminated during startup".to_string());
-                Err(AppError::Singbox(message))
+        tokio::time::timeout(STARTUP_TIMEOUT, async {
+            loop {
+                tokio::select! {
+                    changed = self.ready.changed() => {
+                        changed.map_err(|_| AppError::Singbox("sing-box readiness monitor closed during startup".to_string()))?;
+                        if *self.ready.borrow() {
+                            return Ok(());
+                        }
+                    }
+                    changed = self.exit.changed() => {
+                        changed.map_err(|_| AppError::Singbox("sing-box exit monitor closed during startup".to_string()))?;
+                        if let Some(exit) = self.exit.borrow().clone() {
+                            return Err(AppError::Singbox(exit.message));
+                        }
+                    }
+                }
             }
-        }
+        })
+        .await
+        .map_err(|_| AppError::Singbox("sing-box did not become ready within 30 seconds".to_string()))?
     }
 
     pub async fn stop(&mut self) -> AppResult<()> {
@@ -245,6 +263,15 @@ fn format_event(event: &CommandEvent) -> String {
             )
         }
         _ => String::new(),
+    }
+}
+
+fn event_contains(event: &CommandEvent, marker: &str) -> bool {
+    match event {
+        CommandEvent::Stdout(bytes) | CommandEvent::Stderr(bytes) => {
+            String::from_utf8_lossy(bytes).contains(marker)
+        }
+        _ => false,
     }
 }
 

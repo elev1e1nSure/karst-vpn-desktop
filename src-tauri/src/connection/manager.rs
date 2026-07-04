@@ -143,15 +143,13 @@ impl ConnectionManager {
             format!("sing-box spawning routing_mode={}", routing_mode.as_str()),
         );
         let mut process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
-        let stable_result = process.ensure_stable().await;
-        if let Err(error) = stable_result {
+        let ready_result = process.ensure_ready().await;
+        if let Err(error) = ready_result {
             let _ = process.stop().await;
             return Err(error);
         }
-        app.state::<AppLog>().info(
-            app_log::Category::Core,
-            "sing-box started and stable",
-        );
+        app.state::<AppLog>()
+            .info(app_log::Category::Core, "sing-box started and ready");
         if let Err(error) = Self::ensure_not_shutting_down(app) {
             let _ = process.stop().await;
             return Err(error);
