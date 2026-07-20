@@ -14,9 +14,8 @@ export const DARK_THEME = {
   ink: '#EAE8E4',
   mutedInk: '#98948E',
   border: '#32302C',
-  // Power button sits darker than the cards, with a lighter ring for definition.
-  buttonOffBg: '#201E1C',
-  buttonOffBorder: '#3A3733',
+  buttonOffBg: '#262421',
+  buttonOffBorder: '#373430',
   buttonOffIcon: '#A7A39D',
   danger: '#A56060',
 };
@@ -31,7 +30,7 @@ export const LIGHT_THEME = {
   ink: '#332E26',
   mutedInk: '#7E7669',
   border: '#D5CFC0',
-  buttonOffBg: '#ECE8DD',
+  buttonOffBg: '#F3F1EA',
   buttonOffBorder: '#CDC6B5',
   buttonOffIcon: '#665F53',
   danger: '#A56060',
