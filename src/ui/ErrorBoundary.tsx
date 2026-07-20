@@ -41,14 +41,13 @@ export class ErrorBoundary extends Component<Props, State> {
             gap: 20,
             padding: 32,
             boxSizing: 'border-box',
-            fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+            fontFamily:
+              "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
             background: '#1A1A19',
             color: '#EAE8E4',
           }}
         >
-          <div style={{ font: "500 18px/1.3 'Source Serif 4', serif" }}>
-            Что-то пошло не так
-          </div>
+          <div style={{ font: "500 18px/1.3 'Source Serif 4', serif" }}>Что-то пошло не так</div>
           <div
             style={{
               font: "400 13px/1.5 'Inter', sans-serif",

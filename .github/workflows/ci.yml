@@ -26,18 +26,17 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
       - uses: taiki-e/install-action@v2
         with:
           tool: just
 
-      # node20's bundled npm hits a known "Exit handler never called!" bug on windows-latest runners
-      - run: npm install -g npm@latest
-
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - run: just check

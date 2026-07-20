@@ -21,15 +21,14 @@ jobs:
         with:
           workspaces: src-tauri
 
+      - uses: pnpm/action-setup@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: pnpm
 
-      # node20's bundled npm hits a known "Exit handler never called!" bug on windows-latest runners
-      - run: npm install -g npm@latest
-
-      - run: npm ci
+      - run: pnpm install --frozen-lockfile
 
       - name: Extract tag version
         id: version
@@ -46,7 +45,7 @@ jobs:
           .\scripts\sync-version.ps1 -Version "${{ steps.version.outputs.version }}"
 
       - name: Build installer
-        run: npm run tauri build
+        run: pnpm tauri build
 
       - name: Collect installers
         shell: pwsh

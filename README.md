@@ -17,7 +17,7 @@ Karst — приложение для подключения к VLESS-серве
 ## Разработка
 
 ```bash
-npm install
+pnpm install
 just dev
 ```
 

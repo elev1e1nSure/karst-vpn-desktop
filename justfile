@@ -5,11 +5,11 @@ set shell := ["pwsh", "-NoLogo", "-Command"]
 
 # Run the app in dev mode (Rust backend + WebView, hot-reload)
 dev:
-    npm run tauri dev
+    pnpm tauri dev
 
 # Run frontend formatting, lint and type checks plus Rust formatting and lint checks
 check:
-    npm run check
+    pnpm check
     cargo fmt --manifest-path src-tauri/Cargo.toml --all -- --check
     cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets --all-features -- -D warnings
     cargo check --manifest-path src-tauri/Cargo.toml --all-targets --all-features
@@ -17,7 +17,7 @@ check:
 # Sync version across package.json/Cargo.toml/tauri.conf.json, then build the release bundle
 build:
     @just sync-version
-    npm run tauri build
+    pnpm tauri build
 
 # Bump version everywhere and sync it (e.g. just set-version 0.2.0)
 set-version VERSION:
@@ -31,4 +31,4 @@ sync-version:
 # Full release pipeline used by CI — sync version, build installer
 ci-build:
     @pwsh -NoProfile -File scripts/sync-version.ps1
-    npm run tauri build
+    pnpm tauri build
