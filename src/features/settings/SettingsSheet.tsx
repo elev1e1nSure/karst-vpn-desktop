@@ -85,7 +85,6 @@ export function SettingsSheet({
   onSetAutoRefreshMode,
   onSetAutoRefreshHours,
   onSetDnsDohUrl,
-  onOpenLogs,
 }: {
   theme: Theme;
   accent: string;
@@ -99,7 +98,6 @@ export function SettingsSheet({
   onSetAutoRefreshMode: (m: AutoRefreshMode) => void;
   onSetAutoRefreshHours: (h: number) => void;
   onSetDnsDohUrl: (url: string) => void;
-  onOpenLogs: () => void;
 }) {
   return (
     <div style={{ overflow: 'auto' }}>
@@ -110,12 +108,6 @@ export function SettingsSheet({
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <SettingsActionRow
-          theme={theme}
-          title="Логи"
-          subtitle="Технические логи подключения"
-          onClick={onOpenLogs}
-        />
         <ToggleRow
           theme={theme}
           accent={accent}

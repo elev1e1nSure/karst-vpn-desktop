@@ -20,7 +20,7 @@ export function LogsScreen({
   logs: LogEntryDto[];
   logsLoading: boolean;
   logsError: string;
-  onBack: () => void;
+  onBack?: () => void;
   onClear: () => void;
   onCopy: () => void;
 }) {
@@ -43,28 +43,40 @@ export function LogsScreen({
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10, flexShrink: 0 }}
       >
-        <Pressable onClick={onBack} borderRadius={10}>
+        {onBack ? (
+          <Pressable onClick={onBack} borderRadius={10}>
+            <div
+              className="log-header-btn"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '10px 14px 10px 10px',
+              }}
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M19 12H5M5 12L12 19M5 12L12 5"
+                  stroke={theme.ink}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+              <div style={{ font: "500 14px/1 'Inter', sans-serif", color: theme.ink }}>Назад</div>
+            </div>
+          </Pressable>
+        ) : (
           <div
-            className="log-header-btn"
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '10px 14px 10px 10px',
+              font: "500 17px/1.2 'Source Serif 4', serif",
+              color: theme.ink,
+              padding: '0 4px',
             }}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path
-                d="M19 12H5M5 12L12 19M5 12L12 5"
-                stroke={theme.ink}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <div style={{ font: "500 14px/1 'Inter', sans-serif", color: theme.ink }}>Назад</div>
+            Логи
           </div>
-        </Pressable>
+        )}
         <div style={{ flex: 1 }} />
         <LogActionButton
           theme={theme}

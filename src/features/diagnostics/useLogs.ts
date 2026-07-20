@@ -1,10 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { commands, getErrorMessage } from '../../app/commands';
 import type { LogEntryDto } from '../../app/types';
 
 export function useLogs() {
-  const [screen, setScreen] = useState<'main' | 'logs'>('main');
-  const [direction, setDirection] = useState<'forward' | 'back'>('forward');
   const [logs, setLogs] = useState<LogEntryDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +17,8 @@ export function useLogs() {
     [],
   );
 
-  const load = async () => {
+  // Stable identity: consumed by an effect that reloads logs when the Logs tab opens.
+  const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
@@ -29,18 +28,7 @@ export function useLogs() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const open = () => {
-    setDirection('forward');
-    setScreen('logs');
-    void load();
-  };
-
-  const back = () => {
-    setDirection('back');
-    setScreen('main');
-  };
+  }, []);
 
   const showToast = (message: string) => {
     if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
@@ -78,15 +66,12 @@ export function useLogs() {
   };
 
   return {
-    screen,
-    direction,
     logs,
     loading,
     error,
     toastMessage,
     toastClosing,
-    open,
-    back,
+    load,
     clear,
     copy,
   };

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { commands, getErrorMessage } from '../../app/commands';
@@ -31,22 +31,12 @@ const ROUTING_MODE_TO_DTO: Record<RoutingMode, string> = {
 };
 
 export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
-  const [visible, setVisible] = useState(false);
-  const [closing, setClosing] = useState(false);
   const [themeBusy, setThemeBusy] = useState(false);
   const [darkModeOn, setDarkModeOn] = useState(true);
   const [routingMode, setRoutingMode] = useState<RoutingMode>('BypassRu');
   const [autoRefreshMode, setAutoRefreshMode] = useState<AutoRefreshMode>('Auto');
   const [autoRefreshHours, setAutoRefreshHours] = useState(24);
   const [dnsDohUrl, setDnsDohUrl] = useState('https://1.1.1.1/dns-query');
-  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    },
-    [],
-  );
 
   useEffect(() => {
     void getCurrentWindow().setTheme(darkModeOn ? 'dark' : 'light');
@@ -71,27 +61,6 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     },
     [setAppError],
   );
-
-  const open = () => {
-    if (visible) return;
-    setVisible(true);
-    setClosing(false);
-  };
-
-  const close = () => {
-    if (!visible || closing) return;
-    setClosing(true);
-    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    closeTimeoutRef.current = setTimeout(() => {
-      setVisible(false);
-      setClosing(false);
-    }, 320);
-  };
-
-  const prepareForRouteChange = () => {
-    if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    setClosing(false);
-  };
 
   const toggleDarkMode = () => {
     setThemeBusy(true);
@@ -146,8 +115,6 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
   };
 
   return {
-    visible,
-    closing,
     themeBusy,
     darkModeOn,
     theme: darkModeOn ? DARK_THEME : LIGHT_THEME,
@@ -156,9 +123,6 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     autoRefreshHours,
     dnsDohUrl,
     hydrate,
-    open,
-    close,
-    prepareForRouteChange,
     toggleDarkMode,
     setRouting,
     setAutoRefresh,

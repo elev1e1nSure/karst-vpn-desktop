@@ -102,11 +102,6 @@ export function useAppController() {
     }
   };
 
-  const openLogs = () => {
-    preferences.prepareForRouteChange();
-    logs.open();
-  };
-
   return {
     appError,
     phase,
@@ -119,7 +114,6 @@ export function useAppController() {
     catalog,
     preferences,
     logs,
-    openLogs,
   };
 }
 

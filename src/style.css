@@ -620,6 +620,23 @@ img {
   pointer-events: none;
 }
 
+/* ─── Sidebar ────────────────────────────────────────────────────────────── */
+.sidebar {
+  transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar-toggle {
+  transition: background-color 0.15s ease;
+}
+.sidebar-toggle:hover {
+  background-color: var(--theme-border) !important;
+}
+.sidebar-item {
+  transition: background-color 0.15s ease;
+}
+.sidebar-item:not(.sidebar-item-active):hover {
+  background-color: var(--theme-border) !important;
+}
+
 /* ─── Settings button ────────────────────────────────────────────────────── */
 .settings-btn {
   transition:
