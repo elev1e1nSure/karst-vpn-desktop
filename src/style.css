@@ -454,26 +454,6 @@ img {
   }
 }
 
-@keyframes menuSlideUp {
-  0% {
-    transform: translateY(100%);
-  }
-
-  100% {
-    transform: translateY(0);
-  }
-}
-
-@keyframes menuSlideDown {
-  0% {
-    transform: translateY(0);
-  }
-
-  100% {
-    transform: translateY(100%);
-  }
-}
-
 @keyframes backdropIn {
   0% {
     opacity: 0;

@@ -101,11 +101,30 @@ export function AppView({ controller }: AppViewProps) {
     if (activeTab === 'logs') void onLoadLogs();
   }, [activeTab, onLoadLogs]);
 
-  const menuAnim = `${menuClosing ? 'menuSlideDown' : 'menuSlideUp'} 0.26s cubic-bezier(0.4,0,0.2,1) both`;
-  const backdropAnim = `${menuClosing ? 'backdropOut' : 'backdropIn'} 0.22s cubic-bezier(0.4,0,0.2,1) both`;
   const menuDrag = useSheetDrag(onCloseServerMenu);
-  const sheetDragTransition = (dragging: boolean) =>
-    dragging ? 'none' : 'translate 0.25s cubic-bezier(0.4,0,0.2,1)';
+
+  // Drive the sheet + backdrop with transitions (not keyframes): switching a CSS
+  // animation restarts it from its 0% frame, which jumps whenever open/close
+  // interrupts a still-running fade. `menuReady` flips on the frame after mount
+  // so the entrance interpolates from the closed state.
+  const [menuReady, setMenuReady] = useState(false);
+  useEffect(() => {
+    if (menuVisible && !menuClosing) {
+      const id = requestAnimationFrame(() => setMenuReady(true));
+      return () => cancelAnimationFrame(id);
+    }
+    setMenuReady(false);
+  }, [menuVisible, menuClosing]);
+
+  const menuOpen = menuReady && !menuClosing;
+  // Backdrop fades with the drag so the darkening tracks the pull instead of
+  // holding full and snapping away on release.
+  const dragFade = Math.min(menuDrag.offset / 500, 0.6);
+  const backdropOpacity = menuOpen ? 1 - dragFade : 0;
+  const sheetShift = menuOpen ? '0%' : '100%';
+  const sheetTransition = menuDrag.dragging
+    ? 'none'
+    : 'transform 0.26s cubic-bezier(0.4,0,0.2,1), translate 0.26s cubic-bezier(0.4,0,0.2,1)';
 
   return (
     <div
@@ -272,7 +291,8 @@ export function AppView({ controller }: AppViewProps) {
               position: 'absolute',
               inset: 0,
               background: 'rgba(0,0,0,0.45)',
-              animation: backdropAnim,
+              opacity: backdropOpacity,
+              transition: menuDrag.dragging ? 'none' : 'opacity 0.24s cubic-bezier(0.4,0,0.2,1)',
               zIndex: 5,
             }}
           />
@@ -291,10 +311,10 @@ export function AppView({ controller }: AppViewProps) {
               padding: '0 22px 28px',
               boxSizing: 'border-box',
               zIndex: 6,
-              animation: menuAnim,
               overflow: 'hidden',
+              transform: `translateY(${sheetShift})`,
               translate: `0 ${menuDrag.offset}px`,
-              transition: sheetDragTransition(menuDrag.dragging),
+              transition: sheetTransition,
             }}
           >
             <div
