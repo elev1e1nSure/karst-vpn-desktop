@@ -117,14 +117,11 @@ export function AppView({ controller }: AppViewProps) {
   }, [menuVisible, menuClosing]);
 
   const menuOpen = menuReady && !menuClosing;
-  // Backdrop fades with the drag so the darkening tracks the pull instead of
-  // holding full and snapping away on release.
-  const dragFade = Math.min(menuDrag.offset / 500, 0.6);
-  const backdropOpacity = menuOpen ? 1 - dragFade : 0;
-  const sheetShift = menuOpen ? '0%' : '100%';
-  const sheetTransition = menuDrag.dragging
-    ? 'none'
-    : 'transform 0.26s cubic-bezier(0.4,0,0.2,1), translate 0.26s cubic-bezier(0.4,0,0.2,1)';
+  const backdropOpacity = menuOpen ? 1 : 0;
+  // Fold the drag offset into the single slide transform so a released drag
+  // continues straight down to 100% instead of fighting a separate translate.
+  const sheetTransform = menuOpen ? `translateY(${menuDrag.offset}px)` : 'translateY(100%)';
+  const sheetTransition = menuDrag.dragging ? 'none' : 'transform 0.26s cubic-bezier(0.4,0,0.2,1)';
 
   return (
     <div
@@ -292,7 +289,7 @@ export function AppView({ controller }: AppViewProps) {
               inset: 0,
               background: 'rgba(0,0,0,0.45)',
               opacity: backdropOpacity,
-              transition: menuDrag.dragging ? 'none' : 'opacity 0.24s cubic-bezier(0.4,0,0.2,1)',
+              transition: 'opacity 0.24s cubic-bezier(0.4,0,0.2,1)',
               zIndex: 5,
             }}
           />
@@ -312,8 +309,7 @@ export function AppView({ controller }: AppViewProps) {
               boxSizing: 'border-box',
               zIndex: 6,
               overflow: 'hidden',
-              transform: `translateY(${sheetShift})`,
-              translate: `0 ${menuDrag.offset}px`,
+              transform: sheetTransform,
               transition: sheetTransition,
             }}
           >
