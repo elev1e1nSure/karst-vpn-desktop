@@ -35,7 +35,7 @@ export function SubscriptionDetails({
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Tooltip label="Назад" theme={theme} placement="bottom">
           <Pressable onClick={onBack}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
               <path
                 d="M15 18L9 12L15 6"
                 stroke={theme.mutedInk}
@@ -49,7 +49,7 @@ export function SubscriptionDetails({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              font: "500 18px/1.2 'Source Serif 4', serif",
+              font: "500 20px/1.2 'Source Serif 4', serif",
               color: theme.ink,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -58,7 +58,7 @@ export function SubscriptionDetails({
           >
             {subscription.name}
           </div>
-          <div style={{ font: "400 12px/1 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "400 13.5px/1 'Inter', sans-serif", color: theme.mutedInk }}>
             {subscription.servers.length} серверов
           </div>
         </div>
@@ -75,7 +75,7 @@ export function SubscriptionDetails({
             border: `1px solid ${theme.border}`,
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
             <circle cx="12" cy="12" r="9" stroke={theme.mutedInk} strokeWidth="1.8" />
             <path
               d="M12 8v4M12 16h.01"
@@ -84,7 +84,7 @@ export function SubscriptionDetails({
               strokeLinecap="round"
             />
           </svg>
-          <div style={{ font: "400 12px/1.4 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "400 13px/1.45 'Inter', sans-serif", color: theme.mutedInk }}>
             {subscription.announce}
           </div>
         </div>
@@ -102,7 +102,7 @@ export function SubscriptionDetails({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path
               d="M22 12H2M22 12L18 8M22 12L18 16M2 12L6 8M2 12L6 16"
               stroke={theme.mutedInk}
@@ -111,16 +111,16 @@ export function SubscriptionDetails({
               strokeLinejoin="round"
             />
           </svg>
-          <div style={{ font: "500 12.5px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
+          <div style={{ font: "500 14.5px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
             Трафик
           </div>
-          <div style={{ font: "400 12px/1 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "400 13.5px/1 'Inter', sans-serif", color: theme.mutedInk }}>
             {subscription.trafficLabel}
           </div>
         </div>
         <div style={{ height: 1, background: theme.border }} />
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <rect
               x="3"
               y="4"
@@ -137,10 +137,10 @@ export function SubscriptionDetails({
               strokeLinecap="round"
             />
           </svg>
-          <div style={{ font: "500 12.5px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
+          <div style={{ font: "500 14.5px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
             Истекает
           </div>
-          <div style={{ font: "400 12px/1 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "400 13.5px/1 'Inter', sans-serif", color: theme.mutedInk }}>
             {subscription.expiresLabel}
           </div>
         </div>
@@ -192,7 +192,7 @@ export function SubscriptionDetails({
             border: `1px solid color-mix(in oklch, ${theme.danger} 40%, transparent)`,
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
             <path
               d="M12 9v4M12 17h.01"
               stroke={theme.danger}
@@ -206,7 +206,7 @@ export function SubscriptionDetails({
               strokeLinejoin="round"
             />
           </svg>
-          <div style={{ font: "400 12px/1.4 'Inter', sans-serif", color: theme.danger }}>
+          <div style={{ font: "400 13.5px/1.45 'Inter', sans-serif", color: theme.danger }}>
             {subscription.lastRefreshError}
           </div>
         </div>
@@ -224,7 +224,7 @@ export function SubscriptionDetails({
             gap: 10,
           }}
         >
-          <div style={{ font: "500 14px/1.4 'Inter', sans-serif", color: theme.ink }}>
+          <div style={{ font: "500 15.5px/1.4 'Inter', sans-serif", color: theme.ink }}>
             Удалить подписку и все её серверы?
           </div>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -239,7 +239,7 @@ export function SubscriptionDetails({
                   padding: '10px',
                   borderRadius: 10,
                   border: `1px solid ${theme.border}`,
-                  font: "500 13px/1 'Inter', sans-serif",
+                  font: "500 14px/1 'Inter', sans-serif",
                   color: theme.mutedInk,
                 }}
               >
@@ -254,7 +254,7 @@ export function SubscriptionDetails({
                   padding: '10px',
                   borderRadius: 10,
                   background: theme.danger,
-                  font: "500 13px/1 'Inter', sans-serif",
+                  font: "500 14px/1 'Inter', sans-serif",
                   color: '#fff',
                 }}
               >
@@ -270,13 +270,13 @@ export function SubscriptionDetails({
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 10,
-              padding: '13px 12px',
+              gap: 12,
+              padding: '15px 14px',
               borderRadius: 14,
               border: `1px solid color-mix(in oklch, ${theme.danger} 45%, transparent)`,
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path
                 d="M5 7H19M10 11V17M14 11V17M9 7L10 4H14L15 7M7 7L8 20H16L17 7"
                 stroke={theme.danger}
@@ -286,10 +286,10 @@ export function SubscriptionDetails({
               />
             </svg>
             <div style={{ flex: 1 }}>
-              <div style={{ font: "500 14px/1.3 'Inter', sans-serif", color: theme.danger }}>
+              <div style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.danger }}>
                 Удалить подписку
               </div>
-              <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
+              <div style={{ font: "400 13px/1.35 'Inter', sans-serif", color: theme.mutedInk }}>
                 Группа и её серверы будут удалены
               </div>
             </div>
@@ -315,7 +315,7 @@ function DetailRow({
 }) {
   const icons: Record<string, ReactNode> = {
     link: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
         <path
           d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"
           stroke={theme.mutedInk}
@@ -331,7 +331,7 @@ function DetailRow({
       </svg>
     ),
     globe: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="9" stroke={theme.mutedInk} strokeWidth="1.8" />
         <path
           d="M2 12h20M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"
@@ -341,7 +341,7 @@ function DetailRow({
       </svg>
     ),
     clock: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
         <circle cx="12" cy="12" r="9" stroke={theme.mutedInk} strokeWidth="1.8" />
         <path d="M12 8v4l3 3" stroke={theme.mutedInk} strokeWidth="1.8" strokeLinecap="round" />
       </svg>
@@ -353,13 +353,17 @@ function DetailRow({
       <div style={{ flexShrink: 0, marginTop: 1 }}>{icons[icon]}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
-          style={{ font: "400 11px/1 'Inter', sans-serif", color: theme.mutedInk, marginBottom: 2 }}
+          style={{
+            font: "400 12.5px/1  'Inter', sans-serif",
+            color: theme.mutedInk,
+            marginBottom: 3,
+          }}
         >
           {label}
         </div>
         <div
           style={{
-            font: `400 12.5px/1.3 ${monospace ? "'ui-monospace', 'Cascadia Mono', monospace" : "'Inter', sans-serif"}`,
+            font: `400 14px/1.4 ${monospace ? "'ui-monospace', 'Cascadia Mono', monospace" : "'Inter', sans-serif"}`,
             color: theme.ink,
             overflow: 'hidden',
             textOverflow: 'ellipsis',

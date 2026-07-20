@@ -43,7 +43,7 @@ export function ServerCatalog({
           marginBottom: 14,
         }}
       >
-        <div style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink }}>
+        <div style={{ font: "500 19px/1.2 'Source Serif 4', serif", color: theme.ink }}>
           Выбор сервера
         </div>
         {groups.some((group) => group.id !== null) && (
@@ -59,10 +59,10 @@ export function ServerCatalog({
                 gap: 6,
                 background: `color-mix(in oklch, ${accent} 10%, transparent)`,
                 borderRadius: 10,
-                padding: '8px 12px',
+                padding: '9px 13px',
               }}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
                 <path
                   d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"
                   stroke={accent}
@@ -92,7 +92,7 @@ export function ServerCatalog({
                   strokeLinejoin="round"
                 />
               </svg>
-              <div style={{ font: "500 13px/1 'Inter', sans-serif", color: accent }}>Обновить</div>
+              <div style={{ font: "500 14px/1 'Inter', sans-serif", color: accent }}>Обновить</div>
             </div>
           </Pressable>
         )}
@@ -111,7 +111,7 @@ export function ServerCatalog({
         {groups.length === 0 && (
           <div
             style={{
-              font: "400 13px/1.4 'Inter', sans-serif",
+              font: "400 14px/1.4 'Inter', sans-serif",
               color: theme.mutedInk,
               paddingBottom: 12,
             }}
@@ -144,21 +144,20 @@ export function ServerCatalog({
                   className="server-item"
                   onClick={() => onSelect(server.id)}
                   borderRadius={14}
-                  ripple={false}
                 >
                   <div
                     style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 12,
-                      padding: '12px 16px',
+                      gap: 13,
+                      padding: '14px 16px',
                       cursor: 'default',
                     }}
                   >
                     <div
                       style={{
-                        width: 8,
-                        height: 8,
+                        width: 9,
+                        height: 9,
                         borderRadius: '50%',
                         background: isSelected ? accent : theme.mutedInk,
                         flexShrink: 0,
@@ -175,7 +174,7 @@ export function ServerCatalog({
                     >
                       <span
                         style={{
-                          font: '500 16px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
+                          font: '500 17px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
                           color: theme.ink,
                         }}
                       >
@@ -184,7 +183,7 @@ export function ServerCatalog({
                       {server.latencyLabel && (
                         <span
                           style={{
-                            font: "400 13px/1.3 'Inter', sans-serif",
+                            font: "400 14px/1.3 'Inter', sans-serif",
                             color: theme.mutedInk,
                           }}
                         >
@@ -196,8 +195,8 @@ export function ServerCatalog({
                     {isSelected && (
                       <svg
                         className="server-checkmark"
-                        width="18"
-                        height="18"
+                        width="20"
+                        height="20"
                         viewBox="0 0 24 24"
                         fill="none"
                         style={{ flexShrink: 0 }}
@@ -213,9 +212,13 @@ export function ServerCatalog({
                     )}
                     {server.isCustom && (
                       <Tooltip label="Удалить сервер" theme={theme}>
-                        <div
+                        <Pressable
                           className="remove-server-btn"
-                          onClick={(event) => onRemove(server.id, event)}
+                          onClick={(event) => {
+                            event?.stopPropagation();
+                            onRemove(server.id, event as unknown as MouseEvent);
+                          }}
+                          borderRadius={11}
                           style={{
                             width: 22,
                             height: 22,
@@ -235,7 +238,7 @@ export function ServerCatalog({
                               strokeLinecap="round"
                             />
                           </svg>
-                        </div>
+                        </Pressable>
                       </Tooltip>
                     )}
                   </div>
@@ -247,7 +250,7 @@ export function ServerCatalog({
       </div>
 
       {importMessage && (
-        <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: accent, padding: '8px 0' }}>
+        <div style={{ font: "400 13px/1.3 'Inter', sans-serif", color: accent, padding: '8px 0' }}>
           {importMessage}
         </div>
       )}
@@ -271,7 +274,7 @@ function ServerGroupHeader({
   const content = (
     <div
       style={{
-        padding: '10px 14px',
+        padding: '13px 16px',
         display: 'flex',
         alignItems: 'flex-start',
         gap: 8,
@@ -279,15 +282,15 @@ function ServerGroupHeader({
       }}
     >
       <div style={{ flex: 1 }}>
-        <div style={{ font: "600 15px/1.3 'Inter', sans-serif", color: theme.ink }}>
+        <div style={{ font: "600 16.5px/1.3 'Inter', sans-serif", color: theme.ink }}>
           {group.name}
         </div>
         {group.announce && (
           <div
             style={{
-              font: "400 12px/1.4 'Inter', sans-serif",
+              font: "400 13px/1.4 'Inter', sans-serif",
               color: theme.mutedInk,
-              marginTop: 2,
+              marginTop: 3,
             }}
           >
             {group.announce}
@@ -296,8 +299,8 @@ function ServerGroupHeader({
       </div>
       {group.id && (
         <svg
-          width="20"
-          height="20"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
           style={{ flexShrink: 0, marginTop: 1 }}

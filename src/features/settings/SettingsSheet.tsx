@@ -419,7 +419,7 @@ function SettingsPickerDialog({
       >
         <div
           style={{
-            font: "500 17px/1.2 'Source Serif 4', serif",
+            font: "500 19px/1.2 'Source Serif 4', serif",
             color: theme.ink,
             padding: '18px 0 13px',
           }}
@@ -457,21 +457,19 @@ function SettingsChoiceRow({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          padding: '12px 14px',
+          padding: '14px 16px',
         }}
       >
         <div>
-          <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>
-            {title}
-          </div>
-          <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
+          <div style={{ font: "400 13px/1.35 'Inter', sans-serif", color: theme.mutedInk }}>
             {subtitle}
           </div>
         </div>
         <div
           style={{
-            width: 18,
-            height: 18,
+            width: 20,
+            height: 20,
             borderRadius: '50%',
             border: `1.5px solid ${selected ? accent : theme.border}`,
             display: 'flex',

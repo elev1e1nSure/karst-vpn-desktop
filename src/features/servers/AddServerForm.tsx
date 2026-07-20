@@ -33,8 +33,8 @@ export function AddServerForm({
           style={{
             display: 'flex',
             alignItems: 'center',
-            gap: 10,
-            padding: '13px 10px',
+            gap: 12,
+            padding: '15px 14px',
             borderRadius: 14,
             border: `1.5px solid ${theme.border}`,
             cursor: 'default',
@@ -42,8 +42,8 @@ export function AddServerForm({
         >
           <div
             style={{
-              width: 22,
-              height: 22,
+              width: 26,
+              height: 26,
               borderRadius: '50%',
               background: theme.cardBg,
               display: 'flex',
@@ -52,9 +52,9 @@ export function AddServerForm({
               flexShrink: 0,
             }}
           >
-            <span style={{ font: "400 15px/1 'Inter', sans-serif", color: theme.mutedInk }}>+</span>
+            <span style={{ font: "400 18px/1 'Inter', sans-serif", color: theme.mutedInk }}>+</span>
           </div>
-          <span style={{ font: "500 14px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
+          <span style={{ font: "500 15.5px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
             Добавить VLESS или подписку
           </span>
         </div>
@@ -74,7 +74,7 @@ export function AddServerForm({
         background: theme.cardBg,
       }}
     >
-      <div style={{ font: "500 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
+      <div style={{ font: "500 13.5px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
         VLESS-ссылка или URL подписки
       </div>
       <input
@@ -84,7 +84,7 @@ export function AddServerForm({
         placeholder="vless://... или https://.../sub/..."
         disabled={loading}
         style={{
-          font: "400 13px/1.4 ui-monospace, 'Cascadia Mono', monospace",
+          font: "400 14px/1.4 ui-monospace, 'Cascadia Mono', monospace",
           color: theme.ink,
           background: theme.pageBg,
           border: `1px solid ${theme.border}`,
@@ -93,7 +93,9 @@ export function AddServerForm({
         }}
       />
       {error && (
-        <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.danger }}>{error}</div>
+        <div style={{ font: "400 13px/1.35 'Inter', sans-serif", color: theme.danger }}>
+          {error}
+        </div>
       )}
       <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
         <Pressable onClick={onCancel} disabled={loading} style={{ flex: 1, borderRadius: 10 }}>
@@ -104,7 +106,7 @@ export function AddServerForm({
               padding: 10,
               borderRadius: 10,
               border: `1px solid ${theme.border}`,
-              font: "500 13px/1 'Inter', sans-serif",
+              font: "500 14px/1 'Inter', sans-serif",
               color: theme.mutedInk,
             }}
           >
@@ -119,7 +121,7 @@ export function AddServerForm({
               padding: 10,
               borderRadius: 10,
               background: `color-mix(in oklch, ${accent} 100%, transparent)`,
-              font: "500 13px/1 'Inter', sans-serif",
+              font: "500 14px/1 'Inter', sans-serif",
               color: '#fff',
             }}
           >
