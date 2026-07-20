@@ -182,8 +182,7 @@ export function SubscriptionDetails({
             gap: 12,
             padding: '16px 20px',
             borderRadius: 16,
-            background: `color-mix(in oklch, ${theme.danger} 10%, transparent)`,
-            border: `1px solid color-mix(in oklch, ${theme.danger} 32%, transparent)`,
+            background: `color-mix(in oklch, ${theme.danger} 15%, ${theme.appBg})`,
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -211,8 +210,7 @@ export function SubscriptionDetails({
           style={{
             padding: 12,
             borderRadius: 14,
-            background: theme.cardBg,
-            border: `1px solid color-mix(in oklch, ${theme.danger} 45%, transparent)`,
+            background: `color-mix(in oklch, ${theme.danger} 12%, ${theme.appBg})`,
             display: 'flex',
             flexDirection: 'column',
             gap: 10,
@@ -232,7 +230,7 @@ export function SubscriptionDetails({
                   textAlign: 'center',
                   padding: '10px',
                   borderRadius: 10,
-                  border: `1px solid ${theme.border}`,
+                  background: theme.inputBg,
                   font: "500 14px/1 'Inter', sans-serif",
                   color: theme.mutedInk,
                 }}
@@ -267,7 +265,7 @@ export function SubscriptionDetails({
               gap: 12,
               padding: '15px 14px',
               borderRadius: 14,
-              border: `1px solid color-mix(in oklch, ${theme.danger} 45%, transparent)`,
+              background: `color-mix(in oklch, ${theme.danger} 10%, ${theme.appBg})`,
             }}
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

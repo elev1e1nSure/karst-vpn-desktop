@@ -125,7 +125,6 @@ export function ServerCatalog({
               flexShrink: 0,
               borderRadius: 16,
               background: theme.cardBg,
-              border: `1px solid ${theme.border}`,
               overflow: 'hidden',
             }}
           >
@@ -149,7 +148,6 @@ export function ServerCatalog({
                       alignItems: 'center',
                       gap: 13,
                       padding: '14px 16px',
-                      cursor: 'default',
                     }}
                   >
                     <div
@@ -276,7 +274,6 @@ function ServerGroupHeader({
         display: 'flex',
         alignItems: 'flex-start',
         gap: 8,
-        cursor: 'default',
       }}
     >
       <div style={{ flex: 1 }}>

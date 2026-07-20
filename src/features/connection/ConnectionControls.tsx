@@ -23,7 +23,7 @@ export function ConnectButton({
   const isConnected = phase === 'on';
 
   const buttonBg = isConnected ? accent : theme.buttonOffBg;
-  const borderColor = isConnected ? accent : isTransitioning ? accent : theme.buttonOffBorder;
+  const borderColor = isConnected || isTransitioning ? accent : theme.buttonOffBorder;
   const iconColor = isConnected ? '#fff' : isTransitioning ? accent : theme.buttonOffIcon;
 
   const ringClass = isConnected
@@ -130,8 +130,6 @@ export function LocationChip({
           padding: '18px 22px',
           borderRadius: mood.chipRadius,
           background: theme.cardBg,
-          border: `1px solid ${theme.border}`,
-          cursor: 'default',
         }}
       >
         <div

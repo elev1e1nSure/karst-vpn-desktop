@@ -93,7 +93,6 @@ export function Sidebar({
         display: 'flex',
         flexDirection: 'column',
         background: theme.sidebarBg,
-        borderRight: `1px solid ${theme.border}`,
         padding: `14px ${NAV_PAD_X}px`,
         gap: 7,
       }}

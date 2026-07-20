@@ -36,8 +36,7 @@ export function AddServerForm({
             gap: 12,
             padding: '15px 14px',
             borderRadius: 14,
-            border: `1.5px solid ${theme.border}`,
-            cursor: 'default',
+            background: theme.cardBg,
           }}
         >
           <div
@@ -45,7 +44,7 @@ export function AddServerForm({
               width: 26,
               height: 26,
               borderRadius: '50%',
-              background: theme.cardBg,
+              background: theme.inputBg,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -86,8 +85,7 @@ export function AddServerForm({
         style={{
           font: "400 14px/1.4 ui-monospace, 'Cascadia Mono', monospace",
           color: theme.ink,
-          background: theme.pageBg,
-          border: `1px solid ${theme.border}`,
+          background: theme.inputBg,
           borderRadius: 10,
           padding: '10px 12px',
         }}
@@ -97,31 +95,31 @@ export function AddServerForm({
           {error}
         </div>
       )}
-      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-        <Pressable onClick={onCancel} disabled={loading} style={{ flex: 1, borderRadius: 10 }}>
+      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+        <Pressable onClick={onCancel} disabled={loading} style={{ flex: 1, borderRadius: 12 }}>
           <div
             className="btn-cancel"
             style={{
               textAlign: 'center',
-              padding: 10,
-              borderRadius: 10,
-              border: `1px solid ${theme.border}`,
-              font: "500 14px/1 'Inter', sans-serif",
-              color: theme.mutedInk,
+              padding: '15px 12px',
+              borderRadius: 12,
+              background: theme.pageBg,
+              font: "500 14.5px/1 'Inter', sans-serif",
+              color: theme.ink,
             }}
           >
             Отмена
           </div>
         </Pressable>
-        <Pressable onClick={loading ? undefined : onSubmit} style={{ flex: 1, borderRadius: 10 }}>
+        <Pressable onClick={loading ? undefined : onSubmit} style={{ flex: 1, borderRadius: 12 }}>
           <div
             className="btn-submit"
             style={{
               textAlign: 'center',
-              padding: 10,
-              borderRadius: 10,
-              background: `color-mix(in oklch, ${accent} 100%, transparent)`,
-              font: "500 14px/1 'Inter', sans-serif",
+              padding: '15px 12px',
+              borderRadius: 12,
+              background: accent,
+              font: "500 14.5px/1 'Inter', sans-serif",
               color: '#fff',
             }}
           >

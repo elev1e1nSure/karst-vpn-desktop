@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { AutoRefreshMode, RoutingMode } from '../../app/types';
+import type { AutoRefreshMode } from '../../app/types';
 import { Pressable } from '../../ui/Pressable';
+import { Tooltip } from '../../ui/Tooltip';
 import { themeVars } from '../../ui/theme';
 import type { Theme } from '../../ui/theme';
 
@@ -16,7 +17,9 @@ function MiniSwitch({
   theme: Theme;
   onToggle: () => void;
 }) {
-  const trackColor = checked ? `color-mix(in oklch, ${accent} 70%, transparent)` : theme.border;
+  // Off-track uses the recessed input fill (not the border token) so it stays
+  // distinct from the row hover tint instead of merging into it.
+  const trackColor = checked ? `color-mix(in oklch, ${accent} 70%, transparent)` : theme.inputBg;
   return (
     <div
       className="switch-btn mini-switch-track"
@@ -51,16 +54,6 @@ function MiniSwitch({
   );
 }
 
-const ROUTING_LABELS: Record<RoutingMode, string> = {
-  Full: 'Весь трафик',
-  BypassLocal: 'Обход локальной сети',
-  BypassRu: 'Обход РФ и локальной сети',
-};
-const ROUTING_SUBTITLES: Record<RoutingMode, string> = {
-  Full: 'Весь трафик идёт через сервер, без исключений',
-  BypassLocal: 'Локальная сеть — напрямую, остальное через VPN',
-  BypassRu: 'Домены .ru, .su, .рф и локальная сеть — напрямую',
-};
 const REFRESH_LABELS: Record<AutoRefreshMode, string> = {
   Auto: 'Авто',
   Off: 'Выкл',
@@ -76,12 +69,14 @@ export function SettingsSheet({
   theme,
   accent,
   darkModeOn,
-  routingMode,
+  bypassLocal,
+  bypassRu,
   autoRefreshMode,
   autoRefreshHours,
   dnsDohUrl,
   onToggleDarkMode,
-  onSetRoutingMode,
+  onToggleBypassLocal,
+  onToggleBypassRu,
   onSetAutoRefreshMode,
   onSetAutoRefreshHours,
   onSetDnsDohUrl,
@@ -89,12 +84,14 @@ export function SettingsSheet({
   theme: Theme;
   accent: string;
   darkModeOn: boolean;
-  routingMode: RoutingMode;
+  bypassLocal: boolean;
+  bypassRu: boolean;
   autoRefreshMode: AutoRefreshMode;
   autoRefreshHours: number;
   dnsDohUrl: string;
   onToggleDarkMode: () => void;
-  onSetRoutingMode: (m: RoutingMode) => void;
+  onToggleBypassLocal: () => void;
+  onToggleBypassRu: () => void;
   onSetAutoRefreshMode: (m: AutoRefreshMode) => void;
   onSetAutoRefreshHours: (h: number) => void;
   onSetDnsDohUrl: (url: string) => void;
@@ -110,11 +107,21 @@ export function SettingsSheet({
           checked={darkModeOn}
           onToggle={onToggleDarkMode}
         />
-        <RoutingModeSection
+        <ToggleRow
           theme={theme}
           accent={accent}
-          selectedMode={routingMode}
-          onSelect={onSetRoutingMode}
+          title="Обход локальной сети"
+          subtitle="Локальные адреса и домены (.local, .lan) напрямую"
+          checked={bypassLocal}
+          onToggle={onToggleBypassLocal}
+        />
+        <ToggleRow
+          theme={theme}
+          accent={accent}
+          title="Обход сайтов РФ"
+          subtitle="Домены .ru, .su, .рф напрямую"
+          checked={bypassRu}
+          onToggle={onToggleBypassRu}
         />
         <AutoRefreshSection
           theme={theme}
@@ -127,74 +134,6 @@ export function SettingsSheet({
         <DnsSection theme={theme} url={dnsDohUrl} onSetUrl={onSetDnsDohUrl} />
       </div>
     </div>
-  );
-}
-
-function RoutingModeSection({
-  theme,
-  accent,
-  selectedMode,
-  onSelect,
-}: {
-  theme: Theme;
-  accent: string;
-  selectedMode: RoutingMode;
-  onSelect: (m: RoutingMode) => void;
-}) {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogClosing, setDialogClosing] = useState(false);
-  const closeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const dismissDialog = () => {
-    if (dialogClosing) return;
-    setDialogClosing(true);
-    closeRef.current = setTimeout(() => {
-      setDialogOpen(false);
-      setDialogClosing(false);
-    }, 160);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (closeRef.current) clearTimeout(closeRef.current);
-    };
-  }, []);
-
-  return (
-    <>
-      <SettingsActionRow
-        theme={theme}
-        title="Маршрутизация"
-        subtitle={ROUTING_LABELS[selectedMode]}
-        onClick={() => {
-          setDialogOpen(true);
-          setDialogClosing(false);
-        }}
-      />
-      {dialogOpen && (
-        <SettingsPickerDialog
-          theme={theme}
-          title="Маршрутизация"
-          isClosing={dialogClosing}
-          onDismiss={dismissDialog}
-        >
-          {(['Full', 'BypassLocal', 'BypassRu'] as RoutingMode[]).map((mode) => (
-            <SettingsChoiceRow
-              key={mode}
-              theme={theme}
-              accent={accent}
-              title={ROUTING_LABELS[mode]}
-              subtitle={ROUTING_SUBTITLES[mode]}
-              selected={selectedMode === mode}
-              onClick={() => {
-                onSelect(mode);
-                dismissDialog();
-              }}
-            />
-          ))}
-        </SettingsPickerDialog>
-      )}
-    </>
   );
 }
 
@@ -257,18 +196,18 @@ function AutoRefreshSection({
           onDismiss={dismissDialog}
         >
           {(['Auto', 'Off', 'EveryHours'] as AutoRefreshMode[]).map((m) => (
-            <SettingsChoiceRow
-              key={m}
-              theme={theme}
-              accent={accent}
-              title={REFRESH_LABELS[m]}
-              subtitle={REFRESH_SUBTITLES[m]}
-              selected={mode === m}
-              onClick={() => {
-                onSetMode(m);
-                if (m !== 'EveryHours') dismissDialog();
-              }}
-            />
+            <Tooltip key={m} label={REFRESH_SUBTITLES[m]} theme={theme} placement="top">
+              <SettingsChoiceRow
+                theme={theme}
+                accent={accent}
+                title={REFRESH_LABELS[m]}
+                selected={mode === m}
+                onClick={() => {
+                  onSetMode(m);
+                  if (m !== 'EveryHours') dismissDialog();
+                }}
+              />
+            </Tooltip>
           ))}
           <div className={`hours-input-wrapper ${mode === 'EveryHours' ? 'visible' : ''}`}>
             <input
@@ -285,8 +224,7 @@ function AutoRefreshSection({
               style={{
                 font: "400 14px/1 'Inter', sans-serif",
                 color: theme.ink,
-                background: theme.pageBg,
-                border: `1px solid ${theme.border}`,
+                background: theme.inputBg,
                 borderRadius: 10,
                 padding: '10px 12px',
                 marginTop: 8,
@@ -362,8 +300,7 @@ function DnsSection({
             style={{
               font: "400 14px/1 'Inter', sans-serif",
               color: theme.ink,
-              background: theme.pageBg,
-              border: `1px solid ${theme.border}`,
+              background: theme.inputBg,
               borderRadius: 10,
               padding: '10px 12px',
               width: '100%',
@@ -412,7 +349,7 @@ function SettingsPickerDialog({
           boxSizing: 'border-box',
           borderRadius: 22,
           background: theme.appBg,
-          border: `1px solid ${theme.border}`,
+          boxShadow: '0 20px 48px -12px rgba(0,0,0,0.5)',
           padding: '4px 16px',
           ...themeVars(theme),
         }}
@@ -445,7 +382,7 @@ function SettingsChoiceRow({
   theme: Theme;
   accent: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
   selected: boolean;
   onClick: () => void;
 }) {
@@ -457,14 +394,16 @@ function SettingsChoiceRow({
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: 12,
-          padding: '14px 16px',
+          padding: '16px 16px',
         }}
       >
         <div>
-          <div style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
-          <div style={{ font: "400 13px/1.35 'Inter', sans-serif", color: theme.mutedInk }}>
-            {subtitle}
-          </div>
+          <div style={{ font: "600 18px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
+          {subtitle && (
+            <div style={{ font: "400 13px/1.35 'Inter', sans-serif", color: theme.mutedInk }}>
+              {subtitle}
+            </div>
+          )}
         </div>
         <div
           style={{
