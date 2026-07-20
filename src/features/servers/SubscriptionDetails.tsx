@@ -68,11 +68,10 @@ export function SubscriptionDetails({
         <div
           style={{
             display: 'flex',
-            gap: 10,
-            padding: 12,
-            borderRadius: 14,
+            gap: 12,
+            padding: '16px 20px',
+            borderRadius: 16,
             background: theme.cardBg,
-            border: `1px solid ${theme.border}`,
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -84,7 +83,7 @@ export function SubscriptionDetails({
               strokeLinecap="round"
             />
           </svg>
-          <div style={{ font: "400 13px/1.45 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "400 13.5px/1.45 'Inter', sans-serif", color: theme.mutedInk }}>
             {subscription.announce}
           </div>
         </div>
@@ -94,14 +93,13 @@ export function SubscriptionDetails({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 10,
-          padding: 12,
-          borderRadius: 14,
+          gap: 16,
+          padding: '18px 20px',
+          borderRadius: 16,
           background: theme.cardBg,
-          border: `1px solid ${theme.border}`,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <path
               d="M22 12H2M22 12L18 8M22 12L18 16M2 12L6 8M2 12L6 16"
@@ -111,15 +109,14 @@ export function SubscriptionDetails({
               strokeLinejoin="round"
             />
           </svg>
-          <div style={{ font: "500 14.5px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
+          <div style={{ font: "500 15px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
             Трафик
           </div>
-          <div style={{ font: "400 13.5px/1 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "400 15px/1 'Inter', sans-serif", color: theme.mutedInk }}>
             {subscription.trafficLabel}
           </div>
         </div>
-        <div style={{ height: 1, background: theme.border }} />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
             <rect
               x="3"
@@ -137,10 +134,10 @@ export function SubscriptionDetails({
               strokeLinecap="round"
             />
           </svg>
-          <div style={{ font: "500 14.5px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
+          <div style={{ font: "500 15px/1 'Inter', sans-serif", color: theme.ink, flex: 1 }}>
             Истекает
           </div>
-          <div style={{ font: "400 13.5px/1 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "400 15px/1 'Inter', sans-serif", color: theme.mutedInk }}>
             {subscription.expiresLabel}
           </div>
         </div>
@@ -150,18 +147,16 @@ export function SubscriptionDetails({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: 11,
-          padding: 12,
-          borderRadius: 14,
+          gap: 18,
+          padding: '18px 20px',
+          borderRadius: 16,
           background: theme.cardBg,
-          border: `1px solid ${theme.border}`,
         }}
       >
         <DetailRow
           icon="link"
           label="Ссылка"
           value={subscription.url ?? 'Не указана'}
-          monospace
           theme={theme}
         />
         {subscription.profileWebPageUrl && subscription.profileWebPageUrl !== subscription.url && (
@@ -169,7 +164,6 @@ export function SubscriptionDetails({
             icon="globe"
             label="Страница профиля"
             value={subscription.profileWebPageUrl}
-            monospace
             theme={theme}
           />
         )}
@@ -185,11 +179,11 @@ export function SubscriptionDetails({
         <div
           style={{
             display: 'flex',
-            gap: 10,
-            padding: 12,
-            borderRadius: 14,
+            gap: 12,
+            padding: '16px 20px',
+            borderRadius: 16,
             background: `color-mix(in oklch, ${theme.danger} 10%, transparent)`,
-            border: `1px solid color-mix(in oklch, ${theme.danger} 40%, transparent)`,
+            border: `1px solid color-mix(in oklch, ${theme.danger} 32%, transparent)`,
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -304,13 +298,11 @@ function DetailRow({
   icon,
   label,
   value,
-  monospace = false,
   theme,
 }: {
   icon: 'link' | 'globe' | 'clock';
   label: string;
   value: string;
-  monospace?: boolean;
   theme: Theme;
 }) {
   const icons: Record<string, ReactNode> = {
@@ -349,21 +341,21 @@ function DetailRow({
   };
 
   return (
-    <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
       <div style={{ flexShrink: 0, marginTop: 1 }}>{icons[icon]}</div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
-            font: "400 12.5px/1  'Inter', sans-serif",
+            font: "400 13px/1 'Inter', sans-serif",
             color: theme.mutedInk,
-            marginBottom: 3,
+            marginBottom: 4,
           }}
         >
           {label}
         </div>
         <div
           style={{
-            font: `400 14px/1.4 ${monospace ? "'ui-monospace', 'Cascadia Mono', monospace" : "'Inter', sans-serif"}`,
+            font: "400 15px/1.4 'Inter', sans-serif",
             color: theme.ink,
             overflow: 'hidden',
             textOverflow: 'ellipsis',

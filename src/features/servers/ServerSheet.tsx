@@ -7,7 +7,7 @@ import { SubscriptionDetails } from './SubscriptionDetails';
 
 // Cap the sheet content and centre it so the list/details read as a column
 // instead of stretching across the full desktop-width window.
-const CONTENT_MAX_WIDTH = 620;
+const CONTENT_MAX_WIDTH = 700;
 
 type ServerSheetProps = {
   groups: UiSubscription[];
