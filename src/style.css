@@ -706,6 +706,31 @@ img {
   background-color: var(--hover) !important;
 }
 
+/* ─── Sidebar icon hover micro-animations ────────────────────────────────── */
+/* Each icon rests at identity and eases back on mouse-leave; the transform is
+   applied only while its item is hovered. transform-origin stays centered so
+   the icons never drift out of their square tile. */
+.sidebar-icon {
+  transform-origin: center;
+  transition: transform 0.4s cubic-bezier(0.34, 1.3, 0.5, 1);
+  will-change: transform;
+}
+
+/* Power symbol: a gentle "power-up" pulse. */
+.sidebar-item:hover .sidebar-icon-connection {
+  transform: scale(1.13);
+}
+
+/* Log lines: slide right a touch, like text scrolling into view. */
+.sidebar-item:hover .sidebar-icon-logs {
+  transform: translateX(2.5px);
+}
+
+/* Gear: cranks a little to the right, then settles back on release. */
+.sidebar-item:hover .sidebar-icon-settings {
+  transform: rotate(38deg);
+}
+
 /* ─── Settings button ────────────────────────────────────────────────────── */
 .settings-btn {
   transition:

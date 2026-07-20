@@ -19,7 +19,13 @@ const TABS: TabDef[] = [
     id: 'connection',
     label: 'Подключение',
     icon: (color) => (
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
+      <svg
+        className="sidebar-icon sidebar-icon-connection"
+        width="25"
+        height="25"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
         <path d="M12 3V12" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
         <path
           d="M6.5 6.5C5 8.1 4 10.2 4 12.5C4 17.2 7.8 21 12.5 21C17.2 21 21 17.2 21 12.5C21 10.1 19.9 7.9 18.3 6.4"
@@ -36,7 +42,13 @@ const TABS: TabDef[] = [
     id: 'logs',
     label: 'Логи',
     icon: (color) => (
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
+      <svg
+        className="sidebar-icon sidebar-icon-logs"
+        width="25"
+        height="25"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
         <path
           d="M5 6H19M5 10H19M5 14H15M5 18H12"
           stroke={color}
@@ -50,7 +62,13 @@ const TABS: TabDef[] = [
     id: 'settings',
     label: 'Настройки',
     icon: (color) => (
-      <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
+      <svg
+        className="sidebar-icon sidebar-icon-settings"
+        width="25"
+        height="25"
+        viewBox="0 0 24 24"
+        fill="none"
+      >
         <path
           d="M12 15.5C13.933 15.5 15.5 13.933 15.5 12C15.5 10.067 13.933 8.5 12 8.5C10.067 8.5 8.5 10.067 8.5 12C8.5 13.933 10.067 15.5 12 15.5Z"
           stroke={color}
