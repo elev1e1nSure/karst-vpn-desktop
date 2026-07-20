@@ -87,14 +87,16 @@ export function ConnectButton({
             }}
           />
         ) : (
-          <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
+          <svg className="connect-icon" width="50" height="50" viewBox="0 0 24 24" fill="none">
             <path
+              className="connect-icon-line"
               d="M12 3V12"
               stroke={iconColor}
               strokeWidth={mood.iconStroke}
               strokeLinecap="round"
             />
             <path
+              className="connect-icon-arc"
               d="M6.5 6.5C5 8.1 4 10.2 4 12.5C4 17.2 7.8 21 12.5 21C17.2 21 21 17.2 21 12.5C21 10.1 19.9 7.9 18.3 6.4"
               stroke={iconColor}
               strokeWidth={mood.iconStroke}
@@ -177,7 +179,14 @@ export function LocationChip({
             {server ? server.tag : 'VLESS-ссылка или URL подписки'}
           </div>
         </div>
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+        <svg
+          className="card-arrow-icon"
+          width="19"
+          height="19"
+          viewBox="0 0 24 24"
+          fill="none"
+          style={{ flexShrink: 0 }}
+        >
           <path
             d="M9 6L15 12L9 18"
             stroke={theme.mutedInk}

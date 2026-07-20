@@ -102,7 +102,7 @@ export function Sidebar({
 }) {
   return (
     <nav
-      className="sidebar"
+      className={`sidebar ${collapsed ? 'sidebar-collapsed' : ''}`}
       style={{
         width: collapsed ? COLLAPSED_WIDTH : EXPANDED_WIDTH,
         flexShrink: 0,
@@ -179,18 +179,14 @@ export function Sidebar({
             >
               {tab.icon(color)}
             </span>
-            {!collapsed && (
-              <span
-                style={{
-                  font: "600 16.5px/1 'Inter', sans-serif",
-                  color: active ? theme.ink : theme.mutedInk,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                }}
-              >
-                {tab.label}
-              </span>
-            )}
+            <span
+              className="sidebar-label"
+              style={{
+                color: active ? theme.ink : theme.mutedInk,
+              }}
+            >
+              {tab.label}
+            </span>
           </Pressable>
         );
       })}

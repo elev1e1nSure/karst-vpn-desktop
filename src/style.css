@@ -672,6 +672,27 @@ img {
   transition: width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.sidebar-label {
+  font:
+    600 16.5px/1 'Inter',
+    sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    transform 0.24s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.15s ease;
+  will-change: opacity, transform;
+}
+
+.sidebar-collapsed .sidebar-label {
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+}
+
 /* ─── Sidebar tab content scale animation ───────────────────────────────── */
 @keyframes tabContentScaleIn {
   0% {
@@ -761,6 +782,34 @@ img {
 
 .connect-btn:active {
   transform: none !important;
+}
+
+/* Connect button icon micro-animations */
+.connect-icon {
+  transition: transform 0.38s cubic-bezier(0.34, 1.4, 0.5, 1);
+  will-change: transform;
+}
+
+.connect-btn:hover:not(:disabled) .connect-icon {
+  transform: scale(1.06);
+}
+
+.connect-icon-line {
+  transition: transform 0.38s cubic-bezier(0.34, 1.4, 0.5, 1);
+  transform-origin: center top;
+}
+
+.connect-btn:hover:not(:disabled) .connect-icon-line {
+  transform: translateY(1.5px);
+}
+
+.connect-icon-arc {
+  transition: transform 0.38s cubic-bezier(0.34, 1.4, 0.5, 1);
+  transform-origin: 12px 13.5px;
+}
+
+.connect-btn:hover:not(:disabled) .connect-icon-arc {
+  transform: translate(-1px, 0) scale(1.05);
 }
 
 /* ─── Connecting pulse ring ──────────────────────────────────────────────── */
@@ -918,6 +967,18 @@ img {
 
 .sub-group-header:active {
   opacity: 0.7;
+}
+
+/* ─── Card arrow hover shift ────────────────────────────────────────────── */
+.card-arrow-icon {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+.location-chip:hover .card-arrow-icon,
+.settings-row:hover .card-arrow-icon,
+.sub-group-header:hover .card-arrow-icon {
+  transform: translateX(4px);
 }
 
 /* ─── Subscription drill-in ──────────────────────────────────────────────── */

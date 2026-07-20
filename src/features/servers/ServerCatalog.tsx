@@ -251,7 +251,7 @@ export function ServerCatalog({
         </div>
       )}
 
-      <div style={{ marginTop: 6 }}>
+      <div style={{ marginTop: 12 }}>
         <AddServerForm {...addServer} theme={theme} accent={accent} />
       </div>
     </>
@@ -294,6 +294,7 @@ function ServerGroupHeader({
       </div>
       {group.id && (
         <svg
+          className="card-arrow-icon"
           width="22"
           height="22"
           viewBox="0 0 24 24"

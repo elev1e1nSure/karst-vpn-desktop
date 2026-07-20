@@ -98,7 +98,7 @@ export function SettingsSheet({
 }) {
   return (
     <div style={{ overflow: 'auto' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
         <ToggleRow
           theme={theme}
           accent={accent}
@@ -457,7 +457,7 @@ function SettingsActionRow({
             {subtitle}
           </div>
         </div>
-        <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+        <svg className="card-arrow-icon" width="19" height="19" viewBox="0 0 24 24" fill="none">
           <path
             d="M9 6L15 12L9 18"
             stroke={theme.mutedInk}

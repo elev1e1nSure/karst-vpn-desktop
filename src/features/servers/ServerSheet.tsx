@@ -61,28 +61,23 @@ export function ServerSheet(props: ServerSheetProps) {
   return (
     <div
       style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr',
-        gridTemplateRows: '1fr',
+        position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
         flex: 1,
         minHeight: 0,
-        overflowX: 'hidden',
-        overflowY: 'auto',
+        overflow: 'hidden',
       }}
     >
       <div
         className={detailsVisible ? (detailsClosing ? 'drill-in-back' : 'drill-out-forward') : ''}
         style={{
-          gridColumn: 1,
-          gridRow: 1,
-          minWidth: 0,
-          minHeight: 0,
           width: '100%',
           maxWidth: CONTENT_MAX_WIDTH,
-          justifySelf: 'center',
+          margin: '0 auto',
           display: 'flex',
           flexDirection: 'column',
-          overflow: 'hidden',
+          minHeight: 0,
           visibility: detailsVisible && !detailsClosing ? 'hidden' : 'visible',
           pointerEvents: detailsVisible && !detailsClosing ? 'none' : 'auto',
         }}
@@ -115,17 +110,16 @@ export function ServerSheet(props: ServerSheetProps) {
         <div
           className={detailsClosing ? 'drill-out-back' : 'drill-in-forward'}
           style={{
-            gridColumn: 1,
-            gridRow: 1,
-            minWidth: 0,
-            minHeight: 0,
+            position: 'absolute',
+            inset: 0,
             width: '100%',
             maxWidth: CONTENT_MAX_WIDTH,
-            justifySelf: 'center',
+            margin: '0 auto',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             background: theme.sheetBg,
+            zIndex: 2,
           }}
         >
           <SubscriptionDetails
