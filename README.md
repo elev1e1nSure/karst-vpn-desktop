@@ -26,7 +26,7 @@ just dev
 ## Сборка релиза
 
 ```bash
-just set-version 0.2.0
+just set-version 1.2.3
 just build
 ```
 

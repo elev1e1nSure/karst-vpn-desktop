@@ -9,7 +9,7 @@ export const formatElapsed = (s: number): string => {
 };
 
 export const isRoutingMode = (value: string): value is RoutingMode =>
-  value === 'Full' || value === 'BypassLocal' || value === 'BypassRu';
+  value === 'Full' || value === 'BypassLocal' || value === 'BypassRu' || value === 'BypassRuOnly';
 
 export function formatUpdateInterval(hours: number | null | undefined): string {
   if (!hours || hours <= 0) return 'Не указан';

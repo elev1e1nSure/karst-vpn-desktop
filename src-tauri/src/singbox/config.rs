@@ -80,10 +80,7 @@ pub fn build_config(
 
 fn dns_block(routing_mode: RoutingMode, dns_doh_url: &str) -> Value {
     let mut rules: Vec<Value> = Vec::new();
-    if matches!(
-        routing_mode,
-        RoutingMode::BypassLocal | RoutingMode::BypassRu
-    ) {
+    if routing_mode.bypass_local() {
         rules.push(json!({
             "domain": ["localhost"],
             "domain_suffix": local_domain_suffixes(),
@@ -91,7 +88,7 @@ fn dns_block(routing_mode: RoutingMode, dns_doh_url: &str) -> Value {
             "server": "local-dns",
         }));
     }
-    if routing_mode == RoutingMode::BypassRu {
+    if routing_mode.bypass_ru() {
         rules.push(json!({
             "domain_suffix": ru_domain_suffixes(),
             "action": "route",

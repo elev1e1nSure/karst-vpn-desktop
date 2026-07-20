@@ -718,17 +718,17 @@ img {
 
 /* Power symbol: a gentle "power-up" pulse. */
 .sidebar-item:hover .sidebar-icon-connection {
-  transform: scale(1.13);
+  transform: scale(1.08);
 }
 
 /* Log lines: slide right a touch, like text scrolling into view. */
 .sidebar-item:hover .sidebar-icon-logs {
-  transform: translateX(2.5px);
+  transform: translateX(1.5px);
 }
 
 /* Gear: cranks a little to the right, then settles back on release. */
 .sidebar-item:hover .sidebar-icon-settings {
-  transform: rotate(38deg);
+  transform: rotate(24deg);
 }
 
 /* ─── Settings button ────────────────────────────────────────────────────── */
@@ -756,7 +756,7 @@ img {
 }
 
 .connect-btn:hover {
-  filter: brightness(1.06);
+  filter: brightness(1.04);
 }
 
 .connect-btn:active {
@@ -785,7 +785,7 @@ img {
 }
 
 .location-chip:hover {
-  filter: brightness(1.06);
+  filter: brightness(1.04);
 }
 
 .location-chip:active {
@@ -820,7 +820,7 @@ img {
 }
 
 .remove-server-btn:hover {
-  background-color: rgba(165, 96, 96, 0.15) !important;
+  background-color: rgba(165, 96, 96, 0.1) !important;
 }
 
 .remove-server-btn:hover .remove-icon {
@@ -880,7 +880,7 @@ img {
 }
 
 .btn-submit:hover {
-  filter: brightness(1.12);
+  filter: brightness(1.06);
 }
 
 .btn-submit:active {
@@ -896,7 +896,7 @@ img {
 }
 
 .refresh-all-btn:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.04);
 }
 
 .refresh-all-btn:active {
@@ -913,7 +913,7 @@ img {
 }
 
 .sub-group-header:hover {
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .sub-group-header:active {

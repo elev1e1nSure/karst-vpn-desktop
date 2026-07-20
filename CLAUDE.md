@@ -9,9 +9,9 @@ Karst VPN (desktop) — Tauri 2 app in React/TypeScript + Rust, Windows-first. I
 Key areas:
 
 - `src/App.tsx` — top-level entry component instantiating `useAppController()` and rendering `AppView`.
-- `src/app/` — frontend architecture: state management hook (`useAppController`), layout (`AppView`), Tauri IPC commands (`commands`), domain models/transforms (`models`), and types (`types`).
+- `src/app/` — frontend architecture: state management hook (`useAppController`), layout (`AppView`), Tauri IPC commands (`commands`), domain models/transforms (`models`), presentation helpers (`presentation`), connection status (`useConnectionStatus`), and types (`types`).
 - `src/features/` — domain feature components (`connection/`, `servers/` including subscriptions, `settings/`, `logs/`, `diagnostics/`).
-- `src/ui/` — shared design system & UI components (`ErrorBoundary`, `Pressable`, `Tooltip`, `LogsScreen`, `theme`).
+- `src/ui/` — shared design system & UI components (`ErrorBoundary`, `Pressable`, `Sidebar`, `Tooltip`, `LogsScreen`, `theme`, `useSheetDrag`).
 - `src/main.tsx` — entry point; wires in Windows flag-emoji font polyfill (`TwemojiCountryFlags.woff2`).
 - `src-tauri/src/commands/` — one file per Tauri command group (`connection`, `servers`, `subscriptions`, `settings`, `logs`), registered in `lib.rs`'s `generate_handler!`.
 - `src-tauri/src/connection/manager.rs` — `ConnectionManager`, single source of truth for connect/disconnect state; serializes connect/disconnect through an internal operation lock.
@@ -32,10 +32,11 @@ just check            # pnpm check + cargo fmt/clippy/check — run full lint & 
 just build            # sync-version + pnpm tauri build — release installer
 just set-version X.Y.Z # bump version across package.json/Cargo.toml/tauri.conf.json
 just sync-version     # sync version from package.json into Cargo.toml/tauri.conf.json
+just ci-build         # sync version and build release installer for CI
 ```
 
 Rust backend only (run from `src-tauri/`): `cargo check`, `cargo build`, `cargo clippy`.
-Frontend only: `pnpm check` (runs Prettier, ESLint, TypeScript typecheck), `pnpm format` (Prettier write).
+Frontend only: `pnpm check` (runs Prettier format check, ESLint, TypeScript typecheck), `pnpm format` (Prettier write).
 
 There are no automated unit tests in this repo (frontend or backend).
 
@@ -49,6 +50,7 @@ Release signing/CI: push tag `v*` → GitHub Actions (`.github/workflows/release
 - Do not touch `src-tauri/binaries/` (sing-box sidecar, wintun.dll) unless the task involves upgrading sing-box.
 - Server names run through `emojifyName`/`countryCodeToFlag` in `src/app/models.ts` to turn a leading country code into a flag emoji. Windows/WebView2 doesn't render flag-emoji ligatures natively — `main.tsx` polyfills this with a **locally bundled** font (`src/assets/fonts/TwemojiCountryFlags.woff2`), not the polyfill package's default CDN URL, since the app can't assume network access before a VPN connection exists. Any inline style that renders a flag-bearing string needs `"Twemoji Country Flags"` prefixed onto its `font-family`.
 - `src-tauri/capabilities/default.json` allowlists executing the sing-box sidecar with arbitrary args — required for `SingboxProcess::spawn`; don't broaden it further than necessary.
+- Use `Pressable` for interactive elements to ensure consistent touch ripple feedback across the UI.
 - Keep the UI calm and minimal. Do not add decorative elements without a task.
 
 ## Verification

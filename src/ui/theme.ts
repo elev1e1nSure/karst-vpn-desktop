@@ -9,7 +9,7 @@ export const DARK_THEME = {
   cardBg: '#262421',
   // Borderless surfaces separate by fill contrast, so we need a dedicated
   // hover tint (a step above the card) and a recessed input fill.
-  hover: '#322F2B',
+  hover: 'rgba(255, 255, 255, 0.045)',
   inputBg: '#161514',
   // The bottom sheet reads as a deep, dark modal: a near-black backdrop with
   // darker cards than the main tabs, so the borderless panels don't wash out.
@@ -32,7 +32,7 @@ export const LIGHT_THEME = {
   appBg: '#E4E0D6',
   sidebarBg: '#D8D3C5',
   cardBg: '#F3F1EA',
-  hover: '#E7E2D6',
+  hover: 'rgba(0, 0, 0, 0.035)',
   inputBg: '#EBE7DC',
   sheetBg: '#DCD7C9',
   sheetCardBg: '#EDEAE0',

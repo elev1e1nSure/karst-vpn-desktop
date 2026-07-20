@@ -7,6 +7,7 @@ pub enum RoutingMode {
     Full,
     BypassLocal,
     BypassRu,
+    BypassRuOnly,
 }
 
 impl RoutingMode {
@@ -15,7 +16,16 @@ impl RoutingMode {
             Self::Full => "full",
             Self::BypassLocal => "bypass_local",
             Self::BypassRu => "bypass_ru",
+            Self::BypassRuOnly => "bypass_ru_only",
         }
+    }
+
+    pub fn bypass_local(&self) -> bool {
+        matches!(self, Self::BypassLocal | Self::BypassRu)
+    }
+
+    pub fn bypass_ru(&self) -> bool {
+        matches!(self, Self::BypassRu | Self::BypassRuOnly)
     }
 }
 
@@ -27,6 +37,7 @@ impl TryFrom<&str> for RoutingMode {
             "full" => Ok(Self::Full),
             "bypass_local" => Ok(Self::BypassLocal),
             "bypass_ru" => Ok(Self::BypassRu),
+            "bypass_ru_only" => Ok(Self::BypassRuOnly),
             _ => Err(AppError::InvalidInput(format!(
                 "invalid routing mode: {value}"
             ))),
@@ -45,17 +56,13 @@ pub fn route_rules(mode: RoutingMode) -> Vec<Value> {
         }),
     ];
 
-    match mode {
-        RoutingMode::Full => {}
-        RoutingMode::BypassLocal => {
-            rules.push(local_network_rule());
-            rules.push(local_domain_rule());
-        }
-        RoutingMode::BypassRu => {
-            rules.push(local_network_rule());
-            rules.push(local_domain_rule());
-            rules.push(ru_domain_rule());
-        }
+    if mode.bypass_local() {
+        rules.push(local_network_rule());
+        rules.push(local_domain_rule());
+    }
+
+    if mode.bypass_ru() {
+        rules.push(ru_domain_rule());
     }
 
     rules

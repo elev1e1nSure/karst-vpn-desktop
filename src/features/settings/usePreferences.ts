@@ -16,6 +16,7 @@ const ROUTING_MODE_BY_DTO: Record<string, RoutingMode> = {
   full: 'Full',
   bypass_local: 'BypassLocal',
   bypass_ru: 'BypassRu',
+  bypass_ru_only: 'BypassRuOnly',
 };
 
 const AUTO_REFRESH_MODE_TO_DTO: Record<AutoRefreshMode, string> = {
@@ -28,7 +29,15 @@ const ROUTING_MODE_TO_DTO: Record<RoutingMode, string> = {
   Full: 'full',
   BypassLocal: 'bypass_local',
   BypassRu: 'bypass_ru',
+  BypassRuOnly: 'bypass_ru_only',
 };
+
+function flagsToRoutingMode(bypassLocal: boolean, bypassRu: boolean): RoutingMode {
+  if (bypassLocal && bypassRu) return 'BypassRu';
+  if (bypassLocal && !bypassRu) return 'BypassLocal';
+  if (!bypassLocal && bypassRu) return 'BypassRuOnly';
+  return 'Full';
+}
 
 export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
   const [themeBusy, setThemeBusy] = useState(false);
@@ -37,6 +46,9 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
   const [autoRefreshMode, setAutoRefreshMode] = useState<AutoRefreshMode>('Auto');
   const [autoRefreshHours, setAutoRefreshHours] = useState(24);
   const [dnsDohUrl, setDnsDohUrl] = useState('https://1.1.1.1/dns-query');
+
+  const bypassLocal = routingMode === 'BypassLocal' || routingMode === 'BypassRu';
+  const bypassRu = routingMode === 'BypassRu' || routingMode === 'BypassRuOnly';
 
   useEffect(() => {
     void getCurrentWindow().setTheme(darkModeOn ? 'dark' : 'light');
@@ -83,6 +95,16 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     }
   };
 
+  const toggleBypassLocal = async () => {
+    const nextMode = flagsToRoutingMode(!bypassLocal, bypassRu);
+    await setRouting(nextMode);
+  };
+
+  const toggleBypassRu = async () => {
+    const nextMode = flagsToRoutingMode(bypassLocal, !bypassRu);
+    await setRouting(nextMode);
+  };
+
   const setAutoRefresh = async (mode: AutoRefreshMode) => {
     try {
       await commands.setAutoRefreshSettings(AUTO_REFRESH_MODE_TO_DTO[mode], null);
@@ -119,11 +141,15 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     darkModeOn,
     theme: darkModeOn ? DARK_THEME : LIGHT_THEME,
     routingMode,
+    bypassLocal,
+    bypassRu,
     autoRefreshMode,
     autoRefreshHours,
     dnsDohUrl,
     hydrate,
     toggleDarkMode,
+    toggleBypassLocal,
+    toggleBypassRu,
     setRouting,
     setAutoRefresh,
     setAutoRefreshHours: setAutoRefreshHoursValue,

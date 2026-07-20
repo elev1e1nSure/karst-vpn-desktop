@@ -39,7 +39,7 @@ pub async fn add_subscription(
         subscriptions::insert_subscription(&guard, &subscription)?;
     }
 
-    let result = refresh(pool.inner().clone(), client.inner().clone(), id, &*logs)
+    let result = refresh(pool.inner().clone(), client.inner().clone(), id, &logs)
         .await
         .map(ImportSummaryDto::from);
     match &result {
@@ -80,7 +80,7 @@ pub async fn refresh_subscription(
         pool.inner().clone(),
         client.inner().clone(),
         subscription_id,
-        &*logs,
+        &logs,
     )
     .await
     .map(ImportSummaryDto::from);
@@ -110,7 +110,7 @@ pub async fn refresh_all_subscriptions(
     logs: State<'_, AppLog>,
 ) -> AppResult<Vec<ImportSummaryDto>> {
     logs.info(app_log::Category::Net, "subscription refresh all requested");
-    let result = refresh_all(pool.inner().clone(), client.inner().clone(), &*logs)
+    let result = refresh_all(pool.inner().clone(), client.inner().clone(), &logs)
         .await
         .map(|items| {
             items

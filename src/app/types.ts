@@ -58,5 +58,5 @@ export type ServerPingDto = {
   latency_ms?: number | null;
 };
 
-export type RoutingMode = 'Full' | 'BypassLocal' | 'BypassRu';
+export type RoutingMode = 'Full' | 'BypassLocal' | 'BypassRu' | 'BypassRuOnly';
 export type AutoRefreshMode = 'Auto' | 'Off' | 'EveryHours';

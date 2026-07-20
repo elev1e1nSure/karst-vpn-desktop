@@ -1,5 +1,6 @@
 import { Component } from 'react';
 import type { ErrorInfo, ReactNode } from 'react';
+import { Pressable } from './Pressable';
 
 interface Props {
   children: ReactNode;
@@ -58,8 +59,9 @@ export class ErrorBoundary extends Component<Props, State> {
           >
             {this.state.error.message}
           </div>
-          <button
+          <Pressable
             onClick={this.handleReset}
+            borderRadius={10}
             style={{
               marginTop: 8,
               padding: '10px 28px',
@@ -68,11 +70,10 @@ export class ErrorBoundary extends Component<Props, State> {
               color: '#1A1A19',
               border: 'none',
               font: "500 14px 'Inter', sans-serif",
-              cursor: 'pointer',
             }}
           >
             Попробовать снова
-          </button>
+          </Pressable>
         </div>
       );
     }

@@ -189,7 +189,7 @@ async fn refresh_due(pool: DbPool, client: reqwest::Client, app: &AppHandle) -> 
 
     for subscription_id in due_ids {
         let logs = app.state::<AppLog>();
-        match refresh(pool.clone(), client.clone(), subscription_id.clone(), &*logs).await {
+        match refresh(pool.clone(), client.clone(), subscription_id.clone(), &logs).await {
             Ok(summary) if summary.error.is_none() => app.state::<AppLog>().info(
                 app_log::Category::Net,
                 format!(
