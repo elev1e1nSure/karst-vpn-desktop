@@ -60,12 +60,14 @@ export function AppView({ controller }: AppViewProps) {
     themeBusy,
     darkModeOn,
     theme,
-    routingMode,
+    bypassLocal,
+    bypassRu,
     autoRefreshMode,
     autoRefreshHours,
     dnsDohUrl,
     toggleDarkMode: onToggleDarkMode,
-    setRouting: handleSetRoutingMode,
+    toggleBypassLocal: handleToggleBypassLocal,
+    toggleBypassRu: handleToggleBypassRu,
     setAutoRefresh: handleSetAutoRefreshMode,
     setAutoRefreshHours: handleSetAutoRefreshHours,
     setDnsDohUrl: handleSetDnsDohUrl,
@@ -131,6 +133,8 @@ export function AppView({ controller }: AppViewProps) {
       <div style={{ flex: 1, minWidth: 0, position: 'relative', overflow: 'hidden' }}>
         {activeTab === 'connection' && (
           <div
+            key="connection"
+            className="tab-content-anim"
             style={{
               width: '100%',
               height: '100%',
@@ -215,19 +219,23 @@ export function AppView({ controller }: AppViewProps) {
         )}
 
         {activeTab === 'logs' && (
-          <LogsScreen
-            theme={theme}
-            accent={ACCENT}
-            logs={logs}
-            logsLoading={logsLoading}
-            logsError={logsError}
-            onClear={onClearLogs}
-            onCopy={() => void onCopyLogs()}
-          />
+          <div key="logs" className="tab-content-anim" style={{ width: '100%', height: '100%' }}>
+            <LogsScreen
+              theme={theme}
+              accent={ACCENT}
+              logs={logs}
+              logsLoading={logsLoading}
+              logsError={logsError}
+              onClear={onClearLogs}
+              onCopy={() => void onCopyLogs()}
+            />
+          </div>
         )}
 
         {activeTab === 'settings' && (
           <div
+            key="settings"
+            className="tab-content-anim"
             style={{
               width: '100%',
               height: '100%',
@@ -240,12 +248,14 @@ export function AppView({ controller }: AppViewProps) {
               theme={theme}
               accent={ACCENT}
               darkModeOn={darkModeOn}
-              routingMode={routingMode}
+              bypassLocal={bypassLocal}
+              bypassRu={bypassRu}
               autoRefreshMode={autoRefreshMode}
               autoRefreshHours={autoRefreshHours}
               dnsDohUrl={dnsDohUrl}
               onToggleDarkMode={onToggleDarkMode}
-              onSetRoutingMode={(m) => void handleSetRoutingMode(m)}
+              onToggleBypassLocal={() => void handleToggleBypassLocal()}
+              onToggleBypassRu={() => void handleToggleBypassRu()}
               onSetAutoRefreshMode={(m) => void handleSetAutoRefreshMode(m)}
               onSetAutoRefreshHours={(h) => void handleSetAutoRefreshHours(h)}
               onSetDnsDohUrl={(url) => void handleSetDnsDohUrl(url)}
@@ -275,7 +285,7 @@ export function AppView({ controller }: AppViewProps) {
               maxHeight: '82%',
               display: 'flex',
               flexDirection: 'column',
-              background: theme.appBg,
+              background: theme.sheetBg,
               borderRadius: '22px 22px 0 0',
               boxShadow: '0 -18px 40px -16px rgba(0,0,0,0.4)',
               padding: '0 22px 28px',

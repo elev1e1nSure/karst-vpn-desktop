@@ -36,7 +36,7 @@ export function AddServerForm({
             gap: 12,
             padding: '15px 14px',
             borderRadius: 14,
-            background: theme.cardBg,
+            background: theme.sheetCardBg,
           }}
         >
           <div
@@ -70,7 +70,7 @@ export function AddServerForm({
         gap: 8,
         padding: 14,
         borderRadius: 14,
-        background: theme.cardBg,
+        background: theme.sheetCardBg,
       }}
     >
       <div style={{ font: "500 13.5px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>

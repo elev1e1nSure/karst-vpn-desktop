@@ -125,7 +125,7 @@ export function ServerSheet(props: ServerSheetProps) {
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
-            background: theme.appBg,
+            background: theme.sheetBg,
           }}
         >
           <SubscriptionDetails

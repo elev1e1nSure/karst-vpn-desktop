@@ -11,6 +11,10 @@ export const DARK_THEME = {
   // hover tint (a step above the card) and a recessed input fill.
   hover: '#322F2B',
   inputBg: '#161514',
+  // The bottom sheet reads as a deep, dark modal: a near-black backdrop with
+  // darker cards than the main tabs, so the borderless panels don't wash out.
+  sheetBg: '#121110',
+  sheetCardBg: '#1F1E1C',
   ink: '#EAE8E4',
   mutedInk: '#98948E',
   border: '#32302C',
@@ -27,6 +31,8 @@ export const LIGHT_THEME = {
   cardBg: '#F3F1EA',
   hover: '#E7E2D6',
   inputBg: '#EBE7DC',
+  sheetBg: '#DCD7C9',
+  sheetCardBg: '#EDEAE0',
   ink: '#332E26',
   mutedInk: '#7E7669',
   border: '#D5CFC0',

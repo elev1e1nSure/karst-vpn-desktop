@@ -71,7 +71,7 @@ export function SubscriptionDetails({
             gap: 12,
             padding: '16px 20px',
             borderRadius: 16,
-            background: theme.cardBg,
+            background: theme.sheetCardBg,
           }}
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -96,7 +96,7 @@ export function SubscriptionDetails({
           gap: 16,
           padding: '18px 20px',
           borderRadius: 16,
-          background: theme.cardBg,
+          background: theme.sheetCardBg,
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -150,7 +150,7 @@ export function SubscriptionDetails({
           gap: 18,
           padding: '18px 20px',
           borderRadius: 16,
-          background: theme.cardBg,
+          background: theme.sheetCardBg,
         }}
       >
         <DetailRow

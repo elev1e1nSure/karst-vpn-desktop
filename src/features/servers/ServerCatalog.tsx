@@ -124,7 +124,7 @@ export function ServerCatalog({
             style={{
               flexShrink: 0,
               borderRadius: 16,
-              background: theme.cardBg,
+              background: theme.sheetCardBg,
               overflow: 'hidden',
             }}
           >
