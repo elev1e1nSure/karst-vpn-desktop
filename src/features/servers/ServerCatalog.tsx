@@ -39,13 +39,11 @@ export function ServerCatalog({
         style={{
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          marginBottom: 14,
+          justifyContent: 'flex-end',
+          minHeight: 40,
+          marginBottom: 12,
         }}
       >
-        <div style={{ font: "500 19px/1.2 'Source Serif 4', serif", color: theme.ink }}>
-          Выбор сервера
-        </div>
         {groups.some((group) => group.id !== null) && (
           <Pressable
             className="refresh-all-btn"
@@ -174,7 +172,7 @@ export function ServerCatalog({
                     >
                       <span
                         style={{
-                          font: '500 17px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
+                          font: '500 18px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
                           color: theme.ink,
                         }}
                       >
@@ -282,7 +280,7 @@ function ServerGroupHeader({
       }}
     >
       <div style={{ flex: 1 }}>
-        <div style={{ font: "600 16.5px/1.3 'Inter', sans-serif", color: theme.ink }}>
+        <div style={{ font: "600 17px/1.3 'Inter', sans-serif", color: theme.ink }}>
           {group.name}
         </div>
         {group.announce && (

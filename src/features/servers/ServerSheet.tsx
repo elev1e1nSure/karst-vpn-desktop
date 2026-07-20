@@ -5,6 +5,10 @@ import type { Theme } from '../../ui/theme';
 import { ServerCatalog } from './ServerCatalog';
 import { SubscriptionDetails } from './SubscriptionDetails';
 
+// Cap the sheet content and centre it so the list/details read as a column
+// instead of stretching across the full desktop-width window.
+const CONTENT_MAX_WIDTH = 620;
+
 type ServerSheetProps = {
   groups: UiSubscription[];
   selectedServerId: string;
@@ -73,6 +77,9 @@ export function ServerSheet(props: ServerSheetProps) {
           gridRow: 1,
           minWidth: 0,
           minHeight: 0,
+          width: '100%',
+          maxWidth: CONTENT_MAX_WIDTH,
+          justifySelf: 'center',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -112,6 +119,9 @@ export function ServerSheet(props: ServerSheetProps) {
             gridRow: 1,
             minWidth: 0,
             minHeight: 0,
+            width: '100%',
+            maxWidth: CONTENT_MAX_WIDTH,
+            justifySelf: 'center',
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
