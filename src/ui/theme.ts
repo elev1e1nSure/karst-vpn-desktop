@@ -5,6 +5,7 @@ export const ACCENT = '#D97757';
 export const DARK_THEME = {
   pageBg: '#1A1A19',
   appBg: '#1A1A19',
+  sidebarBg: '#141312',
   cardBg: '#262421',
   ink: '#EAE8E4',
   mutedInk: '#98948E',
@@ -18,6 +19,7 @@ export const DARK_THEME = {
 export const LIGHT_THEME = {
   pageBg: '#E4E0D6',
   appBg: '#E4E0D6',
+  sidebarBg: '#D8D3C5',
   cardBg: '#F3F1EA',
   ink: '#332E26',
   mutedInk: '#7E7669',
