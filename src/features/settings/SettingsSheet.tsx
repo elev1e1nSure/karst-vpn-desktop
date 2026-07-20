@@ -101,13 +101,7 @@ export function SettingsSheet({
 }) {
   return (
     <div style={{ overflow: 'auto' }}>
-      <div
-        style={{ font: "500 17px/1.2 'Source Serif 4', serif", color: theme.ink, marginBottom: 16 }}
-      >
-        Настройки
-      </div>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
         <ToggleRow
           theme={theme}
           accent={accent}
@@ -517,18 +511,16 @@ function SettingsActionRow({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '13px 14px',
+          padding: '16px 18px',
         }}
       >
         <div>
-          <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>
-            {title}
-          </div>
-          <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
+          <div style={{ font: "400 13px/1.35 'Inter', sans-serif", color: theme.mutedInk }}>
             {subtitle}
           </div>
         </div>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none">
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
           <path
             d="M9 6L15 12L9 18"
             stroke={theme.mutedInk}
@@ -564,14 +556,12 @@ function ToggleRow({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '13px 14px',
+          padding: '16px 18px',
         }}
       >
         <div>
-          <div style={{ font: "500 14.5px/1.3 'Inter', sans-serif", color: theme.ink }}>
-            {title}
-          </div>
-          <div style={{ font: "400 12px/1.3 'Inter', sans-serif", color: theme.mutedInk }}>
+          <div style={{ font: "500 16px/1.3 'Inter', sans-serif", color: theme.ink }}>{title}</div>
+          <div style={{ font: "400 13px/1.35 'Inter', sans-serif", color: theme.mutedInk }}>
             {subtitle}
           </div>
         </div>

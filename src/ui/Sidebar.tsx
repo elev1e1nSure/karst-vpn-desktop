@@ -113,23 +113,17 @@ export function Sidebar({
             marginBottom: 6,
           }}
         >
-          <svg
-            width="22"
-            height="22"
-            viewBox="0 0 24 24"
-            fill="none"
-            style={{
-              transform: collapsed ? 'rotate(180deg)' : 'none',
-              transition: 'transform 0.24s cubic-bezier(0.4,0,0.2,1)',
-            }}
-          >
-            <path
-              d="M15 6L9 12L15 18"
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <rect
+              x="3"
+              y="4.5"
+              width="18"
+              height="15"
+              rx="3"
               stroke={theme.mutedInk}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              strokeWidth="1.9"
             />
+            <line x1="9.5" y1="4.5" x2="9.5" y2="19.5" stroke={theme.mutedInk} strokeWidth="1.9" />
           </svg>
         </Pressable>
       </Tooltip>
@@ -137,8 +131,9 @@ export function Sidebar({
       {TABS.map((tab) => {
         const active = activeTab === tab.id;
         const color = active ? accent : theme.mutedInk;
-        const item = (
+        return (
           <Pressable
+            key={tab.id}
             onClick={() => onSelectTab(tab.id)}
             className={`sidebar-item ${active ? 'sidebar-item-active' : ''}`}
             borderRadius={14}
@@ -170,7 +165,7 @@ export function Sidebar({
             {!collapsed && (
               <span
                 style={{
-                  font: "600 15px/1 'Inter', sans-serif",
+                  font: "600 16.5px/1 'Inter', sans-serif",
                   color: active ? theme.ink : theme.mutedInk,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
@@ -180,13 +175,6 @@ export function Sidebar({
               </span>
             )}
           </Pressable>
-        );
-        return collapsed ? (
-          <Tooltip key={tab.id} label={tab.label} theme={theme} placement="bottom">
-            {item}
-          </Tooltip>
-        ) : (
-          <div key={tab.id}>{item}</div>
         );
       })}
     </nav>

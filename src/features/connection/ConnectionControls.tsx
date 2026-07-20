@@ -36,8 +36,8 @@ export function ConnectButton({
     <div
       style={{
         position: 'relative',
-        width: 208,
-        height: 208,
+        width: 256,
+        height: 256,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -47,26 +47,26 @@ export function ConnectButton({
         className={ringClass}
         style={{
           position: 'absolute',
-          width: 168,
-          height: 168,
+          width: 208,
+          height: 208,
           borderRadius: '50%',
           background: `color-mix(in oklch, ${accent} 100%, transparent)`,
           pointerEvents: 'none',
         }}
       />
-      <button
-        type="button"
-        className="connect-btn"
-        aria-label="Подключить VPN"
+      <Pressable
         onClick={enabled && !isTransitioning ? onClick : undefined}
+        disabled={!enabled || isTransitioning}
+        borderRadius={94}
+        className="connect-btn"
         style={{
           position: 'relative',
           zIndex: 2,
-          width: 152,
-          height: 152,
+          width: 188,
+          height: 188,
           borderRadius: '50%',
           background: buttonBg,
-          border: `2px solid ${borderColor}`,
+          border: `2.5px solid ${borderColor}`,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -78,16 +78,16 @@ export function ConnectButton({
         {isTransitioning ? (
           <div
             style={{
-              width: 30,
-              height: 30,
+              width: 38,
+              height: 38,
               borderRadius: '50%',
-              border: '3px solid rgba(255,255,255,0.35)',
+              border: '3.5px solid rgba(255,255,255,0.35)',
               borderTopColor: '#fff',
               animation: 'spin 0.85s linear infinite',
             }}
           />
         ) : (
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+          <svg width="50" height="50" viewBox="0 0 24 24" fill="none">
             <path
               d="M12 3V12"
               stroke={iconColor}
@@ -104,7 +104,7 @@ export function ConnectButton({
             />
           </svg>
         )}
-      </button>
+      </Pressable>
     </div>
   );
 }
@@ -126,8 +126,8 @@ export function LocationChip({
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: 14,
-          padding: '16px 18px',
+          gap: 16,
+          padding: '18px 22px',
           borderRadius: mood.chipRadius,
           background: theme.cardBg,
           border: `1px solid ${theme.border}`,
@@ -136,9 +136,9 @@ export function LocationChip({
       >
         <div
           style={{
-            width: 34,
-            height: 34,
-            borderRadius: 10,
+            width: 42,
+            height: 42,
+            borderRadius: 12,
             background: theme.pageBg,
             display: 'flex',
             alignItems: 'center',
@@ -148,8 +148,8 @@ export function LocationChip({
         >
           <div
             style={{
-              width: 14,
-              height: 14,
+              width: 17,
+              height: 17,
               borderRadius: '50%',
               border: `2px solid ${theme.mutedInk}`,
             }}
@@ -158,7 +158,7 @@ export function LocationChip({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              font: '500 14px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
+              font: '500 16px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
               color: theme.ink,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -169,7 +169,7 @@ export function LocationChip({
           </div>
           <div
             style={{
-              font: "400 12px/1.3 'Inter', sans-serif",
+              font: "400 13.5px/1.3 'Inter', sans-serif",
               color: theme.mutedInk,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -179,7 +179,7 @@ export function LocationChip({
             {server ? server.tag : 'VLESS-ссылка или URL подписки'}
           </div>
         </div>
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+        <svg width="19" height="19" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
           <path
             d="M9 6L15 12L9 18"
             stroke={theme.mutedInk}

@@ -35,7 +35,7 @@ export function LogsScreen({
         background: theme.appBg,
         ...themeVars(theme),
         boxSizing: 'border-box',
-        padding: '18px 18px 20px',
+        padding: '22px 26px 24px',
         overflow: 'hidden',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
       }}
@@ -43,7 +43,7 @@ export function LogsScreen({
       <div
         style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 10, flexShrink: 0 }}
       >
-        {onBack ? (
+        {onBack && (
           <Pressable onClick={onBack} borderRadius={10}>
             <div
               className="log-header-btn"
@@ -66,16 +66,6 @@ export function LogsScreen({
               <div style={{ font: "500 14px/1 'Inter', sans-serif", color: theme.ink }}>Назад</div>
             </div>
           </Pressable>
-        ) : (
-          <div
-            style={{
-              font: "500 17px/1.2 'Source Serif 4', serif",
-              color: theme.ink,
-              padding: '0 4px',
-            }}
-          >
-            Логи
-          </div>
         )}
         <div style={{ flex: 1 }} />
         <LogActionButton
@@ -95,7 +85,7 @@ export function LogsScreen({
             </>
           }
         />
-        <div style={{ width: 6, flexShrink: 0 }} />
+        <div style={{ width: 8, flexShrink: 0 }} />
         <LogActionButton
           theme={theme}
           label="Очистить логи"
@@ -112,14 +102,13 @@ export function LogsScreen({
           }
         />
       </div>
-      <div style={{ height: 1, background: theme.border, marginBottom: 12, flexShrink: 0 }} />
       <div style={{ flex: 1, overflow: 'auto' }}>
         {logsLoading && logs.length === 0 ? (
-          <span style={{ color: theme.mutedInk, font: "400 12px/1.5 'Inter', sans-serif" }}>
+          <span style={{ color: theme.mutedInk, font: "400 13.5px/1.5 'Inter', sans-serif" }}>
             Загрузка…
           </span>
         ) : logsError ? (
-          <span style={{ color: theme.danger, font: "400 12px/1.5 'Inter', sans-serif" }}>
+          <span style={{ color: theme.danger, font: "400 13.5px/1.5 'Inter', sans-serif" }}>
             {logsError}
           </span>
         ) : logs.length === 0 ? (
@@ -129,7 +118,7 @@ export function LogsScreen({
             <div
               key={`${entry.source}-${index}`}
               style={{
-                font: "400 12px/1.45 'Inter', sans-serif",
+                font: "400 13.5px/1.5 'Inter', sans-serif",
                 color: theme.ink,
                 overflowWrap: 'anywhere',
                 whiteSpace: 'pre-wrap',
@@ -160,22 +149,18 @@ function LogActionButton({
 }) {
   return (
     <Tooltip label={label} theme={theme} placement="bottom" disabled={disabled}>
-      <Pressable
-        onClick={disabled ? undefined : onClick}
-        disabled={disabled}
-        style={{ borderRadius: 10 }}
-      >
+      <Pressable onClick={disabled ? undefined : onClick} disabled={disabled} borderRadius={12}>
         <div
           className="log-header-btn"
           style={{
-            width: 36,
-            height: 36,
+            width: 44,
+            height: 44,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             {icon}
           </svg>
         </div>
@@ -206,7 +191,7 @@ function EmptyLogs({ theme }: { theme: Theme }) {
           opacity="0.5"
         />
       </svg>
-      <div style={{ font: "500 18px/1.2 'Source Serif 4', serif", color: theme.mutedInk }}>
+      <div style={{ font: "500 22px/1.2 'Source Serif 4', serif", color: theme.mutedInk }}>
         Логов пока нет
       </div>
     </div>

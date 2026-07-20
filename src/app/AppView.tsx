@@ -136,68 +136,81 @@ export function AppView({ controller }: AppViewProps) {
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
+              alignItems: 'center',
               boxSizing: 'border-box',
-              padding: '28px 28px 36px',
+              padding: '40px 40px 48px',
               background: theme.appBg,
             }}
           >
+            {/* Cap and centre the content so the button and server card read as a
+                real panel instead of stretching across the wide desktop window. */}
             <div
               style={{
-                flex: 1,
+                width: '100%',
+                maxWidth: 480,
+                height: '100%',
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 28,
               }}
             >
-              <ConnectButton
-                phase={isTransitioning && phase === 'off' ? 'connecting' : phase}
-                enabled={selectedServer !== null || isConnected}
-                theme={theme}
-                accent={ACCENT}
-                onClick={() => void onTapButton()}
-              />
-
               <div
                 style={{
+                  flex: 1,
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 6,
-                  minHeight: 78,
+                  justifyContent: 'center',
+                  gap: 36,
                 }}
               >
-                <div style={{ font: "500 24px/1.15 'Source Serif 4', serif", color: theme.ink }}>
-                  {statusLabel}
-                </div>
-                {isConnected ? (
-                  <div
-                    style={{
-                      font: "500 14px/1 'Inter', sans-serif",
-                      color: theme.mutedInk,
-                      letterSpacing: '0.3px',
-                      fontVariantNumeric: 'tabular-nums',
-                    }}
-                  >
-                    {formatElapsed(elapsed)}
-                  </div>
-                ) : (
-                  <div
-                    style={{
-                      font: "400 14px/1.4 'Inter', sans-serif",
-                      color: appError ? theme.danger : theme.mutedInk,
-                      maxWidth: 250,
-                      textAlign: 'center',
-                    }}
-                  >
-                    {subLabel}
-                  </div>
-                )}
-              </div>
-            </div>
+                <ConnectButton
+                  phase={isTransitioning && phase === 'off' ? 'connecting' : phase}
+                  enabled={selectedServer !== null || isConnected}
+                  theme={theme}
+                  accent={ACCENT}
+                  onClick={() => void onTapButton()}
+                />
 
-            <LocationChip server={selectedServer} theme={theme} onClick={onOpenServerMenu} />
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 8,
+                    minHeight: 92,
+                  }}
+                >
+                  <div style={{ font: "500 30px/1.15 'Source Serif 4', serif", color: theme.ink }}>
+                    {statusLabel}
+                  </div>
+                  {isConnected ? (
+                    <div
+                      style={{
+                        font: "500 17px/1 'Inter', sans-serif",
+                        color: theme.mutedInk,
+                        letterSpacing: '0.3px',
+                        fontVariantNumeric: 'tabular-nums',
+                      }}
+                    >
+                      {formatElapsed(elapsed)}
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        font: "400 16px/1.45 'Inter', sans-serif",
+                        color: appError ? theme.danger : theme.mutedInk,
+                        maxWidth: 360,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {subLabel}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <LocationChip server={selectedServer} theme={theme} onClick={onOpenServerMenu} />
+            </div>
           </div>
         )}
 
@@ -220,7 +233,7 @@ export function AppView({ controller }: AppViewProps) {
               height: '100%',
               boxSizing: 'border-box',
               overflow: 'auto',
-              padding: '20px 22px 28px',
+              padding: '24px 28px 28px',
             }}
           >
             <SettingsSheet
