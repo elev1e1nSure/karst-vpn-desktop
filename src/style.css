@@ -845,6 +845,7 @@ img {
 
 .add-server-input {
   outline: none;
+  border: none;
   width: 100%;
   box-sizing: border-box;
   transition: box-shadow 0.15s ease;
@@ -1029,6 +1030,7 @@ img {
 
 .hours-input {
   outline: none;
+  border: none;
   width: 100%;
   box-sizing: border-box;
   transition: box-shadow 0.15s ease;
