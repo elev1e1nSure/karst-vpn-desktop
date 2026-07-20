@@ -17,9 +17,9 @@ function MiniSwitch({
   theme: Theme;
   onToggle: () => void;
 }) {
-  // Off-track uses the recessed input fill (not the border token) so it stays
-  // distinct from the row hover tint instead of merging into it.
-  const trackColor = checked ? `color-mix(in oklch, ${accent} 70%, transparent)` : theme.inputBg;
+  // Off-track needs to read against both the row's rest bg and its hover tint,
+  // so it uses a dedicated recessed color rather than a nearby surface token.
+  const trackColor = checked ? `color-mix(in oklch, ${accent} 70%, transparent)` : theme.switchOff;
   return (
     <div
       className="switch-btn mini-switch-track"

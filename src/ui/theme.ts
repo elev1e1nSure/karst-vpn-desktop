@@ -15,6 +15,9 @@ export const DARK_THEME = {
   // darker cards than the main tabs, so the borderless panels don't wash out.
   sheetBg: '#121110',
   sheetCardBg: '#1F1E1C',
+  // Switch off-track: a recessed pill distinct from both the row rest bg and
+  // its hover tint, so the toggle never merges into the settings row.
+  switchOff: '#100F0E',
   ink: '#EAE8E4',
   mutedInk: '#98948E',
   border: '#32302C',
@@ -33,6 +36,7 @@ export const LIGHT_THEME = {
   inputBg: '#EBE7DC',
   sheetBg: '#DCD7C9',
   sheetCardBg: '#EDEAE0',
+  switchOff: '#CDC6B5',
   ink: '#332E26',
   mutedInk: '#7E7669',
   border: '#D5CFC0',
