@@ -6,7 +6,11 @@ import type { Theme } from './theme';
 export type AppTab = 'connection' | 'logs' | 'settings';
 
 const EXPANDED_WIDTH = 208;
-const COLLAPSED_WIDTH = 64;
+// Collapsed sidebar shrinks to exactly one square tile (ITEM_SIZE) plus
+// the nav's horizontal padding on each side.
+const ITEM_SIZE = 52;
+const NAV_PAD_X = 8;
+const COLLAPSED_WIDTH = ITEM_SIZE + NAV_PAD_X * 2;
 
 type TabDef = { id: AppTab; label: string; icon: (color: string) => ReactNode };
 
@@ -15,7 +19,7 @@ const TABS: TabDef[] = [
     id: 'connection',
     label: 'Подключение',
     icon: (color) => (
-      <svg width="23" height="23" viewBox="0 0 24 24" fill="none">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
         <path d="M12 3V12" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
         <path
           d="M6.5 6.5C5 8.1 4 10.2 4 12.5C4 17.2 7.8 21 12.5 21C17.2 21 21 17.2 21 12.5C21 10.1 19.9 7.9 18.3 6.4"
@@ -32,7 +36,7 @@ const TABS: TabDef[] = [
     id: 'logs',
     label: 'Логи',
     icon: (color) => (
-      <svg width="23" height="23" viewBox="0 0 24 24" fill="none">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
         <path
           d="M5 6H19M5 10H19M5 14H15M5 18H12"
           stroke={color}
@@ -46,7 +50,7 @@ const TABS: TabDef[] = [
     id: 'settings',
     label: 'Настройки',
     icon: (color) => (
-      <svg width="23" height="23" viewBox="0 0 24 24" fill="none">
+      <svg width="25" height="25" viewBox="0 0 24 24" fill="none">
         <path
           d="M12 15.5C13.933 15.5 15.5 13.933 15.5 12C15.5 10.067 13.933 8.5 12 8.5C10.067 8.5 8.5 10.067 8.5 12C8.5 13.933 10.067 15.5 12 15.5Z"
           stroke={color}
@@ -90,7 +94,7 @@ export function Sidebar({
         flexDirection: 'column',
         background: theme.sidebarBg,
         borderRight: `1px solid ${theme.border}`,
-        padding: '14px 12px',
+        padding: `14px ${NAV_PAD_X}px`,
         gap: 7,
       }}
     >
@@ -98,13 +102,14 @@ export function Sidebar({
         <Pressable
           onClick={onToggleCollapsed}
           className="sidebar-toggle"
-          borderRadius={12}
+          borderRadius={14}
           style={{
-            width: 40,
-            height: 40,
+            width: ITEM_SIZE,
+            height: ITEM_SIZE,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            flexShrink: 0,
             marginBottom: 6,
           }}
         >
@@ -136,24 +141,36 @@ export function Sidebar({
           <Pressable
             onClick={() => onSelectTab(tab.id)}
             className={`sidebar-item ${active ? 'sidebar-item-active' : ''}`}
-            borderRadius={12}
+            borderRadius={14}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 13,
-              height: 52,
-              padding: collapsed ? 0 : '0 14px',
-              justifyContent: collapsed ? 'center' : 'flex-start',
+              height: ITEM_SIZE,
+              padding: 0,
+              overflow: 'hidden',
               background: active
                 ? `color-mix(in oklch, ${accent} 14%, transparent)`
                 : 'transparent',
             }}
           >
-            <span style={{ display: 'flex', flexShrink: 0 }}>{tab.icon(color)}</span>
+            {/* Fixed-size square icon tile anchored at the left edge: it stays put
+                while the sidebar width animates, and is all that remains when collapsed. */}
+            <span
+              style={{
+                width: ITEM_SIZE,
+                height: ITEM_SIZE,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}
+            >
+              {tab.icon(color)}
+            </span>
             {!collapsed && (
               <span
                 style={{
-                  font: "600 14.5px/1 'Inter', sans-serif",
+                  font: "600 15px/1 'Inter', sans-serif",
                   color: active ? theme.ink : theme.mutedInk,
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
