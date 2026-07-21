@@ -14,8 +14,10 @@ Key areas:
 - `src/ui/` — shared design system & UI components (`ErrorBoundary`, `Pressable`, `Sidebar`, `Tooltip`, `LogsScreen`, `theme`, `useSheetDrag`).
 - `src/main.tsx` — entry point; wires in Windows flag-emoji font polyfill (`TwemojiCountryFlags.woff2`).
 - `src-tauri/src/commands/` — one file per Tauri command group (`connection`, `servers`, `subscriptions`, `settings`, `logs`), registered in `lib.rs`'s `generate_handler!`.
-- `src-tauri/src/connection/manager.rs` — `ConnectionManager`, single source of truth for connect/disconnect state; serializes connect/disconnect through an internal operation lock.
-- `src-tauri/src/singbox/` — builds sing-box JSON config (`config.rs`, `outbound.rs`, `route_rules.rs`), validates sidecar checksum, cleans up stale TUN adapters, and manages sidecar process (`process.rs`, `process_guard.rs`).
+- `src-tauri/src/connection/manager.rs` — `ConnectionManager`, single source of truth for connect/disconnect state; serializes connect/disconnect through an internal operation lock. `tunnel.rs` owns the one-or-two sidecar processes making up a live connection.
+- `src-tauri/src/core/` — core-agnostic sidecar layer: `SidecarSpec` (per-core binary/config/log/PID names, readiness marker, checksum), `process.rs` (spawn, readiness, teardown), `process_guard.rs` (Windows job objects, stale-PID recovery), and `CoreMode`/`TransportCore` for picking which core handles a transport. `SPECS` is the registry both startup recovery and the log viewer iterate.
+- `src-tauri/src/singbox/` — builds sing-box JSON config (`config.rs`, `outbound.rs`, `route_rules.rs`) and declares `singbox::SPEC`. sing-box always runs: it owns TUN, routing and DNS.
+- `src-tauri/src/xray/` — optional second core for transports sing-box can't express (notably xhttp). Builds a loopback SOCKS5 inbound plus VLESS outbound (`config.rs`, `outbound.rs`) and declares `xray::SPEC`.
 - `src-tauri/src/subscription/` — fetches subscription payload (`fetch.rs`), base64-decodes (`decode.rs`), parses VLESS links, replaces servers for that subscription in one DB transaction (`refresh.rs`).
 - `src-tauri/src/vless/` — hand-rolled VLESS URI parser (`parser.rs`), link model (`model.rs`), optional xray-json outbound builder (`xray_json.rs`).
 - `src-tauri/src/db/` — raw `rusqlite`, no ORM; schema in `schema.rs` (idempotent migrations, recreates corrupt DB); per-table modules (`servers.rs`, `subscriptions.rs`, `settings.rs`).
@@ -28,7 +30,7 @@ Key areas:
 - `src-tauri/src/error.rs` — single `AppError` enum for the whole backend; serializes to `{ kind, message }` for the frontend.
 - `src-tauri/src/lib.rs` — `tauri::Builder` setup: single-instance plugin, DB init, connection manager init, scheduler spawn, tray init, close-to-tray event wiring, invoke handler registration.
 - `src-tauri/src/main.rs` — thin binary entrypoint; calls `karst_vpn_lib::run()`.
-- `src-tauri/binaries/` — checked-in `sing-box` sidecar exe + `wintun.dll`, required for `tauri dev`/`tauri build` to work.
+- `src-tauri/binaries/` — checked-in `sing-box` and `xray` sidecar exes + `wintun.dll`, required for `tauri dev`/`tauri build` to work. `build.rs` hashes both and exposes `SINGBOX_SHA256`/`XRAY_SHA256`.
 
 ## Commands
 
@@ -54,9 +56,9 @@ Release signing/CI: push tag `v*` → GitHub Actions (`.github/workflows/release
 - Follow the existing React/TypeScript and Rust project style.
 - Comments in English only, and only for non-obvious decisions or constraints.
 - Do not add secrets, real VLESS links, subscriptions, tokens, or private endpoints to the repo.
-- Do not touch `src-tauri/binaries/` (sing-box sidecar, wintun.dll) unless the task involves upgrading sing-box.
+- Do not touch `src-tauri/binaries/` (sing-box and xray sidecars, wintun.dll) unless the task involves upgrading a core. Xray is pinned to v26.3.27: later releases are prereleases, and its config schema shifts between them (`streamSettings.network` was renamed to `method` after this tag). Verify config keys against the tagged source, not the docs site, which tracks prereleases.
 - Server names run through `emojifyName`/`countryCodeToFlag` in `src/app/models.ts` to turn a leading country code into a flag emoji. Windows/WebView2 doesn't render flag-emoji ligatures natively — `main.tsx` polyfills this with a **locally bundled** font (`src/assets/fonts/TwemojiCountryFlags.woff2`), not the polyfill package's default CDN URL, since the app can't assume network access before a VPN connection exists. Any inline style that renders a flag-bearing string needs `"Twemoji Country Flags"` prefixed onto its `font-family`.
-- `src-tauri/capabilities/default.json` allowlists executing the sing-box sidecar with arbitrary args — required for `SingboxProcess::spawn`; don't broaden it further than necessary.
+- `src-tauri/capabilities/default.json` allowlists executing the sing-box and xray sidecars with arbitrary args — required for `SidecarProcess::spawn`; don't broaden it further than necessary.
 - Use `Pressable` for interactive elements to ensure consistent touch ripple feedback across the UI.
 - Keep the UI calm and minimal. Do not add decorative elements without a task.
 
@@ -65,7 +67,8 @@ Release signing/CI: push tag `v*` → GitHub Actions (`.github/workflows/release
 - `just check` must pass (runs frontend `pnpm check` + backend `cargo fmt`, `cargo clippy`, `cargo check`).
 - For frontend changes, `pnpm check` (or `pnpm build`) must pass.
 - For backend changes, `cargo check` and `cargo clippy` in `src-tauri/` must pass.
-- A successful build does **not** prove the VPN connection actually works — for changes touching `connection/`, `singbox/`, or routing, explicitly state that manual testing via `just dev` on Windows is required.
+- A successful build does **not** prove the VPN connection actually works — for changes touching `connection/`, `core/`, `singbox/`, `xray/`, or routing, explicitly state that manual testing via `just dev` on Windows is required.
+- Generated core configs can still be checked statically without starting a tunnel: `sing-box check -c <file>` and `xray run -test -c <file>` load the config and exit. Use them instead of trusting a config shape from memory.
 
 ## Git
 

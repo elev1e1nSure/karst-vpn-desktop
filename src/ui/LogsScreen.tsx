@@ -1,9 +1,24 @@
+import { useMemo, useState } from 'react';
 import type { LogEntryDto } from '../app/types';
 import type { ReactNode } from 'react';
 import { Pressable } from './Pressable';
 import { themeVars } from './theme';
 import type { Theme } from './theme';
 import { Tooltip } from './Tooltip';
+
+type LogGroup = 'app' | 'sing-box' | 'xray';
+
+const GROUP_LABELS: Record<LogGroup, string> = {
+  app: 'Приложение',
+  'sing-box': 'sing-box',
+  xray: 'Xray',
+};
+
+// Rotated files arrive as "<source>.1"; both halves belong to the same group.
+function groupOf(source: string): LogGroup {
+  const base = source.replace(/\.1$/, '');
+  return base === 'sing-box' || base === 'xray' ? base : 'app';
+}
 
 export function LogsScreen({
   theme,
@@ -24,6 +39,22 @@ export function LogsScreen({
   onClear: () => void;
   onCopy: () => void;
 }) {
+  const [group, setGroup] = useState<LogGroup | 'all'>('all');
+
+  const available = useMemo(() => {
+    const seen = new Set<LogGroup>();
+    for (const entry of logs) seen.add(groupOf(entry.source));
+    return (['app', 'sing-box', 'xray'] as LogGroup[]).filter((item) => seen.has(item));
+  }, [logs]);
+
+  // A group vanishes once its file rotates away; fall back rather than showing an empty list.
+  const activeGroup = group !== 'all' && !available.includes(group) ? 'all' : group;
+  const visibleLogs = useMemo(
+    () =>
+      activeGroup === 'all' ? logs : logs.filter((entry) => groupOf(entry.source) === activeGroup),
+    [logs, activeGroup],
+  );
+
   const actionsDisabled = logs.length === 0 || logsLoading;
   return (
     <div
@@ -102,6 +133,20 @@ export function LogsScreen({
           }
         />
       </div>
+      {available.length > 1 && (
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexShrink: 0 }}>
+          {(['all', ...available] as (LogGroup | 'all')[]).map((item) => (
+            <FilterChip
+              key={item}
+              theme={theme}
+              accent={accent}
+              label={item === 'all' ? 'Все' : GROUP_LABELS[item]}
+              selected={activeGroup === item}
+              onClick={() => setGroup(item)}
+            />
+          ))}
+        </div>
+      )}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {logsLoading && logs.length === 0 ? (
           <span style={{ color: theme.mutedInk, font: "400 13.5px/1.5 'Inter', sans-serif" }}>
@@ -111,10 +156,10 @@ export function LogsScreen({
           <span style={{ color: theme.danger, font: "400 13.5px/1.5 'Inter', sans-serif" }}>
             {logsError}
           </span>
-        ) : logs.length === 0 ? (
+        ) : visibleLogs.length === 0 ? (
           <EmptyLogs theme={theme} />
         ) : (
-          logs.map((entry, index) => (
+          visibleLogs.map((entry, index) => (
             <div
               key={`${entry.source}-${index}`}
               style={{
@@ -131,6 +176,38 @@ export function LogsScreen({
         )}
       </div>
     </div>
+  );
+}
+
+function FilterChip({
+  theme,
+  accent,
+  label,
+  selected,
+  onClick,
+}: {
+  theme: Theme;
+  accent: string;
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <Pressable onClick={onClick} borderRadius={999}>
+      <div
+        className="log-header-btn"
+        style={{
+          padding: '6px 12px',
+          borderRadius: 999,
+          font: "500 12.5px/1 'Inter', sans-serif",
+          color: selected ? accent : theme.mutedInk,
+          border: `1px solid ${selected ? accent : 'transparent'}`,
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
+      </div>
+    </Pressable>
   );
 }
 
