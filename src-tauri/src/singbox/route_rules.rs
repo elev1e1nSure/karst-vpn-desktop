@@ -55,6 +55,7 @@ impl TryFrom<&str> for RoutingMode {
 pub struct XrayBypass {
     pub process_names: Vec<String>,
     pub server_cidrs: Vec<String>,
+    pub server_port: u16,
 }
 
 impl XrayBypass {
@@ -65,9 +66,12 @@ impl XrayBypass {
             "outbound": "direct",
         })];
 
+        // Scoped to the server's port as well: without it every process reaching that address
+        // skips the tunnel, which was observed sending ordinary browser traffic direct.
         if !self.server_cidrs.is_empty() {
             rules.push(json!({
                 "ip_cidr": self.server_cidrs,
+                "port": [self.server_port],
                 "action": "route",
                 "outbound": "direct",
             }));

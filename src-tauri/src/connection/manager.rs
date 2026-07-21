@@ -160,7 +160,16 @@ impl ConnectionManager {
                         .map(|name| (*name).to_string())
                         .collect(),
                     server_cidrs: resolve_server_cidrs(&link.host, link.port).await,
+                    server_port: link.port,
                 };
+                app.state::<AppLog>().info(
+                    app_log::Category::Core,
+                    format!(
+                        "xray bypass rules processes=[{}] server_cidrs={}",
+                        bypass.process_names.join(","),
+                        bypass.server_cidrs.len()
+                    ),
+                );
                 (socks_outbound(socks_port), Some(process), Some(bypass))
             }
         };
