@@ -6,8 +6,10 @@ use serde_json::{json, Value};
 pub fn build_config(outbound: Value, socks_port: u16) -> Value {
     json!({
         "log": {
-            // The readiness marker in xray::SPEC is logged at warning severity.
-            "loglevel": "warning",
+            // Matches sing-box's level. At "warning" xray logs neither the transport it negotiated
+            // nor the requests it tunnels, which makes a half-working chain indistinguishable from
+            // a dead one. The readiness marker in xray::SPEC is logged above this level either way.
+            "loglevel": "info",
         },
         "inbounds": [
             {
