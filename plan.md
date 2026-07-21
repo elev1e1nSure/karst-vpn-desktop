@@ -40,36 +40,78 @@ XHTTP умеет H3/QUIC через `finalmask.quicParams` — для VLESS в s
 Свежая. Новый формат DNS (`action: "route"`, `type: "https"`), уже используемый
 в `src-tauri/src/singbox/config.rs`, валиден. Доподнимать ядро не нужно.
 
-### Xray переименовал ключ транспорта: `network` → `method`
+### Версия Xray: v26.3.27 — последняя стабильная
 
-Актуальная схема `streamSettings`:
+Все релизы после (v26.4.x … v26.7.11) помечены prerelease. Бандлим `Xray-windows-64.zip` из v26.3.27.
 
-```json
-"streamSettings": {
-  "method": "raw",
-  "rawSettings": {},
-  "xhttpSettings": {},
-  "kcpSettings": {},
-  "grpcSettings": {},
-  "wsSettings": {},
-  "httpupgradeSettings": {},
-  "hysteriaSettings": {},
-  "security": "none",
-  "realitySettings": {},
-  "tlsSettings": {},
-  "finalmask": {},
-  "sockopt": {}
+### Ключ транспорта — `network`, НЕ `method`
+
+Сверено по исходникам на теге v26.3.27 (`infra/conf/transport_internet.go`), не по доке.
+**Вхождений `"method"` в файле ровно 0** — этот ключ появился уже после марта, в prerelease-ветке.
+Сайт документации опережает стабильный релиз, доверять ему нельзя.
+
+```go
+type StreamConfig struct {
+    Network             *TransportProtocol `json:"network"`
+    Security            string             `json:"security"`
+    REALITYSettings     *REALITYConfig     `json:"realitySettings"`
+    XHTTPSettings       *SplitHTTPConfig   `json:"xhttpSettings"`
+    SplitHTTPSettings   *SplitHTTPConfig   `json:"splithttpSettings"` // legacy-алиас
+    RAWSettings         *TCPConfig         `json:"rawSettings"`
+    TCPSettings         *TCPConfig         `json:"tcpSettings"`       // legacy-алиас
+    ...
 }
 ```
 
-Транспорт `tcp` переименован в `raw` (`tcpSettings` → `rawSettings`).
-Английская версия доки ещё показывает `network` — значит это legacy-алиас, оба ключа работают.
-Транспорт `h2` / `httpSettings` из списка пропал совсем: актуальный набор —
-RAW, XHTTP, mKCP, gRPC, WebSocket, HTTPUpgrade, Hysteria.
+Из `TransportProtocol.Build()`:
 
-**Открытый риск:** `method` / `raw` / `finalmask` / `hysteriaSettings` выглядят как ветка v26.x.
-В v25.x, вероятно, ещё `network` / `tcpSettings`. Поэтому **версия Xray фиксируется до написания
-генератора конфига** (см. 3.1), иначе получим код под доку, которой бинарь не соответствует.
+- `raw` == `tcp`, `xhttp` == `splithttp`, `kcp` == `mkcp` — алиасы;
+- `h2` / `http` / `quic` — **удалены**, возвращают ошибку (`PrintRemovedFeatureError`);
+- `ws` / `grpc` / `httpupgrade` — работают, но печатают deprecation-варнинг.
+
+Следствие: `Transport::Http` (`vless/model.rs`) при xray-ядре собрать нельзя — обрабатывать
+как несовместимый транспорт, наравне с обратной ситуацией у xhttp в sing-box.
+
+### Семантика `extra` в xhttpSettings — неочевидная
+
+```go
+func (c *SplitHTTPConfig) Build() (proto.Message, error) {
+    if c.Extra != nil {
+        var extra SplitHTTPConfig
+        json.Unmarshal(c.Extra, &extra)
+        extra.Host = c.Host
+        extra.Path = c.Path
+        extra.Mode = c.Mode
+        c = &extra          // весь остальной внешний конфиг выбрасывается
+    }
+```
+
+Если `extra` задан, он **заменяет собой весь `xhttpSettings`**; снаружи выживают только
+`host`, `path`, `mode`.
+
+Практический вывод: `extra` из ссылки прокидывается verbatim, `host`/`path`/`mode` ставятся
+снаружи, а плоские дубликаты вроде `x_padding_bytes` из ссылки **игнорируются** — они всё равно
+были бы затёрты, а их значения уже продублированы внутри `extra`.
+
+`mode`: `""` → `auto`; допустимые — `auto`, `packet-up`, `stream-up`, `stream-one`.
+
+Полный набор полей `SplitHTTPConfig` (v26.3.27): `host`, `path`, `mode`, `headers`,
+`xPaddingBytes`, `xPaddingObfsMode`, `xPaddingKey`, `xPaddingHeader`, `xPaddingPlacement`,
+`xPaddingMethod`, `uplinkHTTPMethod`, `sessionPlacement`, `sessionKey`, `seqPlacement`, `seqKey`,
+`uplinkDataPlacement`, `uplinkDataKey`, `uplinkChunkSize`, `noGRPCHeader`, `noSSEHeader`,
+`scMaxEachPostBytes`, `scMinPostsIntervalMs`, `scMaxBufferedPosts`, `scStreamUpServerSecs`,
+`serverMaxHeaderBytes`, `xmux`, `downloadSettings`, `extra`.
+
+Нам из них нужны только `host` / `path` / `mode` / `extra`.
+
+### REALITY: поле `spiderX` теряется парсером
+
+`REALITYConfig` (v26.3.27) на клиентской стороне: `serverName`, `fingerprint`, `publicKey`,
+`shortId`, `spiderX`, `password`, `mldsa65Verify`.
+
+Ссылки 3x-ui несут `spx=…` — это `spiderX`. Наш парсер (`src-tauri/src/vless/parser.rs:103-115`)
+читает только `pbk` / `sid` / `sni` / `fp` и `spx` молча теряет. Для sing-box безвредно
+(он spiderX не поддерживает), для xray-ядра поле надо добавить в `Security::Reality`.
 
 ### `process_name` на Windows поддерживается
 
@@ -101,14 +143,43 @@ Xray socks inbound:
 
 Поле `ip` — локальный IP для UDP-ассоциации; для localhost-цепочки `127.0.0.1` корректно.
 
+### Диалект share-link у 3x-ui (целевая панель)
+
+Форма ссылки, снятая с тестовой подписки (значения заменены плейсхолдерами):
+
+```
+vless://<uuid>@<host>:443
+  ?type=xhttp
+  &security=reality
+  &encryption=none
+  &sni=<sni>
+  &pbk=<publicKey>
+  &sid=<shortId>
+  &spx=<spiderX>
+  &fp=firefox
+  &path=<path>
+  &host=                    // пустое значение = поле не задано
+  &mode=auto
+  &extra=<url-encoded JSON: {"mode":"auto","xPaddingBytes":"100-1000"}>
+  &x_padding_bytes=100-1000 // плоский дубликат содержимого extra, игнорируем
+#<имя с флаг-эмодзи>
+```
+
+Заметки:
+
+- `flow` отсутствует — Vision с xhttp несовместим, это ожидаемо;
+- `host=` приходит пустым; текущий `first_non_empty` в парсере уже трактует пустое как `None`;
+- имя содержит флаг-эмодзи и проходит через существующий `emojifyName`.
+
+Целевая подписка отдаёт классический base64-список строк `vless://`, а не xray-JSON,
+поэтому ветка `xray_json.rs` для неё не задействуется.
+
 ### Что ещё не проверено
 
-- **Полный список полей `xhttpSettings`** (`mode`, `extra`, `xmux`, `downloadSettings`) —
-  context7 отдал только факт существования объекта. Достать напрямую
-  с `xtls.github.io/en/config/transports/xhttp.html` до начала 3.6. Гадать нельзя.
-- **Диалект share-link для xhttp** — спецификация неофициальная, панели кодируют по-разному
-  (`mode`, `extra` как URL-encoded JSON, `host` vs `sni`). Нужна живая ссылка с целевой панели.
-- Точная форма route-правила с `process_name` в 1.13, формат `log` у Xray, `freedom` + `domainStrategy`.
+- Точная форма route-правила с `process_name` в sing-box 1.13.
+- Формат `log` у Xray и что он печатает при старте (для 3.2 не критично — ready-проба
+  делается TCP-поллом порта).
+- `freedom` outbound + `domainStrategy`.
 
 ### Побочная находка: баг в существующем коде (вне рамок задачи)
 
@@ -128,9 +199,7 @@ Xray socks inbound:
 
 ### 3.1. Sidecar и сборка — 0.5 дня
 
-**Первым делом фиксируется версия Xray** (v25.x или v26.x) — от неё зависит,
-писать генератор конфига под `method`/`rawSettings` или под `network`/`tcpSettings`.
-Дефолт — последний стабильный v26.x.
+Версия зафиксирована: **v26.3.27** (`Xray-windows-64.zip`), генератор конфига пишется под `network`.
 
 - `src-tauri/binaries/xray-x86_64-pc-windows-msvc.exe`
 - `externalBin` в `src-tauri/tauri.conf.json:38`
@@ -164,6 +233,28 @@ Ready-проба различается:
 - `core/xray/config.rs`: socks inbound `127.0.0.1:P`, `{"udp": true, "auth": "noauth"}`, outbound vless + freedom.
 - `core/xray/outbound.rs`: `VlessLink` → xray `streamSettings`. Зеркало существующего
   `src-tauri/src/vless/xray_json.rs` (тот парсит xray-JSON → URI, здесь обратное направление).
+
+Целевая форма для xhttp + reality (проверена по исходникам v26.3.27):
+
+```json
+"streamSettings": {
+  "network": "xhttp",
+  "security": "reality",
+  "realitySettings": {
+    "serverName": "<sni>",
+    "fingerprint": "firefox",
+    "publicKey": "<pbk>",
+    "shortId": "<sid>",
+    "spiderX": "<spx>"
+  },
+  "xhttpSettings": {
+    "host": "",
+    "path": "<path>",
+    "mode": "auto",
+    "extra": { "mode": "auto", "xPaddingBytes": "100-1000" }
+  }
+}
+```
 - `src-tauri/src/singbox/config.rs:54`: в режиме xray outbound `proxy` становится
   `{"type":"socks","server":"127.0.0.1","server_port":P,"version":"5"}`.
   Остальной конфиг (TUN, DNS, route rules) не трогается.
@@ -197,11 +288,14 @@ xray → ready → sing-box → ready. Остановка в обратном п
 
 ### 3.6. Парсер и модель — 0.5 дня
 
-**Блокер:** до старта нужны точная схема `xhttpSettings` и живая xhttp-ссылка с целевой панели
-(см. «Что ещё не проверено»). Поля модели ниже — предварительные.
+Блокер снят: схема и диалект ссылок подтверждены (см. 2a).
 
-- `Transport::Xhttp { host, path, mode, extra }` в `src-tauri/src/vless/model.rs:34`
-- `parser.rs:138` — вместо ошибки нормальный разбор (`path`, `host`, `mode`, `extra` сырым JSON)
+- `Transport::Xhttp { host, path, mode, extra }` в `src-tauri/src/vless/model.rs:34`,
+  где `extra` — сырая JSON-строка, прокидываемая в конфиг без разбора
+- `Security::Reality` — добавить `spider_x: Option<String>` (параметр `spx`)
+- `parser.rs:138` — вместо ошибки нормальный разбор `type=xhttp`; плоский `x_padding_bytes`
+  игнорировать (перекрывается семантикой `extra`)
+- `parse_flow` — `flow` с xhttp несовместим, отвергать как `InvalidVisionFlow`
 - `src-tauri/src/singbox/outbound.rs:89` — `Transport::Xhttp` возвращает ошибку «требуется xray»
 
 Транспорт становится жёстким признаком требуемого ядра.
@@ -258,21 +352,12 @@ DB: один ключ `core_mode` в settings, миграция не нужна 
 
 Начинать с 3.0 (самостоятельный фикс), затем 3.1 + 3.2 — фундамент, ничего не ломает.
 
-Этап 3.6 заблокирован до получения входных данных ниже; остальные этапы от них не зависят.
+Блокеров нет: версия, схема конфига и диалект ссылок 3x-ui подтверждены по исходникам v26.3.27.
 
-## 7. Входные данные, которых не хватает
+Остаётся ручная зависимость: положить `xray-x86_64-pc-windows-msvc.exe` (v26.3.27)
+в `src-tauri/binaries/`.
 
-Достаётся из открытых доков (делаю сам):
+## 7. Тестовый стенд
 
-- полная схема `xhttpSettings` — `xtls.github.io/en/config/transports/xhttp.html`;
-- точная форма route-правила с `process_name` в sing-box 1.13;
-- `freedom` outbound + `domainStrategy`, формат `log` у Xray;
-- в какой версии Xray появился `method` / `rawSettings`.
-
-Нужно от владельца проекта:
-
-1. **Живая xhttp-ссылка с целевой панели** (в переписку, не в репозиторий; UUID и хост замазать —
-   нужны только query-параметры). Спецификация share-link неофициальная, панели кодируют
-   `mode` / `extra` / `host` по-разному.
-2. **Тип панели** (3x-ui / Marzban / иное) — определяет диалект ссылок и формат подписки.
-3. **Версия Xray для бандла** — см. 3.1.
+Целевая панель — 3x-ui, транспорт xhttp + REALITY, режим `auto`.
+Реквизиты тестового сервера в репозиторий не коммитятся.
