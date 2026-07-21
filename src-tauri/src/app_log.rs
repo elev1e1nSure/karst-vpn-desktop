@@ -10,8 +10,6 @@ use url::Url;
 use crate::error::{AppError, AppResult};
 
 const APP_LOG_FILE: &str = "app.log";
-const SINGBOX_LOG_FILE: &str = "sing-box.log";
-const SINGBOX_ROTATED_LOG_FILE: &str = "sing-box.log.1";
 const MAX_APP_LOG_BYTES: u64 = 512 * 1024;
 const MAX_LIST_BYTES: u64 = 256 * 1024;
 const MAX_LINES: usize = 500;
@@ -99,16 +97,19 @@ impl AppLog {
 
         self.extend_file(&mut entries, "app.1", &self.app_data_dir.join("app.log.1"))?;
         self.extend_file(&mut entries, "app", &self.path())?;
-        self.extend_file(
-            &mut entries,
-            "sing-box.1",
-            &self.app_data_dir.join(SINGBOX_ROTATED_LOG_FILE),
-        )?;
-        self.extend_file(
-            &mut entries,
-            "sing-box",
-            &self.app_data_dir.join(SINGBOX_LOG_FILE),
-        )?;
+        for spec in crate::core::SPECS {
+            let rotated_source = format!("{}.1", spec.name);
+            self.extend_file(
+                &mut entries,
+                &rotated_source,
+                &self.app_data_dir.join(spec.rotated_log_file),
+            )?;
+            self.extend_file(
+                &mut entries,
+                spec.name,
+                &self.app_data_dir.join(spec.log_file),
+            )?;
+        }
 
         if entries.len() > MAX_LINES {
             entries = entries.split_off(entries.len() - MAX_LINES);
@@ -119,12 +120,13 @@ impl AppLog {
 
     pub fn clear(&self) -> AppResult<()> {
         let _guard = self.lock()?;
-        for path in [
-            self.path(),
-            self.app_data_dir.join("app.log.1"),
-            self.app_data_dir.join(SINGBOX_LOG_FILE),
-            self.app_data_dir.join(SINGBOX_ROTATED_LOG_FILE),
-        ] {
+        let mut paths = vec![self.path(), self.app_data_dir.join("app.log.1")];
+        for spec in crate::core::SPECS {
+            paths.push(self.app_data_dir.join(spec.log_file));
+            paths.push(self.app_data_dir.join(spec.rotated_log_file));
+        }
+
+        for path in paths {
             match fs::remove_file(path) {
                 Ok(()) => {}
                 Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}

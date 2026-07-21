@@ -1,6 +1,7 @@
 pub mod app_log;
 pub mod commands;
 pub mod connection;
+pub mod core;
 pub mod db;
 pub mod dto;
 pub mod error;
@@ -30,14 +31,17 @@ pub fn run() {
             app.manage(lifecycle::LifecycleState::default());
             app.manage(logs);
 
-            if let Err(error) = singbox::process::recover_stale_process(&app_data_dir) {
-                app.state::<app_log::AppLog>().error(
-                    app_log::Category::Service,
-                    format!(
-                        "stale sing-box recovery failed kind={} message={error}",
-                        error.kind()
-                    ),
-                );
+            for spec in core::SPECS {
+                if let Err(error) = core::process::recover_stale_process(spec, &app_data_dir) {
+                    app.state::<app_log::AppLog>().error(
+                        app_log::Category::Service,
+                        format!(
+                            "stale {} recovery failed kind={} message={error}",
+                            spec.name,
+                            error.kind()
+                        ),
+                    );
+                }
             }
             let pool = db::open(&app_data_dir.join("karst.sqlite3"))?;
             let client = reqwest::Client::builder()

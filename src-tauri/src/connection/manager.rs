@@ -5,13 +5,13 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
 use crate::app_log::{self, AppLog};
+use crate::core::process::SidecarProcess;
 use crate::db::DbPool;
 use crate::db::{lock_pool, servers, settings};
 use crate::error::{AppError, AppResult};
 use crate::healthcheck::tcp_check;
 use crate::singbox::config::{build_config, TunOptions};
 use crate::singbox::outbound::vless_to_outbound;
-use crate::singbox::process::SingboxProcess;
 use crate::vless::parser::parse_vless_uri;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +38,7 @@ pub struct ConnectionManager {
 }
 
 struct ConnectionState {
-    process: Option<SingboxProcess>,
+    process: Option<SidecarProcess>,
     status: ConnectionStatus,
     generation: u64,
 }
@@ -129,18 +129,25 @@ impl ConnectionManager {
         let outbound = vless_to_outbound(&link);
         let config = build_config(outbound, &tun_options, routing_mode, &dns_doh_url);
 
+        let spec = &crate::singbox::SPEC;
         app.state::<AppLog>().info(
             app_log::Category::Core,
-            format!("sing-box spawning routing_mode={}", routing_mode.as_str()),
+            format!(
+                "{} spawning routing_mode={}",
+                spec.name,
+                routing_mode.as_str()
+            ),
         );
-        let mut process = SingboxProcess::spawn(app, &config, &app_data_dir).await?;
+        let mut process = SidecarProcess::spawn(app, spec, &config, &app_data_dir).await?;
         let ready_result = process.ensure_ready().await;
         if let Err(error) = ready_result {
             let _ = process.stop().await;
             return Err(error);
         }
-        app.state::<AppLog>()
-            .info(app_log::Category::Core, "sing-box started and ready");
+        app.state::<AppLog>().info(
+            app_log::Category::Core,
+            format!("{} started and ready", spec.name),
+        );
         if let Err(error) = Self::ensure_not_shutting_down(app) {
             let _ = process.stop().await;
             return Err(error);
@@ -273,7 +280,7 @@ impl ConnectionManager {
         app: AppHandle,
         inner: Arc<Mutex<ConnectionState>>,
         generation: u64,
-        mut exit: tokio::sync::watch::Receiver<Option<crate::singbox::process::ProcessExit>>,
+        mut exit: tokio::sync::watch::Receiver<Option<crate::core::process::ProcessExit>>,
     ) {
         tauri::async_runtime::spawn(async move {
             let current_exit = { exit.borrow().clone() };

@@ -16,8 +16,8 @@ pub enum AppError {
     Json(#[from] serde_json::Error),
     #[error("invalid VLESS link: {0}")]
     Vless(String),
-    #[error("sing-box error: {0}")]
-    Singbox(String),
+    #[error("core error: {0}")]
+    Core(String),
     #[error("connection error: {0}")]
     Connection(String),
     #[error("not found: {0}")]
@@ -37,7 +37,7 @@ impl AppError {
             Self::Url(_) => "url",
             Self::Json(_) => "json",
             Self::Vless(_) => "vless",
-            Self::Singbox(_) => "singbox",
+            Self::Core(_) => "core",
             Self::Connection(_) => "connection",
             Self::NotFound(_) => "not_found",
             Self::InvalidInput(_) => "invalid_input",

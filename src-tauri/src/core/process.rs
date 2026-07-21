@@ -12,20 +12,18 @@ use tokio::task::JoinHandle;
 use crate::error::{AppError, AppResult};
 
 use super::process_guard::{self, ProcessGuard};
+use super::SidecarSpec;
 
-const LOG_FILE: &str = "sing-box.log";
-const ROTATED_LOG_FILE: &str = "sing-box.log.1";
-const PID_FILE: &str = "sing-box.pid";
 const MAX_LOG_BYTES: u64 = 1024 * 1024;
 const STARTUP_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
-const STARTUP_READY_MARKER: &str = "sing-box started";
 
 #[derive(Debug, Clone)]
 pub struct ProcessExit {
     pub message: String,
 }
 
-pub struct SingboxProcess {
+pub struct SidecarProcess {
+    spec: &'static SidecarSpec,
     child: Option<CommandChild>,
     log_task: JoinHandle<()>,
     exit: watch::Receiver<Option<ProcessExit>>,
@@ -35,58 +33,66 @@ pub struct SingboxProcess {
     _guard: ProcessGuard,
 }
 
-impl SingboxProcess {
-    pub async fn spawn(app: &AppHandle, config: &Value, app_data_dir: &Path) -> AppResult<Self> {
-        verify_sidecar(Sidecar::SingBox)?;
+impl SidecarProcess {
+    pub async fn spawn(
+        app: &AppHandle,
+        spec: &'static SidecarSpec,
+        config: &Value,
+        app_data_dir: &Path,
+    ) -> AppResult<Self> {
+        verify_sidecar(spec)?;
 
         tokio::fs::create_dir_all(app_data_dir).await?;
-        let config_path = app_data_dir.join("sing-box-config.json");
+        let config_path = app_data_dir.join(spec.config_file);
         let config_bytes = serde_json::to_vec_pretty(config)?;
         tokio::fs::write(&config_path, config_bytes).await?;
 
-        let log_path = app_data_dir.join(LOG_FILE);
-        rotate_log_if_needed(&log_path).await?;
+        let log_path = app_data_dir.join(spec.log_file);
+        let rotated_log_path = app_data_dir.join(spec.rotated_log_file);
+        rotate_log_if_needed(&log_path, &rotated_log_path).await?;
 
         let sidecar = app
             .shell()
-            .sidecar("sing-box")
-            .map_err(|error| AppError::Singbox(error.to_string()))?
-            .args(["run", "-c"])
+            .sidecar(spec.name)
+            .map_err(|error| AppError::Core(error.to_string()))?
+            .args(spec.run_args)
             .arg(&config_path)
             .current_dir(sidecar_working_dir()?);
 
         let (mut receiver, child) = sidecar
             .spawn()
-            .map_err(|error| AppError::Singbox(error.to_string()))?;
+            .map_err(|error| AppError::Core(error.to_string()))?;
         let pid = child.pid();
-        let guard = match ProcessGuard::attach(pid) {
+        let guard = match ProcessGuard::attach(pid, spec.name) {
             Ok(guard) => guard,
             Err(error) => {
                 let _ = child.kill();
                 return Err(error);
             }
         };
-        let pid_path = app_data_dir.join(PID_FILE);
+        let pid_path = app_data_dir.join(spec.pid_file);
         tokio::fs::write(&pid_path, pid.to_string()).await?;
 
         let (exit_tx, exit_rx) = watch::channel(None);
         let (ready_tx, ready_rx) = watch::channel(false);
         let task_pid_path = pid_path.clone();
+        let name = spec.name;
+        let ready_marker = spec.ready_marker;
         let log_task = tokio::spawn(async move {
             let mut observed_exit = false;
             while let Some(event) = receiver.recv().await {
                 let exit = match &event {
                     CommandEvent::Terminated(payload) => Some(ProcessExit {
                         message: format!(
-                            "sing-box terminated code={:?} signal={:?}",
+                            "{name} terminated code={:?} signal={:?}",
                             payload.code, payload.signal
                         ),
                     }),
                     _ => None,
                 };
                 let line = format_event(&event);
-                let _ = append_log(&log_path, line.as_bytes()).await;
-                if event_contains(&event, STARTUP_READY_MARKER) {
+                let _ = append_log(&log_path, &rotated_log_path, line.as_bytes()).await;
+                if event_contains(&event, ready_marker) {
                     ready_tx.send_replace(true);
                 }
                 if let Some(exit) = exit {
@@ -98,12 +104,13 @@ impl SingboxProcess {
             if !observed_exit {
                 let _ = tokio::fs::remove_file(&task_pid_path).await;
                 exit_tx.send_replace(Some(ProcessExit {
-                    message: "sing-box event stream closed unexpectedly".to_string(),
+                    message: format!("{name} event stream closed unexpectedly"),
                 }));
             }
         });
 
         Ok(Self {
+            spec,
             child: Some(child),
             log_task,
             exit: exit_rx,
@@ -123,36 +130,37 @@ impl SingboxProcess {
             return Ok(());
         }
         if let Some(exit) = self.exit.borrow().clone() {
-            return Err(AppError::Singbox(exit.message));
+            return Err(AppError::Core(exit.message));
         }
 
+        let name = self.spec.name;
         tokio::time::timeout(STARTUP_TIMEOUT, async {
             loop {
                 tokio::select! {
                     changed = self.ready.changed() => {
-                        changed.map_err(|_| AppError::Singbox("sing-box readiness monitor closed during startup".to_string()))?;
+                        changed.map_err(|_| AppError::Core(format!("{name} readiness monitor closed during startup")))?;
                         if *self.ready.borrow() {
                             return Ok(());
                         }
                     }
                     changed = self.exit.changed() => {
-                        changed.map_err(|_| AppError::Singbox("sing-box exit monitor closed during startup".to_string()))?;
+                        changed.map_err(|_| AppError::Core(format!("{name} exit monitor closed during startup")))?;
                         if let Some(exit) = self.exit.borrow().clone() {
-                            return Err(AppError::Singbox(exit.message));
+                            return Err(AppError::Core(exit.message));
                         }
                     }
                 }
             }
         })
         .await
-        .map_err(|_| AppError::Singbox("sing-box did not become ready within 30 seconds".to_string()))?
+        .map_err(|_| AppError::Core(format!("{name} did not become ready within 30 seconds")))?
     }
 
     pub async fn stop(&mut self) -> AppResult<()> {
         if let Some(child) = self.child.take() {
             child
                 .kill()
-                .map_err(|error| AppError::Singbox(error.to_string()))?;
+                .map_err(|error| AppError::Core(error.to_string()))?;
 
             self.wait_for_exit().await?;
         }
@@ -166,7 +174,7 @@ impl SingboxProcess {
         if let Some(child) = self.child.take() {
             child
                 .kill()
-                .map_err(|error| AppError::Singbox(error.to_string()))?;
+                .map_err(|error| AppError::Core(error.to_string()))?;
         }
         self.log_task.abort();
         remove_pid_file(&self.pid_path)?;
@@ -178,27 +186,28 @@ impl SingboxProcess {
         if self.exit.borrow().is_some() {
             return Ok(());
         }
+        let name = self.spec.name;
         tokio::time::timeout(std::time::Duration::from_secs(5), self.exit.changed())
             .await
-            .map_err(|_| {
-                AppError::Singbox("sing-box did not terminate within 5 seconds".to_string())
-            })?
-            .map_err(|_| {
-                AppError::Singbox("sing-box exit monitor closed unexpectedly".to_string())
-            })?;
+            .map_err(|_| AppError::Core(format!("{name} did not terminate within 5 seconds")))?
+            .map_err(|_| AppError::Core(format!("{name} exit monitor closed unexpectedly")))?;
         Ok(())
     }
 }
 
-impl Drop for SingboxProcess {
+impl Drop for SidecarProcess {
     fn drop(&mut self) {
         let _ = self.terminate_now();
     }
 }
 
-pub fn recover_stale_process(app_data_dir: &Path) -> AppResult<()> {
-    let _ = std::fs::remove_file(app_data_dir.join("sing-box-config.json"));
-    process_guard::recover_stale_process(&app_data_dir.join(PID_FILE), &sidecar_working_dir()?)
+pub fn recover_stale_process(spec: &SidecarSpec, app_data_dir: &Path) -> AppResult<()> {
+    let _ = std::fs::remove_file(app_data_dir.join(spec.config_file));
+    process_guard::recover_stale_process(
+        &app_data_dir.join(spec.pid_file),
+        &sidecar_working_dir()?,
+        spec,
+    )
 }
 
 fn remove_pid_file(path: &Path) -> AppResult<()> {
@@ -213,7 +222,7 @@ fn remove_config_file(path: &Path) {
     let _ = std::fs::remove_file(path);
 }
 
-fn sidecar_working_dir() -> AppResult<PathBuf> {
+pub fn sidecar_working_dir() -> AppResult<PathBuf> {
     let path = if cfg!(debug_assertions) {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("binaries")
     } else {
@@ -264,8 +273,8 @@ fn event_contains(event: &CommandEvent, marker: &str) -> bool {
     }
 }
 
-async fn append_log(path: &Path, bytes: &[u8]) -> AppResult<()> {
-    rotate_log_if_needed(path).await?;
+async fn append_log(path: &Path, rotated: &Path, bytes: &[u8]) -> AppResult<()> {
+    rotate_log_if_needed(path, rotated).await?;
     let mut file = tokio::fs::OpenOptions::new()
         .create(true)
         .append(true)
@@ -276,7 +285,7 @@ async fn append_log(path: &Path, bytes: &[u8]) -> AppResult<()> {
     Ok(())
 }
 
-async fn rotate_log_if_needed(path: &Path) -> AppResult<()> {
+async fn rotate_log_if_needed(path: &Path, rotated: &Path) -> AppResult<()> {
     let metadata = match tokio::fs::metadata(path).await {
         Ok(metadata) => metadata,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
@@ -287,21 +296,19 @@ async fn rotate_log_if_needed(path: &Path) -> AppResult<()> {
         return Ok(());
     }
 
-    let rotated = path.with_file_name(ROTATED_LOG_FILE);
-    if tokio::fs::metadata(&rotated).await.is_ok() {
-        tokio::fs::remove_file(&rotated).await?;
+    if tokio::fs::metadata(rotated).await.is_ok() {
+        tokio::fs::remove_file(rotated).await?;
     }
     tokio::fs::rename(path, rotated).await?;
     Ok(())
 }
 
-fn verify_sidecar(sidecar: Sidecar) -> AppResult<()> {
-    let expected = sidecar.expected_hash();
-    let prefix = sidecar.binary_prefix();
+fn verify_sidecar(spec: &SidecarSpec) -> AppResult<()> {
+    let name = spec.name;
     let dir = sidecar_working_dir()?;
     let path = std::fs::read_dir(&dir)
         .map_err(|error| {
-            AppError::Singbox(format!(
+            AppError::Core(format!(
                 "cannot read sidecar directory for integrity check: {error}"
             ))
         })?
@@ -310,13 +317,13 @@ fn verify_sidecar(sidecar: Sidecar) -> AppResult<()> {
         .find(|path| {
             path.file_name()
                 .and_then(|name| name.to_str())
-                .is_some_and(|name| name.starts_with(prefix) && name.ends_with(".exe"))
+                .is_some_and(|file| file.starts_with(name) && file.ends_with(".exe"))
         })
-        .ok_or_else(|| AppError::Singbox(format!("{prefix} sidecar not found")))?;
+        .ok_or_else(|| AppError::Core(format!("{name} sidecar not found")))?;
 
     let mut file = std::fs::File::open(&path).map_err(|error| {
-        AppError::Singbox(format!(
-            "cannot open {prefix} sidecar for integrity check: {error}"
+        AppError::Core(format!(
+            "cannot open {name} sidecar for integrity check: {error}"
         ))
     })?;
 
@@ -325,8 +332,8 @@ fn verify_sidecar(sidecar: Sidecar) -> AppResult<()> {
     let mut buffer = [0u8; 8192];
     loop {
         let count = std::io::Read::read(&mut file, &mut buffer).map_err(|error| {
-            AppError::Singbox(format!(
-                "cannot read {prefix} sidecar for integrity check: {error}"
+            AppError::Core(format!(
+                "cannot read {name} sidecar for integrity check: {error}"
             ))
         })?;
         if count == 0 {
@@ -336,33 +343,11 @@ fn verify_sidecar(sidecar: Sidecar) -> AppResult<()> {
     }
     let actual = hex::encode(hasher.finalize());
 
-    if actual != expected {
-        return Err(AppError::Singbox(format!(
-            "{prefix} sidecar integrity check failed (expected {expected})",
+    if actual != spec.expected_sha256 {
+        return Err(AppError::Core(format!(
+            "{name} sidecar integrity check failed (expected {})",
+            spec.expected_sha256
         )));
     }
     Ok(())
-}
-
-#[derive(Debug, Clone, Copy)]
-#[allow(dead_code)]
-enum Sidecar {
-    SingBox,
-    Xray,
-}
-
-impl Sidecar {
-    fn binary_prefix(&self) -> &'static str {
-        match self {
-            Self::SingBox => "sing-box",
-            Self::Xray => "xray",
-        }
-    }
-
-    fn expected_hash(&self) -> &'static str {
-        match self {
-            Self::SingBox => env!("SINGBOX_SHA256"),
-            Self::Xray => env!("XRAY_SHA256"),
-        }
-    }
 }
