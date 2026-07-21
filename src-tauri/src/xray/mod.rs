@@ -1,3 +1,6 @@
+pub mod config;
+pub mod outbound;
+
 use crate::core::SidecarSpec;
 
 pub const SPEC: SidecarSpec = SidecarSpec {

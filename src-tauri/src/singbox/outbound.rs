@@ -1,8 +1,21 @@
 use serde_json::{json, Map, Value};
 
+use crate::error::{AppError, AppResult};
 use crate::vless::model::{Security, Transport, VlessLink};
 
-pub fn vless_to_outbound(link: &VlessLink) -> Value {
+/// Loopback SOCKS5 hop into the xray core, used instead of a native VLESS outbound when xray
+/// handles the transport. sing-box keeps owning TUN, routing and DNS either way.
+pub fn socks_outbound(port: u16) -> Value {
+    json!({
+        "type": "socks",
+        "tag": "proxy",
+        "server": "127.0.0.1",
+        "server_port": port,
+        "version": "5",
+    })
+}
+
+pub fn vless_to_outbound(link: &VlessLink) -> AppResult<Value> {
     let mut outbound = Map::new();
     outbound.insert("type".to_string(), json!("vless"));
     outbound.insert("tag".to_string(), json!("proxy"));
@@ -20,11 +33,11 @@ pub fn vless_to_outbound(link: &VlessLink) -> Value {
         outbound.insert("tls".to_string(), tls);
     }
 
-    if let Some(transport) = transport_config(&link.transport) {
+    if let Some(transport) = transport_config(&link.transport)? {
         outbound.insert("transport".to_string(), transport);
     }
 
-    Value::Object(outbound)
+    Ok(Value::Object(outbound))
 }
 
 fn tls_config(security: &Security) -> Option<Value> {
@@ -86,41 +99,49 @@ fn tls_config(security: &Security) -> Option<Value> {
     }
 }
 
-fn transport_config(transport: &Transport) -> Option<Value> {
-    match transport {
-        Transport::Tcp => None,
-        Transport::Ws { host, path } => {
-            let mut transport = Map::new();
-            transport.insert("type".to_string(), json!("ws"));
-            insert_optional(&mut transport, "path", path);
-            if let Some(host) = host {
-                transport.insert("headers".to_string(), json!({ "Host": host }));
+fn transport_config(transport: &Transport) -> AppResult<Option<Value>> {
+    let config =
+        match transport {
+            Transport::Tcp => None,
+            Transport::Ws { host, path } => {
+                let mut transport = Map::new();
+                transport.insert("type".to_string(), json!("ws"));
+                insert_optional(&mut transport, "path", path);
+                if let Some(host) = host {
+                    transport.insert("headers".to_string(), json!({ "Host": host }));
+                }
+                Some(Value::Object(transport))
             }
-            Some(Value::Object(transport))
-        }
-        Transport::Grpc { service_name } => {
-            let mut transport = Map::new();
-            transport.insert("type".to_string(), json!("grpc"));
-            insert_optional(&mut transport, "service_name", service_name);
-            Some(Value::Object(transport))
-        }
-        Transport::Http { host, path } => {
-            let mut transport = Map::new();
-            transport.insert("type".to_string(), json!("http"));
-            if let Some(host) = host {
-                transport.insert("host".to_string(), json!([host]));
+            Transport::Grpc { service_name } => {
+                let mut transport = Map::new();
+                transport.insert("type".to_string(), json!("grpc"));
+                insert_optional(&mut transport, "service_name", service_name);
+                Some(Value::Object(transport))
             }
-            insert_optional(&mut transport, "path", path);
-            Some(Value::Object(transport))
-        }
-        Transport::HttpUpgrade { host, path } => {
-            let mut transport = Map::new();
-            transport.insert("type".to_string(), json!("httpupgrade"));
-            insert_optional(&mut transport, "host", host);
-            insert_optional(&mut transport, "path", path);
-            Some(Value::Object(transport))
-        }
-    }
+            Transport::Http { host, path } => {
+                let mut transport = Map::new();
+                transport.insert("type".to_string(), json!("http"));
+                if let Some(host) = host {
+                    transport.insert("host".to_string(), json!([host]));
+                }
+                insert_optional(&mut transport, "path", path);
+                Some(Value::Object(transport))
+            }
+            Transport::HttpUpgrade { host, path } => {
+                let mut transport = Map::new();
+                transport.insert("type".to_string(), json!("httpupgrade"));
+                insert_optional(&mut transport, "host", host);
+                insert_optional(&mut transport, "path", path);
+                Some(Value::Object(transport))
+            }
+            // sing-box's maintainer rejected XHTTP outright, so these servers require the xray core.
+            Transport::Xhttp { .. } => return Err(AppError::Core(
+                "sing-box does not support the xhttp transport; this server requires the xray core"
+                    .to_string(),
+            )),
+        };
+
+    Ok(config)
 }
 
 fn insert_optional(map: &mut Map<String, Value>, key: &str, value: &Option<String>) {

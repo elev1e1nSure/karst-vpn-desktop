@@ -50,6 +50,14 @@ pub enum Transport {
         host: Option<String>,
         path: Option<String>,
     },
+    Xhttp {
+        host: Option<String>,
+        path: Option<String>,
+        mode: Option<String>,
+        /// Raw JSON blob from the link's `extra` param, forwarded to Xray untouched. Xray treats it
+        /// as a whole replacement `xhttpSettings`, keeping only host/path/mode from the outer level.
+        extra: Option<String>,
+    },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -91,6 +99,10 @@ pub enum ParseError {
     MissingRealityPublicKey,
     #[error("unsupported flow: {0}")]
     UnsupportedFlow(String),
+    #[error("unsupported xhttp mode: {0}")]
+    UnsupportedXhttpMode(String),
+    #[error("xhttp extra is not valid JSON: {0}")]
+    InvalidXhttpExtra(String),
     #[error("xtls-rprx-vision requires tcp transport and tls or reality security")]
     InvalidVisionFlow,
     #[error("invalid URI: {0}")]
@@ -115,6 +127,7 @@ impl Transport {
             Self::Grpc { .. } => "grpc",
             Self::Http { .. } => "http",
             Self::HttpUpgrade { .. } => "httpupgrade",
+            Self::Xhttp { .. } => "xhttp",
         }
     }
 }

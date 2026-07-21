@@ -136,8 +136,31 @@ fn parse_transport(query: &HashMap<String, String>) -> Result<Transport, ParseEr
             host: first_non_empty(query, &["host"]),
             path: first_non_empty(query, &["path"]),
         }),
-        "xhttp" => Err(ParseError::UnsupportedTransport("xhttp".to_string())),
+        "xhttp" => Ok(Transport::Xhttp {
+            host: first_non_empty(query, &["host"]),
+            path: first_non_empty(query, &["path"]),
+            mode: parse_xhttp_mode(query.get("mode"))?,
+            // Reject malformed JSON here rather than letting Xray fail with an opaque startup error.
+            extra: match first_non_empty(query, &["extra"]) {
+                Some(extra) => {
+                    serde_json::from_str::<serde_json::Value>(&extra)
+                        .map_err(|error| ParseError::InvalidXhttpExtra(error.to_string()))?;
+                    Some(extra)
+                }
+                None => None,
+            },
+        }),
         other => Err(ParseError::UnsupportedTransport(other.to_string())),
+    }
+}
+
+fn parse_xhttp_mode(value: Option<&String>) -> Result<Option<String>, ParseError> {
+    match value.map(String::as_str).filter(|value| !value.is_empty()) {
+        None => Ok(None),
+        Some(mode @ ("auto" | "packet-up" | "stream-up" | "stream-one")) => {
+            Ok(Some(mode.to_string()))
+        }
+        Some(other) => Err(ParseError::UnsupportedXhttpMode(other.to_string())),
     }
 }
 
