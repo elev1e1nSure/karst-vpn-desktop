@@ -6,13 +6,27 @@
   <img src="https://github.com/elev1e1nSure/karst-vpn-desktop/actions/workflows/release.yml/badge.svg" alt="Build">
 </p>
 
-Karst — приложение для подключения к VLESS-серверам и подпискам на Windows. Добавляешь ссылку/подписку, выбираешь сервер из списка и подключаешься через системный TUN-туннель на sing-box. Подписки обновляются автоматически, есть проверка задержки серверов и три режима маршрутизации.
+Karst — VPN-клиент для Windows с поддержкой VLESS-протокола. Добавляешь ссылку или подписку, выбираешь сервер, подключаешься через системный TUN-туннель на sing-box.
 
-Десктопная версия [Karst VPN для Android](https://github.com/elev1e1nSure/karst-vpn). Также есть [лендинг](https://github.com/elev1e1nSure/karst-site).
+Десктопная версия [Karst VPN для Android](https://github.com/elev1e1nSure/karst-vpn). Лендинг — [karst-site](https://github.com/elev1e1nSure/karst-site).
+
+## Фичи
+
+- **VLESS-ссылки** — импорт одиночных ссылок и подписок
+- **Подписки** — автообновление по расписанию (оффлайн, при запуске, каждый N часов), раз в сессию
+- **Серверы** — ручной и автоматический (из подписок), группировка по подпискам, проверка задержки (TCP ping)
+- **Маршрутизация** — 3 режима: прокси весь трафик, только локальный (bypass LAN), правило по умолчанию (default-route из конфига)
+- **TUN-туннель** — системный виртуальный адаптер через sing-box sidecar, автоочистка при падении
+- **Системный трей** — сворачивание в трей, quit через меню
+- **Логи** — структурированное логирование в файл, просмотр в приложении
+- **DNS** — настраиваемый DoH-резолвер
+- **Single instance** — только один экземпляр приложения
 
 ## Установка
 
-Установщик `.exe` доступен в [Releases](https://github.com/elev1e1nSure/karst-vpn-desktop/releases)
+Установщик `.exe` — в [Releases](https://github.com/elev1e1nSure/karst-vpn-desktop/releases).
+
+Требования: Windows 10+, [WebView2](https://developer.microsoft.com/microsoft-edge/webview2/).
 
 ## Разработка
 
@@ -21,7 +35,12 @@ pnpm install
 just dev
 ```
 
-Требуется Rust toolchain и Node.js. Подробнее об архитектуре — в [CLAUDE.md](./CLAUDE.md).
+Требуется Rust toolchain и Node.js. Архитектура — в [CLAUDE.md](./CLAUDE.md).
+
+Проверка:
+```bash
+just check
+```
 
 ## Сборка релиза
 
@@ -30,4 +49,4 @@ just set-version 1.2.3
 just build
 ```
 
-Push тега `v*` запускает GitHub Actions, которая собирает Windows-инсталлятор и публикует его в Releases (см. `.github/workflows/release.yml`).
+Push тега `v*` запускает CI, которая собирает MSI + NSIS установщики и публикует в Releases.

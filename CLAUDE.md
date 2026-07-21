@@ -10,17 +10,24 @@ Key areas:
 
 - `src/App.tsx` — top-level entry component instantiating `useAppController()` and rendering `AppView`.
 - `src/app/` — frontend architecture: state management hook (`useAppController`), layout (`AppView`), Tauri IPC commands (`commands`), domain models/transforms (`models`), presentation helpers (`presentation`), connection status (`useConnectionStatus`), and types (`types`).
-- `src/features/` — domain feature components (`connection/`, `servers/` including subscriptions, `settings/`, `logs/`, `diagnostics/`).
+- `src/features/` — domain feature components (`connection/`, `servers/` including subscriptions, `settings/`, `logs/`, `diagnostics/`). Each subfolder has a main component + a `use*` hook for state/commands.
 - `src/ui/` — shared design system & UI components (`ErrorBoundary`, `Pressable`, `Sidebar`, `Tooltip`, `LogsScreen`, `theme`, `useSheetDrag`).
 - `src/main.tsx` — entry point; wires in Windows flag-emoji font polyfill (`TwemojiCountryFlags.woff2`).
 - `src-tauri/src/commands/` — one file per Tauri command group (`connection`, `servers`, `subscriptions`, `settings`, `logs`), registered in `lib.rs`'s `generate_handler!`.
 - `src-tauri/src/connection/manager.rs` — `ConnectionManager`, single source of truth for connect/disconnect state; serializes connect/disconnect through an internal operation lock.
 - `src-tauri/src/singbox/` — builds sing-box JSON config (`config.rs`, `outbound.rs`, `route_rules.rs`), validates sidecar checksum, cleans up stale TUN adapters, and manages sidecar process (`process.rs`, `process_guard.rs`).
-- `src-tauri/src/subscription/` — fetch → base64-decode → parse VLESS links → replace servers for that subscription in one DB transaction (`refresh.rs`).
-- `src-tauri/src/vless/` — hand-rolled VLESS URI parser (`parser.rs`) and link model (`model.rs`).
-- `src-tauri/src/db/` — raw `rusqlite`, no ORM; `schema.rs` runs idempotent migrations and recreates corrupt DB on startup if needed.
+- `src-tauri/src/subscription/` — fetches subscription payload (`fetch.rs`), base64-decodes (`decode.rs`), parses VLESS links, replaces servers for that subscription in one DB transaction (`refresh.rs`).
+- `src-tauri/src/vless/` — hand-rolled VLESS URI parser (`parser.rs`), link model (`model.rs`), optional xray-json outbound builder (`xray_json.rs`).
+- `src-tauri/src/db/` — raw `rusqlite`, no ORM; schema in `schema.rs` (idempotent migrations, recreates corrupt DB); per-table modules (`servers.rs`, `subscriptions.rs`, `settings.rs`).
+- `src-tauri/src/healthcheck.rs` — TCP ping to server address:port for latency measurement.
+- `src-tauri/src/app_log.rs` — structured file-based logging with categories, in-app viewer reads from same file.
+- `src-tauri/src/dto.rs` — serialization DTOs mapping backend records → frontend types.
+- `src-tauri/src/tray.rs` — system tray icon with menu (show window, quit); updates icon on connect/disconnect.
+- `src-tauri/src/lifecycle.rs` — close-to-tray, graceful shutdown, force-kill tunnel on exit.
 - `src-tauri/src/scheduler.rs` — background task that periodically refreshes subscriptions per `AutoRefreshMode` (Off/Auto/EveryHours).
 - `src-tauri/src/error.rs` — single `AppError` enum for the whole backend; serializes to `{ kind, message }` for the frontend.
+- `src-tauri/src/lib.rs` — `tauri::Builder` setup: single-instance plugin, DB init, connection manager init, scheduler spawn, tray init, close-to-tray event wiring, invoke handler registration.
+- `src-tauri/src/main.rs` — thin binary entrypoint; calls `karst_vpn_lib::run()`.
 - `src-tauri/binaries/` — checked-in `sing-box` sidecar exe + `wintun.dll`, required for `tauri dev`/`tauri build` to work.
 
 ## Commands
