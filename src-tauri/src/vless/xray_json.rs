@@ -54,16 +54,12 @@ fn vless_uri_from_outbound(outbound: &Value, remarks: Option<&str>) -> Option<St
     let mut url = Url::parse(&format!("vless://{id}@{address}:{port}")).ok()?;
     let stream = outbound.get("streamSettings");
 
+    // Xray renamed `streamSettings.network` to `method` after v26.3.27; both keys are in the wild.
     let raw_network = stream
-        .and_then(|s| s.get("network"))
+        .and_then(|s| s.get("method").or_else(|| s.get("network")))
         .and_then(Value::as_str)
-        .unwrap_or("tcp");
-    // Xray's config schema calls HTTP/2 transport "h2"; our own URI param convention uses "http".
-    let network = if raw_network == "h2" {
-        "http"
-    } else {
-        raw_network
-    };
+        .unwrap_or("raw");
+    let network = normalize_network(raw_network);
     let security = stream
         .and_then(|s| s.get("security"))
         .and_then(Value::as_str)
@@ -104,6 +100,7 @@ fn vless_uri_from_outbound(outbound: &Value, remarks: Option<&str>) -> Option<St
             append_optional(&mut query, "fp", str_field(reality, "fingerprint"));
             append_optional(&mut query, "pbk", str_field(reality, "publicKey"));
             append_optional(&mut query, "sid", str_field(reality, "shortId"));
+            append_optional(&mut query, "spx", str_field(reality, "spiderX"));
         }
 
         match network {
@@ -148,6 +145,21 @@ fn vless_uri_from_outbound(outbound: &Value, remarks: Option<&str>) -> Option<St
     }
 
     Some(url.to_string())
+}
+
+/// Collapses Xray's transport aliases onto the single spelling our `vless://` URI convention uses,
+/// so legacy and current panel exports import identically. `h2` no longer exists in Xray, but old
+/// panels still export it; unsupported transports are rejected downstream by the parser.
+fn normalize_network(network: &str) -> &str {
+    match network {
+        "raw" | "tcp" => "tcp",
+        "xhttp" | "splithttp" => "xhttp",
+        "websocket" | "ws" => "ws",
+        "h2" | "http" => "http",
+        "mkcp" | "kcp" => "kcp",
+        // Anything else passes through unchanged so the parser reports the real name it rejected.
+        other => other,
+    }
 }
 
 fn str_field<'a>(value: &'a Value, key: &str) -> Option<&'a str> {

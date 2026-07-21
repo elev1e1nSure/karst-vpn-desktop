@@ -111,6 +111,7 @@ fn parse_security(query: &HashMap<String, String>) -> Result<Security, ParseErro
                 public_key,
                 short_id: first_non_empty(query, &["sid"]),
                 fingerprint: first_non_empty(query, &["fp"]),
+                spider_x: first_non_empty(query, &["spx"]),
             })
         }
         other => Err(ParseError::UnsupportedSecurity(other.to_string())),

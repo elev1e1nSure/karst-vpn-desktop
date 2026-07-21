@@ -127,8 +127,14 @@ func (c *SplitHTTPConfig) Build() (proto.Message, error) {
 sing-box socks outbound:
 
 ```json
-{ "type": "socks", "tag": "socks-out", "server": "127.0.0.1",
-  "server_port": 1080, "version": "5", "udp_over_tcp": false }
+{
+  "type": "socks",
+  "tag": "socks-out",
+  "server": "127.0.0.1",
+  "server_port": 1080,
+  "version": "5",
+  "udp_over_tcp": false
+}
 ```
 
 Поле `network` у socks-outbound **не указывать**: оно сужает outbound до одного протокола
@@ -137,8 +143,7 @@ sing-box socks outbound:
 Xray socks inbound:
 
 ```json
-{ "protocol": "socks",
-  "settings": { "auth": "noauth", "udp": true, "ip": "127.0.0.1" } }
+{ "protocol": "socks", "settings": { "auth": "noauth", "udp": true, "ip": "127.0.0.1" } }
 ```
 
 Поле `ip` — локальный IP для UDP-ассоциации; для localhost-цепочки `127.0.0.1` корректно.
@@ -255,6 +260,7 @@ Ready-проба различается:
   }
 }
 ```
+
 - `src-tauri/src/singbox/config.rs:54`: в режиме xray outbound `proxy` становится
   `{"type":"socks","server":"127.0.0.1","server_port":P,"version":"5"}`.
   Остальной конфиг (TUN, DNS, route rules) не трогается.
@@ -327,15 +333,15 @@ DB: один ключ `core_mode` в settings, миграция не нужна 
 
 ## 4. Оценка
 
-| Этап | Время |
-| --- | --- |
-| 3.0 Фикс импорта xray-JSON | 0.5 часа |
-| 3.1 Sidecar + сборка + чексуммы | 0.5 дня |
-| 3.2 Обобщение process/guard | 1 день |
-| 3.3 xray config/outbound + socks-чейнинг | 1 день |
-| 3.4–3.5 Порядок запуска + анти-петля | 0.5 дня |
-| 3.6 xhttp парсер/модель | 0.5 дня |
-| 3.7–3.8 Настройки + UI + логи | 0.5 дня |
+| Этап                                     | Время    |
+| ---------------------------------------- | -------- |
+| 3.0 Фикс импорта xray-JSON               | 0.5 часа |
+| 3.1 Sidecar + сборка + чексуммы          | 0.5 дня  |
+| 3.2 Обобщение process/guard              | 1 день   |
+| 3.3 xray config/outbound + socks-чейнинг | 1 день   |
+| 3.4–3.5 Порядок запуска + анти-петля     | 0.5 дня  |
+| 3.6 xhttp парсер/модель                  | 0.5 дня  |
+| 3.7–3.8 Настройки + UI + логи            | 0.5 дня  |
 
 **Итого ~4 дня.** Риск-зона одна — 3.5. Остальное механика.
 

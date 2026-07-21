@@ -27,6 +27,8 @@ pub enum Security {
         public_key: String,
         short_id: Option<String>,
         fingerprint: Option<String>,
+        // Xray-only: sing-box has no spiderX equivalent, so this stays unused until the xray core lands.
+        spider_x: Option<String>,
     },
 }
 

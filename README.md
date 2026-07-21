@@ -38,6 +38,7 @@ just dev
 Требуется Rust toolchain и Node.js. Архитектура — в [CLAUDE.md](./CLAUDE.md).
 
 Проверка:
+
 ```bash
 just check
 ```
