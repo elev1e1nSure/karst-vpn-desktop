@@ -10,6 +10,7 @@ pub mod lifecycle;
 pub mod scheduler;
 pub mod singbox;
 pub mod subscription;
+pub mod title_bar;
 pub mod tray;
 pub mod vless;
 pub mod xray;
@@ -78,6 +79,7 @@ pub fn run() {
             let main_window = app
                 .get_webview_window("main")
                 .ok_or_else(|| std::io::Error::other("main window is unavailable"))?;
+            title_bar::set_dark_caption(&main_window)?;
             let app_handle = app.handle().clone();
             let window_for_event = main_window.clone();
             main_window.on_window_event(move |event| {
