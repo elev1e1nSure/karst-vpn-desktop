@@ -997,18 +997,6 @@ img {
   opacity: 0.7;
 }
 
-/* ─── Card arrow hover shift ────────────────────────────────────────────── */
-.card-arrow-icon {
-  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
-}
-
-.location-chip:hover .card-arrow-icon,
-.settings-row:hover .card-arrow-icon,
-.sub-group-header:hover .card-arrow-icon {
-  transform: translateX(4px);
-}
-
 /* ─── Subscription drill-in ──────────────────────────────────────────────── */
 .drill-in-forward {
   animation: drillInFromRight 0.2s cubic-bezier(0.4, 0, 0.2, 1) both;
