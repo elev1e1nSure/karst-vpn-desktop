@@ -12,6 +12,7 @@ pub mod singbox;
 pub mod subscription;
 pub mod tray;
 pub mod vless;
+pub mod xray;
 
 use std::time::Duration;
 

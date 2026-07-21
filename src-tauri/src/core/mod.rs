@@ -3,7 +3,7 @@ mod process_guard;
 
 /// Every core the app can spawn. Startup recovery and the log viewer iterate this, so registering
 /// a new core here is enough for both to pick it up.
-pub const SPECS: &[&SidecarSpec] = &[&crate::singbox::SPEC];
+pub const SPECS: &[&SidecarSpec] = &[&crate::singbox::SPEC, &crate::xray::SPEC];
 
 /// Everything that differs between the sidecar cores the app can drive.
 ///
