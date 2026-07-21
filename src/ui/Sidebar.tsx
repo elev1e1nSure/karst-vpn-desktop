@@ -152,7 +152,13 @@ export function Sidebar({
             marginBottom: 6,
           }}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+          <svg
+            className="sidebar-toggle-icon"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
             <rect
               x="3"
               y="4.5"
@@ -162,7 +168,17 @@ export function Sidebar({
               stroke={theme.mutedInk}
               strokeWidth="1.9"
             />
-            <line x1="9.5" y1="4.5" x2="9.5" y2="19.5" stroke={theme.mutedInk} strokeWidth="1.9" />
+            <g className="sidebar-toggle-divider-motion">
+              <line
+                className="sidebar-toggle-divider"
+                x1="9.5"
+                y1="4.5"
+                x2="9.5"
+                y2="19.5"
+                stroke={theme.mutedInk}
+                strokeWidth="1.9"
+              />
+            </g>
           </svg>
         </Pressable>
       </Tooltip>
