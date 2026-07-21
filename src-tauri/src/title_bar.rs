@@ -10,7 +10,7 @@ pub fn set_dark_caption(window: &tauri::WebviewWindow) -> tauri::Result<()> {
     let hwnd = window.hwnd()?;
     let result = unsafe {
         DwmSetWindowAttribute(
-            hwnd.0 as *mut c_void,
+            hwnd.0,
             DWMWA_CAPTION_COLOR as u32,
             &caption_color as *const u32 as *const c_void,
             std::mem::size_of_val(&caption_color) as u32,
