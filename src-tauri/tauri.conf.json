@@ -35,7 +35,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "externalBin": ["binaries/sing-box"],
+    "externalBin": ["binaries/sing-box", "binaries/xray"],
     "windows": {
       "nsis": {
         "installerIcon": "icons/icon.ico",

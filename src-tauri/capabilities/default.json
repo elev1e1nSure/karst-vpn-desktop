@@ -16,6 +16,16 @@
           "args": true
         }
       ]
+    },
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/xray",
+          "sidecar": true,
+          "args": true
+        }
+      ]
     }
   ]
 }

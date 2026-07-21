@@ -37,7 +37,7 @@ pub struct SingboxProcess {
 
 impl SingboxProcess {
     pub async fn spawn(app: &AppHandle, config: &Value, app_data_dir: &Path) -> AppResult<Self> {
-        verify_sidecar()?;
+        verify_sidecar(Sidecar::SingBox)?;
 
         tokio::fs::create_dir_all(app_data_dir).await?;
         let config_path = app_data_dir.join("sing-box-config.json");
@@ -295,8 +295,9 @@ async fn rotate_log_if_needed(path: &Path) -> AppResult<()> {
     Ok(())
 }
 
-fn verify_sidecar() -> AppResult<()> {
-    let expected = env!("SINGBOX_SHA256");
+fn verify_sidecar(sidecar: Sidecar) -> AppResult<()> {
+    let expected = sidecar.expected_hash();
+    let prefix = sidecar.binary_prefix();
     let dir = sidecar_working_dir()?;
     let path = std::fs::read_dir(&dir)
         .map_err(|error| {
@@ -309,13 +310,13 @@ fn verify_sidecar() -> AppResult<()> {
         .find(|path| {
             path.file_name()
                 .and_then(|name| name.to_str())
-                .is_some_and(|name| name.starts_with("sing-box") && name.ends_with(".exe"))
+                .is_some_and(|name| name.starts_with(prefix) && name.ends_with(".exe"))
         })
-        .ok_or_else(|| AppError::Singbox("sing-box sidecar not found".to_string()))?;
+        .ok_or_else(|| AppError::Singbox(format!("{prefix} sidecar not found")))?;
 
     let mut file = std::fs::File::open(&path).map_err(|error| {
         AppError::Singbox(format!(
-            "cannot open sing-box sidecar for integrity check: {error}"
+            "cannot open {prefix} sidecar for integrity check: {error}"
         ))
     })?;
 
@@ -325,7 +326,7 @@ fn verify_sidecar() -> AppResult<()> {
     loop {
         let count = std::io::Read::read(&mut file, &mut buffer).map_err(|error| {
             AppError::Singbox(format!(
-                "cannot read sing-box sidecar for integrity check: {error}"
+                "cannot read {prefix} sidecar for integrity check: {error}"
             ))
         })?;
         if count == 0 {
@@ -337,8 +338,31 @@ fn verify_sidecar() -> AppResult<()> {
 
     if actual != expected {
         return Err(AppError::Singbox(format!(
-            "sing-box sidecar integrity check failed (expected {expected})",
+            "{prefix} sidecar integrity check failed (expected {expected})",
         )));
     }
     Ok(())
+}
+
+#[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
+enum Sidecar {
+    SingBox,
+    Xray,
+}
+
+impl Sidecar {
+    fn binary_prefix(&self) -> &'static str {
+        match self {
+            Self::SingBox => "sing-box",
+            Self::Xray => "xray",
+        }
+    }
+
+    fn expected_hash(&self) -> &'static str {
+        match self {
+            Self::SingBox => env!("SINGBOX_SHA256"),
+            Self::Xray => env!("XRAY_SHA256"),
+        }
+    }
 }

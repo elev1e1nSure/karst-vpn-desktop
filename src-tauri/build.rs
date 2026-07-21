@@ -1,30 +1,11 @@
+use sha2::Digest;
 use std::io::Read;
 
 fn main() {
     let binaries_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("binaries");
-    let singbox_path = std::fs::read_dir(&binaries_dir)
-        .expect("cannot read binaries directory")
-        .filter_map(|entry| entry.ok())
-        .map(|entry| entry.path())
-        .find(|path| {
-            path.file_name()
-                .and_then(|name| name.to_str())
-                .is_some_and(|name| name.starts_with("sing-box") && name.ends_with(".exe"))
-        })
-        .expect("sing-box.exe not found in binaries/");
 
-    let mut file = std::fs::File::open(&singbox_path).expect("sing-box.exe not found in binaries/");
-    let mut hasher = <sha2::Sha256 as sha2::Digest>::new();
-    let mut buffer = [0u8; 8192];
-    loop {
-        let count = file.read(&mut buffer).expect("failed to read sing-box.exe");
-        if count == 0 {
-            break;
-        }
-        <sha2::Sha256 as sha2::Digest>::update(&mut hasher, &buffer[..count]);
-    }
-    let hash = hex::encode(<sha2::Sha256 as sha2::Digest>::finalize(hasher));
-    println!("cargo:rustc-env=SINGBOX_SHA256={hash}");
+    compute_sidecar_hash(&binaries_dir, "sing-box", "SINGBOX_SHA256");
+    compute_sidecar_hash(&binaries_dir, "xray", "XRAY_SHA256");
 
     let mut windows = tauri_build::WindowsAttributes::new();
     windows = windows.app_manifest(
@@ -55,4 +36,33 @@ fn main() {
 
     let attributes = tauri_build::Attributes::new().windows_attributes(windows);
     tauri_build::try_build(attributes).expect("failed to run Tauri build script");
+}
+
+fn compute_sidecar_hash(binaries_dir: &std::path::Path, prefix: &str, env_var: &str) {
+    let path = std::fs::read_dir(binaries_dir)
+        .expect("cannot read binaries directory")
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .find(|path| {
+            path.file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.starts_with(prefix) && name.ends_with(".exe"))
+        })
+        .unwrap_or_else(|| panic!("{prefix}.exe not found in binaries/"));
+
+    let mut file = std::fs::File::open(&path)
+        .unwrap_or_else(|_| panic!("{prefix}.exe not found in binaries/"));
+    let mut hasher = sha2::Sha256::new();
+    let mut buffer = [0u8; 8192];
+    loop {
+        let count = file
+            .read(&mut buffer)
+            .unwrap_or_else(|_| panic!("failed to read {prefix}.exe"));
+        if count == 0 {
+            break;
+        }
+        hasher.update(&buffer[..count]);
+    }
+    let hash = hex::encode(hasher.finalize());
+    println!("cargo:rustc-env={env_var}={hash}");
 }
