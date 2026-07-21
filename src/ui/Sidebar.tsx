@@ -48,34 +48,10 @@ const TABS: TabDef[] = [
         viewBox="0 0 24 24"
         fill="none"
       >
-        <path
-          className="sidebar-log-line"
-          d="M5 6H19"
-          stroke={color}
-          strokeWidth="1.9"
-          strokeLinecap="round"
-        />
-        <path
-          className="sidebar-log-line"
-          d="M5 10H19"
-          stroke={color}
-          strokeWidth="1.9"
-          strokeLinecap="round"
-        />
-        <path
-          className="sidebar-log-line"
-          d="M5 14H15"
-          stroke={color}
-          strokeWidth="1.9"
-          strokeLinecap="round"
-        />
-        <path
-          className="sidebar-log-line"
-          d="M5 18H12"
-          stroke={color}
-          strokeWidth="1.9"
-          strokeLinecap="round"
-        />
+        <path d="M5 6H19" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+        <path d="M5 10H19" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+        <path d="M5 14H15" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
+        <path d="M5 18H12" stroke={color} strokeWidth="1.9" strokeLinecap="round" />
       </svg>
     ),
   },
