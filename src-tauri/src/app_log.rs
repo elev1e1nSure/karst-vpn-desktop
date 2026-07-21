@@ -11,8 +11,8 @@ use crate::error::{AppError, AppResult};
 
 const APP_LOG_FILE: &str = "app.log";
 const MAX_APP_LOG_BYTES: u64 = 512 * 1024;
-const MAX_LIST_BYTES: u64 = 256 * 1024;
-const MAX_LINES: usize = 500;
+const MAX_LIST_BYTES: u64 = 1024 * 1024;
+const MAX_LINES: usize = 4000;
 
 #[derive(Debug, Clone, Copy)]
 pub enum Level {
@@ -93,7 +93,7 @@ impl AppLog {
 
     pub fn list(&self) -> AppResult<Vec<LogEntry>> {
         let _guard = self.lock()?;
-        let mut entries = Vec::new();
+        let mut entries: Vec<(String, LogEntry)> = Vec::new();
 
         self.extend_file(&mut entries, "app.1", &self.app_data_dir.join("app.log.1"))?;
         self.extend_file(&mut entries, "app", &self.path())?;
@@ -111,6 +111,12 @@ impl AppLog {
             )?;
         }
 
+        // Files are read whole, so without this the viewer shows every app line, then every
+        // sing-box line, then every xray line. Debugging a connection needs the causal order
+        // across cores, so interleave by the timestamp each line is written with.
+        entries.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let mut entries: Vec<LogEntry> = entries.into_iter().map(|(_, entry)| entry).collect();
         if entries.len() > MAX_LINES {
             entries = entries.split_off(entries.len() - MAX_LINES);
         }
@@ -159,7 +165,12 @@ impl AppLog {
         Ok(())
     }
 
-    fn extend_file(&self, entries: &mut Vec<LogEntry>, source: &str, path: &Path) -> AppResult<()> {
+    fn extend_file(
+        &self,
+        entries: &mut Vec<(String, LogEntry)>,
+        source: &str,
+        path: &Path,
+    ) -> AppResult<()> {
         let text = match read_tail(path, MAX_LIST_BYTES) {
             Ok(text) => text,
             Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(()),
@@ -170,11 +181,20 @@ impl AppLog {
             return Ok(());
         }
 
+        // Multi-line core output and the first line of a tail-truncated file carry no timestamp of
+        // their own; they inherit the previous one so they stay attached to it after sorting.
+        let mut sort_key = String::new();
         for line in text.lines().map(str::trim).filter(|line| !line.is_empty()) {
-            entries.push(LogEntry {
-                source: source.to_string(),
-                message: line.to_string(),
-            });
+            if let Some(timestamp) = line_timestamp(line) {
+                sort_key = timestamp.to_string();
+            }
+            entries.push((
+                sort_key.clone(),
+                LogEntry {
+                    source: source.to_string(),
+                    message: line.to_string(),
+                },
+            ));
         }
         Ok(())
     }
@@ -208,6 +228,18 @@ impl AppLog {
             .lock()
             .map_err(|_| AppError::Internal("app log lock poisoned".to_string()))
     }
+}
+
+/// Every line this module writes starts with `[YYYY-MM-DD HH:MM:SS.mmm]`, including the core
+/// output it wraps, so the fixed-width prefix doubles as a lexicographically sortable key.
+fn line_timestamp(line: &str) -> Option<&str> {
+    let rest = line.strip_prefix('[')?;
+    let end = rest.find(']')?;
+    let candidate = &rest[..end];
+    let looks_like_timestamp = candidate.len() == 23
+        && candidate.as_bytes()[4] == b'-'
+        && candidate.as_bytes()[10] == b' ';
+    looks_like_timestamp.then_some(candidate)
 }
 
 fn sanitize(message: &str) -> String {
