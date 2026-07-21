@@ -80,16 +80,28 @@ impl SidecarProcess {
         let ready_marker = spec.ready_marker;
         let log_task = tokio::spawn(async move {
             let mut observed_exit = false;
+            // Cores print the reason they refuse to start (bad bind, bad config) on their way out,
+            // so the last line makes the failure legible without opening the core's own log.
+            let mut last_output: Option<String> = None;
             while let Some(event) = receiver.recv().await {
                 let exit = match &event {
-                    CommandEvent::Terminated(payload) => Some(ProcessExit {
-                        message: format!(
-                            "{name} terminated code={:?} signal={:?}",
-                            payload.code, payload.signal
-                        ),
-                    }),
+                    CommandEvent::Terminated(payload) => {
+                        let reason = match &last_output {
+                            Some(line) => format!(": {line}"),
+                            None => String::new(),
+                        };
+                        Some(ProcessExit {
+                            message: format!(
+                                "{name} terminated code={:?} signal={:?}{reason}",
+                                payload.code, payload.signal
+                            ),
+                        })
+                    }
                     _ => None,
                 };
+                if let Some(text) = event_text(&event) {
+                    last_output = Some(text);
+                }
                 let line = format_event(&event);
                 let _ = append_log(&log_path, &rotated_log_path, line.as_bytes()).await;
                 if event_contains(&event, ready_marker) {
@@ -138,7 +150,15 @@ impl SidecarProcess {
             loop {
                 tokio::select! {
                     changed = self.ready.changed() => {
-                        changed.map_err(|_| AppError::Core(format!("{name} readiness monitor closed during startup")))?;
+                        if changed.is_err() {
+                            // One task owns both senders, so a closed readiness channel means the
+                            // process is already gone. Report why it died, not that we stopped
+                            // listening for it.
+                            if let Some(exit) = self.exit.borrow().clone() {
+                                return Err(AppError::Core(exit.message));
+                            }
+                            return Err(AppError::Core(format!("{name} readiness monitor closed during startup")));
+                        }
                         if *self.ready.borrow() {
                             return Ok(());
                         }
@@ -262,6 +282,15 @@ fn format_event(event: &CommandEvent) -> String {
         }
         _ => String::new(),
     }
+}
+
+fn event_text(event: &CommandEvent) -> Option<String> {
+    let bytes = match event {
+        CommandEvent::Stdout(bytes) | CommandEvent::Stderr(bytes) => bytes,
+        _ => return None,
+    };
+    let text = String::from_utf8_lossy(bytes).trim().to_string();
+    (!text.is_empty()).then_some(text)
 }
 
 fn event_contains(event: &CommandEvent, marker: &str) -> bool {

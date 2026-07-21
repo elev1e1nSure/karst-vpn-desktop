@@ -17,6 +17,8 @@ use crate::singbox::outbound::{socks_outbound, vless_to_outbound};
 use crate::singbox::route_rules::XrayBypass;
 use crate::vless::parser::parse_vless_uri;
 
+const PORT_PICK_ATTEMPTS: usize = 16;
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ConnectionStatus {
     Disconnected,
@@ -318,12 +320,26 @@ impl ConnectionManager {
         Ok(())
     }
 
-    /// Picks a free loopback port for the sing-box -> xray hop. The listener is dropped right away,
-    /// so a racing process could still take it; the window is small and a collision surfaces as a
-    /// normal startup failure rather than silent breakage.
+    /// Picks a free loopback port for the sing-box -> xray hop.
+    ///
+    /// xray's SOCKS inbound listens on TCP *and* UDP, and on Windows a port free for one can be
+    /// reserved for the other (Hyper-V/WSL excluded port ranges), which makes xray die at startup
+    /// with a bind error. Both protocols are probed, retrying until a port serves both.
+    ///
+    /// The sockets close before xray binds them, so a racing process could still take the port;
+    /// that window is small and surfaces as a normal startup failure rather than silent breakage.
     fn pick_loopback_port() -> AppResult<u16> {
-        let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
-        Ok(listener.local_addr()?.port())
+        for _ in 0..PORT_PICK_ATTEMPTS {
+            let tcp = std::net::TcpListener::bind("127.0.0.1:0")?;
+            let port = tcp.local_addr()?.port();
+            if std::net::UdpSocket::bind(("127.0.0.1", port)).is_ok() {
+                return Ok(port);
+            }
+        }
+
+        Err(AppError::Core(format!(
+            "no loopback port free for both TCP and UDP after {PORT_PICK_ATTEMPTS} attempts"
+        )))
     }
 
     fn lock_inner(&self) -> AppResult<std::sync::MutexGuard<'_, ConnectionState>> {
