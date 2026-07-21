@@ -158,7 +158,7 @@ export function LocationChip({
         <div style={{ flex: 1, minWidth: 0 }}>
           <div
             style={{
-              font: '500 16px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
+              font: '500 18px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
               color: theme.ink,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
