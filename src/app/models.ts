@@ -4,6 +4,7 @@ export type UiServer = {
   id: string;
   name: string;
   tag: string;
+  details: string;
   latencyLabel: string;
   isCustom: boolean;
   subscriptionId?: string | null;
@@ -83,6 +84,7 @@ function serverToUi(server: ServerDto): UiServer {
     id: server.id,
     name: emojifyName(server.name),
     tag: `VLESS · ${server.host}:${server.port}${flow}`,
+    details: `${server.host} · VLESS · ${server.transport}`,
     latencyLabel: '',
     isCustom: !server.subscription_id,
     subscriptionId: server.subscription_id,

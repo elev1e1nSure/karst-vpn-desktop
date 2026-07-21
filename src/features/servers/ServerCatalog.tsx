@@ -163,30 +163,46 @@ export function ServerCatalog({
                       style={{
                         flex: 1,
                         minWidth: 0,
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap',
-                        textOverflow: 'ellipsis',
                       }}
                     >
-                      <span
+                      <div
                         style={{
-                          font: '500 18px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
-                          color: theme.ink,
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap',
+                          textOverflow: 'ellipsis',
                         }}
                       >
-                        {server.name}
-                      </span>
-                      {server.latencyLabel && (
                         <span
                           style={{
-                            font: "400 14px/1.3 'Inter', sans-serif",
-                            color: theme.mutedInk,
+                            font: '500 18px/1.3 "Twemoji Country Flags", \'Inter\', sans-serif',
+                            color: theme.ink,
                           }}
                         >
-                          {' '}
-                          {server.latencyLabel}
+                          {server.name}
                         </span>
-                      )}
+                        {server.latencyLabel && (
+                          <span
+                            style={{
+                              font: "400 14px/1.3 'Inter', sans-serif",
+                              color: theme.mutedInk,
+                            }}
+                          >
+                            {' '}
+                            {server.latencyLabel}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        style={{
+                          font: "400 13px/1.3 'Inter', sans-serif",
+                          color: theme.mutedInk,
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap',
+                          textOverflow: 'ellipsis',
+                        }}
+                      >
+                        {server.details}
+                      </div>
                     </div>
                     {isSelected && (
                       <svg
