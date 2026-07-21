@@ -5,13 +5,16 @@ use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
 use crate::app_log::{self, AppLog};
+use crate::connection::tunnel::Tunnel;
 use crate::core::process::SidecarProcess;
+use crate::core::TransportCore;
 use crate::db::DbPool;
 use crate::db::{lock_pool, servers, settings};
 use crate::error::{AppError, AppResult};
-use crate::healthcheck::tcp_check;
+use crate::healthcheck::{resolve_server_cidrs, tcp_check};
 use crate::singbox::config::{build_config, TunOptions};
-use crate::singbox::outbound::vless_to_outbound;
+use crate::singbox::outbound::{socks_outbound, vless_to_outbound};
+use crate::singbox::route_rules::XrayBypass;
 use crate::vless::parser::parse_vless_uri;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,7 +41,7 @@ pub struct ConnectionManager {
 }
 
 struct ConnectionState {
-    process: Option<SidecarProcess>,
+    process: Option<Tunnel>,
     status: ConnectionStatus,
     generation: u64,
 }
@@ -97,12 +100,13 @@ impl ConnectionManager {
         pool: DbPool,
         server_id: String,
     ) -> AppResult<ConnectionStatus> {
-        let (server, routing_mode, dns_doh_url) = {
+        let (server, routing_mode, dns_doh_url, core_mode) = {
             let guard = lock_pool(&pool)?;
             (
                 servers::get_server(&guard, &server_id)?,
                 settings::get_routing_mode(&guard)?,
                 settings::get_dns_doh_url(&guard)?,
+                settings::get_core_mode(&guard)?,
             )
         };
         let link = parse_vless_uri(&server.vless_uri)
@@ -126,33 +130,66 @@ impl ConnectionManager {
             .app_data_dir()
             .map_err(|error| AppError::Io(std::io::Error::other(error)))?;
         let tun_options = TunOptions::new(app_data_dir.join("sing-box-cache.db"));
-        let outbound = vless_to_outbound(&link)?;
-        let config = build_config(outbound, &tun_options, routing_mode, &dns_doh_url);
+        let core = core_mode.resolve(&link.transport);
 
-        let spec = &crate::singbox::SPEC;
+        // Dropping `xray` on any early return terminates it, so no explicit cleanup is needed
+        // before the tunnel is assembled.
+        let (proxy_outbound, xray, xray_bypass) = match core {
+            TransportCore::SingBox => (vless_to_outbound(&link)?, None, None),
+            TransportCore::Xray => {
+                let socks_port = Self::pick_loopback_port()?;
+                let xray_config = crate::xray::config::build_config(
+                    crate::xray::outbound::vless_to_outbound(&link)?,
+                    socks_port,
+                );
+                app.state::<AppLog>().info(
+                    app_log::Category::Core,
+                    format!("xray spawning socks_port={socks_port}"),
+                );
+                let mut process =
+                    SidecarProcess::spawn(app, &crate::xray::SPEC, &xray_config, &app_data_dir)
+                        .await?;
+                process.ensure_ready().await?;
+                app.state::<AppLog>()
+                    .info(app_log::Category::Core, "xray started and ready");
+
+                let bypass = XrayBypass {
+                    process_names: crate::xray::SPEC
+                        .executables
+                        .iter()
+                        .map(|name| (*name).to_string())
+                        .collect(),
+                    server_cidrs: resolve_server_cidrs(&link.host, link.port).await,
+                };
+                (socks_outbound(socks_port), Some(process), Some(bypass))
+            }
+        };
+
+        let config = build_config(
+            proxy_outbound,
+            &tun_options,
+            routing_mode,
+            &dns_doh_url,
+            xray_bypass.as_ref(),
+        );
+
         app.state::<AppLog>().info(
             app_log::Category::Core,
             format!(
-                "{} spawning routing_mode={}",
-                spec.name,
-                routing_mode.as_str()
+                "sing-box spawning routing_mode={} transport_core={}",
+                routing_mode.as_str(),
+                core.as_str()
             ),
         );
-        let mut process = SidecarProcess::spawn(app, spec, &config, &app_data_dir).await?;
-        let ready_result = process.ensure_ready().await;
-        if let Err(error) = ready_result {
-            let _ = process.stop().await;
-            return Err(error);
-        }
-        app.state::<AppLog>().info(
-            app_log::Category::Core,
-            format!("{} started and ready", spec.name),
-        );
-        if let Err(error) = Self::ensure_not_shutting_down(app) {
-            let _ = process.stop().await;
-            return Err(error);
-        }
-        let exit = process.exit_receiver();
+        let mut singbox =
+            SidecarProcess::spawn(app, &crate::singbox::SPEC, &config, &app_data_dir).await?;
+        singbox.ensure_ready().await?;
+        app.state::<AppLog>()
+            .info(app_log::Category::Core, "sing-box started and ready");
+        Self::ensure_not_shutting_down(app)?;
+
+        let process = Tunnel::new(singbox, xray);
+        let exits = process.exit_receivers();
 
         let status = ConnectionStatus::Connected {
             server_id,
@@ -170,7 +207,9 @@ impl ConnectionManager {
             inner.generation
         };
         crate::tray::update_connection_status(app, &status);
-        Self::monitor_exit(app.clone(), self.inner.clone(), generation, exit);
+        for exit in exits {
+            Self::monitor_exit(app.clone(), self.inner.clone(), generation, exit);
+        }
         Ok(status)
     }
 
@@ -270,6 +309,14 @@ impl ConnectionManager {
         Ok(())
     }
 
+    /// Picks a free loopback port for the sing-box -> xray hop. The listener is dropped right away,
+    /// so a racing process could still take it; the window is small and a collision surfaces as a
+    /// normal startup failure rather than silent breakage.
+    fn pick_loopback_port() -> AppResult<u16> {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0")?;
+        Ok(listener.local_addr()?.port())
+    }
+
     fn lock_inner(&self) -> AppResult<std::sync::MutexGuard<'_, ConnectionState>> {
         self.inner
             .lock()
@@ -281,6 +328,7 @@ impl ConnectionManager {
         inner: Arc<Mutex<ConnectionState>>,
         generation: u64,
         mut exit: tokio::sync::watch::Receiver<Option<crate::core::process::ProcessExit>>,
+        // One task per process: whichever dies first wins the generation check and reports the loss.
     ) {
         tauri::async_runtime::spawn(async move {
             let current_exit = { exit.borrow().clone() };

@@ -65,12 +65,14 @@ export function AppView({ controller }: AppViewProps) {
     autoRefreshMode,
     autoRefreshHours,
     dnsDohUrl,
+    coreMode,
     toggleDarkMode: onToggleDarkMode,
     toggleBypassLocal: handleToggleBypassLocal,
     toggleBypassRu: handleToggleBypassRu,
     setAutoRefresh: handleSetAutoRefreshMode,
     setAutoRefreshHours: handleSetAutoRefreshHours,
     setDnsDohUrl: handleSetDnsDohUrl,
+    setCore: handleSetCoreMode,
   } = preferences;
   const {
     logs,
@@ -269,12 +271,14 @@ export function AppView({ controller }: AppViewProps) {
               autoRefreshMode={autoRefreshMode}
               autoRefreshHours={autoRefreshHours}
               dnsDohUrl={dnsDohUrl}
+              coreMode={coreMode}
               onToggleDarkMode={onToggleDarkMode}
               onToggleBypassLocal={() => void handleToggleBypassLocal()}
               onToggleBypassRu={() => void handleToggleBypassRu()}
               onSetAutoRefreshMode={(m) => void handleSetAutoRefreshMode(m)}
               onSetAutoRefreshHours={(h) => void handleSetAutoRefreshHours(h)}
               onSetDnsDohUrl={(url) => void handleSetDnsDohUrl(url)}
+              onSetCoreMode={(m) => void handleSetCoreMode(m)}
             />
           </div>
         )}

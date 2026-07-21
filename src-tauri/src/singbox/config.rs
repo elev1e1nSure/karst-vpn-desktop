@@ -2,7 +2,9 @@ use std::path::PathBuf;
 
 use serde_json::{json, Value};
 
-use super::route_rules::{local_domain_suffixes, route_rules, ru_domain_suffixes, RoutingMode};
+use super::route_rules::{
+    local_domain_suffixes, route_rules, ru_domain_suffixes, RoutingMode, XrayBypass,
+};
 
 #[derive(Debug, Clone)]
 pub struct TunOptions {
@@ -32,13 +34,14 @@ pub fn build_config(
     tun: &TunOptions,
     routing_mode: RoutingMode,
     dns_doh_url: &str,
+    xray_bypass: Option<&XrayBypass>,
 ) -> Value {
     json!({
         "log": {
             "level": "info",
             "timestamp": true,
         },
-        "dns": dns_block(routing_mode, dns_doh_url),
+        "dns": dns_block(routing_mode, dns_doh_url, xray_bypass),
         "inbounds": [
             {
                 "type": "tun",
@@ -63,7 +66,7 @@ pub fn build_config(
             }
         ],
         "route": {
-            "rules": route_rules(routing_mode),
+            "rules": route_rules(routing_mode, xray_bypass),
             "rule_set": [],
             "final": "proxy",
             "auto_detect_interface": true,
@@ -78,8 +81,15 @@ pub fn build_config(
     })
 }
 
-fn dns_block(routing_mode: RoutingMode, dns_doh_url: &str) -> Value {
+fn dns_block(
+    routing_mode: RoutingMode,
+    dns_doh_url: &str,
+    xray_bypass: Option<&XrayBypass>,
+) -> Value {
     let mut rules: Vec<Value> = Vec::new();
+    if let Some(bypass) = xray_bypass {
+        rules.push(bypass.dns_rule());
+    }
     if routing_mode.bypass_local() {
         rules.push(json!({
             "domain": ["localhost"],

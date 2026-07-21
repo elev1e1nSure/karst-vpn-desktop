@@ -51,6 +51,7 @@ export type SettingsDto = {
   auto_refresh_hours: number;
   routing_mode: string;
   dns_doh_url: string;
+  core_mode: string;
 };
 
 export type ServerPingDto = {
@@ -60,3 +61,4 @@ export type ServerPingDto = {
 
 export type RoutingMode = 'Full' | 'BypassLocal' | 'BypassRu' | 'BypassRuOnly';
 export type AutoRefreshMode = 'Auto' | 'Off' | 'EveryHours';
+export type CoreMode = 'Auto' | 'SingBox' | 'Xray';

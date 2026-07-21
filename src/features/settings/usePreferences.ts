@@ -3,7 +3,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { commands, getErrorMessage } from '../../app/commands';
 import { isRoutingMode } from '../../app/presentation';
-import type { AutoRefreshMode, RoutingMode, SettingsDto } from '../../app/types';
+import type { AutoRefreshMode, CoreMode, RoutingMode, SettingsDto } from '../../app/types';
 import { DARK_THEME, LIGHT_THEME } from '../../ui/theme';
 
 const AUTO_REFRESH_MODE_BY_DTO: Record<string, AutoRefreshMode> = {
@@ -23,6 +23,18 @@ const AUTO_REFRESH_MODE_TO_DTO: Record<AutoRefreshMode, string> = {
   Auto: 'auto',
   Off: 'off',
   EveryHours: 'every_hours',
+};
+
+const CORE_MODE_BY_DTO: Record<string, CoreMode> = {
+  auto: 'Auto',
+  singbox: 'SingBox',
+  xray: 'Xray',
+};
+
+const CORE_MODE_TO_DTO: Record<CoreMode, string> = {
+  Auto: 'auto',
+  SingBox: 'singbox',
+  Xray: 'xray',
 };
 
 const ROUTING_MODE_TO_DTO: Record<RoutingMode, string> = {
@@ -46,6 +58,7 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
   const [autoRefreshMode, setAutoRefreshMode] = useState<AutoRefreshMode>('Auto');
   const [autoRefreshHours, setAutoRefreshHours] = useState(24);
   const [dnsDohUrl, setDnsDohUrl] = useState('https://1.1.1.1/dns-query');
+  const [coreMode, setCoreMode] = useState<CoreMode>('Auto');
 
   const bypassLocal = routingMode === 'BypassLocal' || routingMode === 'BypassRu';
   const bypassRu = routingMode === 'BypassRu' || routingMode === 'BypassRuOnly';
@@ -59,6 +72,7 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
       setAutoRefreshMode(AUTO_REFRESH_MODE_BY_DTO[settings.auto_refresh_mode] ?? 'Auto');
       setAutoRefreshHours(settings.auto_refresh_hours);
       setDnsDohUrl(settings.dns_doh_url);
+      setCoreMode(CORE_MODE_BY_DTO[settings.core_mode] ?? 'Auto');
       const savedTheme = localStorage.getItem('karst-dark-mode');
       if (savedTheme !== null) setDarkModeOn(savedTheme === 'true');
       const savedRouting = localStorage.getItem('karst-routing-mode');
@@ -126,6 +140,16 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     }
   };
 
+  const setCore = async (mode: CoreMode) => {
+    try {
+      await commands.setCoreMode(CORE_MODE_TO_DTO[mode]);
+      setCoreMode(mode);
+      setAppError('');
+    } catch (error) {
+      setAppError(getErrorMessage(error));
+    }
+  };
+
   const setDnsDohUrlValue = async (url: string) => {
     try {
       await commands.setDnsDohUrl(url);
@@ -146,6 +170,7 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     autoRefreshMode,
     autoRefreshHours,
     dnsDohUrl,
+    coreMode,
     hydrate,
     toggleDarkMode,
     toggleBypassLocal,
@@ -154,5 +179,6 @@ export function usePreferences(setAppError: Dispatch<SetStateAction<string>>) {
     setAutoRefresh,
     setAutoRefreshHours: setAutoRefreshHoursValue,
     setDnsDohUrl: setDnsDohUrlValue,
+    setCore,
   };
 }

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import type { AutoRefreshMode } from '../../app/types';
+import type { AutoRefreshMode, CoreMode } from '../../app/types';
 import { Pressable } from '../../ui/Pressable';
 import { Tooltip } from '../../ui/Tooltip';
 import { themeVars } from '../../ui/theme';
@@ -65,6 +65,17 @@ const REFRESH_SUBTITLES: Record<AutoRefreshMode, string> = {
   EveryHours: 'Один и тот же интервал для всех подписок',
 };
 
+const CORE_LABELS: Record<CoreMode, string> = {
+  Auto: 'Автоматически',
+  SingBox: 'sing-box',
+  Xray: 'Xray',
+};
+const CORE_SUBTITLES: Record<CoreMode, string> = {
+  Auto: 'Xray для xhttp, sing-box для остальных транспортов',
+  SingBox: 'Всегда sing-box; серверы с xhttp не подключатся',
+  Xray: 'Всегда Xray; серверы с h2 не подключатся',
+};
+
 export function SettingsSheet({
   theme,
   accent,
@@ -74,12 +85,14 @@ export function SettingsSheet({
   autoRefreshMode,
   autoRefreshHours,
   dnsDohUrl,
+  coreMode,
   onToggleDarkMode,
   onToggleBypassLocal,
   onToggleBypassRu,
   onSetAutoRefreshMode,
   onSetAutoRefreshHours,
   onSetDnsDohUrl,
+  onSetCoreMode,
 }: {
   theme: Theme;
   accent: string;
@@ -89,12 +102,14 @@ export function SettingsSheet({
   autoRefreshMode: AutoRefreshMode;
   autoRefreshHours: number;
   dnsDohUrl: string;
+  coreMode: CoreMode;
   onToggleDarkMode: () => void;
   onToggleBypassLocal: () => void;
   onToggleBypassRu: () => void;
   onSetAutoRefreshMode: (m: AutoRefreshMode) => void;
   onSetAutoRefreshHours: (h: number) => void;
   onSetDnsDohUrl: (url: string) => void;
+  onSetCoreMode: (m: CoreMode) => void;
 }) {
   return (
     <div style={{ overflow: 'auto' }}>
@@ -123,6 +138,7 @@ export function SettingsSheet({
           checked={bypassRu}
           onToggle={onToggleBypassRu}
         />
+        <CoreSection theme={theme} accent={accent} mode={coreMode} onSetMode={onSetCoreMode} />
         <AutoRefreshSection
           theme={theme}
           accent={accent}
@@ -134,6 +150,74 @@ export function SettingsSheet({
         <DnsSection theme={theme} url={dnsDohUrl} onSetUrl={onSetDnsDohUrl} />
       </div>
     </div>
+  );
+}
+
+function CoreSection({
+  theme,
+  accent,
+  mode,
+  onSetMode,
+}: {
+  theme: Theme;
+  accent: string;
+  mode: CoreMode;
+  onSetMode: (m: CoreMode) => void;
+}) {
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogClosing, setDialogClosing] = useState(false);
+  const closeRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const dismissDialog = () => {
+    if (dialogClosing) return;
+    setDialogClosing(true);
+    closeRef.current = setTimeout(() => {
+      setDialogOpen(false);
+      setDialogClosing(false);
+    }, 160);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (closeRef.current) clearTimeout(closeRef.current);
+    };
+  }, []);
+
+  return (
+    <>
+      <SettingsActionRow
+        theme={theme}
+        title="Ядро подключения"
+        subtitle={CORE_LABELS[mode]}
+        onClick={() => {
+          setDialogOpen(true);
+          setDialogClosing(false);
+        }}
+      />
+      {dialogOpen && (
+        <SettingsPickerDialog
+          theme={theme}
+          title="Ядро подключения"
+          isClosing={dialogClosing}
+          onDismiss={dismissDialog}
+        >
+          {(['Auto', 'SingBox', 'Xray'] as CoreMode[]).map((m) => (
+            <Tooltip key={m} label={CORE_SUBTITLES[m]} theme={theme} placement="top">
+              <SettingsChoiceRow
+                theme={theme}
+                accent={accent}
+                title={CORE_LABELS[m]}
+                selected={mode === m}
+                onClick={() => {
+                  onSetMode(m);
+                  dismissDialog();
+                }}
+              />
+            </Tooltip>
+          ))}
+        </SettingsPickerDialog>
+      )}
+    </>
   );
 }
 

@@ -5,6 +5,69 @@ mod process_guard;
 /// a new core here is enough for both to pick it up.
 pub const SPECS: &[&SidecarSpec] = &[&crate::singbox::SPEC, &crate::xray::SPEC];
 
+/// Which core terminates the proxy protocol. sing-box runs either way — it owns TUN, routing and
+/// DNS — so this only decides whether it dials the server itself or hands off to xray over a
+/// loopback SOCKS5 hop.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CoreMode {
+    Auto,
+    SingBox,
+    Xray,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TransportCore {
+    SingBox,
+    Xray,
+}
+
+impl CoreMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Auto => "auto",
+            Self::SingBox => "singbox",
+            Self::Xray => "xray",
+        }
+    }
+
+    /// Transport/core mismatches are not rejected here: each outbound builder already knows what it
+    /// can express and reports it with a message naming the core to switch to.
+    pub fn resolve(&self, transport: &crate::vless::model::Transport) -> TransportCore {
+        match self {
+            Self::SingBox => TransportCore::SingBox,
+            Self::Xray => TransportCore::Xray,
+            Self::Auto => match transport {
+                crate::vless::model::Transport::Xhttp { .. } => TransportCore::Xray,
+                _ => TransportCore::SingBox,
+            },
+        }
+    }
+}
+
+impl TryFrom<&str> for CoreMode {
+    type Error = crate::error::AppError;
+
+    fn try_from(value: &str) -> crate::error::AppResult<Self> {
+        match value {
+            "auto" => Ok(Self::Auto),
+            "singbox" => Ok(Self::SingBox),
+            "xray" => Ok(Self::Xray),
+            _ => Err(crate::error::AppError::InvalidInput(format!(
+                "invalid core mode: {value}"
+            ))),
+        }
+    }
+}
+
+impl TransportCore {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::SingBox => "sing-box",
+            Self::Xray => "xray",
+        }
+    }
+}
+
 /// Everything that differs between the sidecar cores the app can drive.
 ///
 /// Each core owns its own config, log and PID files so both can run side by side without

@@ -1,6 +1,7 @@
 use tauri::State;
 
 use crate::app_log::{self, AppLog};
+use crate::core::CoreMode;
 use crate::db;
 use crate::db::settings;
 use crate::db::DbPool;
@@ -19,7 +20,27 @@ pub fn get_settings(pool: State<'_, DbPool>) -> AppResult<SettingsDto> {
         auto_refresh_hours: settings::get_auto_refresh_hours(&guard)?,
         routing_mode: settings::get_routing_mode(&guard)?.as_str().to_string(),
         dns_doh_url: settings::get_dns_doh_url(&guard)?,
+        core_mode: settings::get_core_mode(&guard)?.as_str().to_string(),
     })
+}
+
+#[tauri::command]
+pub fn set_core_mode(
+    pool: State<'_, DbPool>,
+    logs: State<'_, AppLog>,
+    mode: String,
+) -> AppResult<SettingsDto> {
+    let mode = CoreMode::try_from(mode.as_str())?;
+    let mode_label = mode.as_str();
+    {
+        let guard = db::lock_pool(pool.inner())?;
+        settings::set_core_mode(&guard, mode)?;
+    }
+    logs.info(
+        app_log::Category::Service,
+        format!("settings updated core_mode={mode_label}"),
+    );
+    get_settings(pool)
 }
 
 #[tauri::command]

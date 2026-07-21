@@ -1,6 +1,7 @@
 use chrono::Utc;
 use rusqlite::{params, Connection, OptionalExtension};
 
+use crate::core::CoreMode;
 use crate::error::{AppError, AppResult};
 use crate::scheduler::AutoRefreshMode;
 use crate::singbox::route_rules::RoutingMode;
@@ -9,6 +10,7 @@ pub const AUTO_REFRESH_MODE_KEY: &str = "auto_refresh_mode";
 pub const AUTO_REFRESH_HOURS_KEY: &str = "auto_refresh_hours";
 pub const ROUTING_MODE_KEY: &str = "routing_mode";
 pub const DNS_DOH_URL_KEY: &str = "dns_doh_url";
+pub const CORE_MODE_KEY: &str = "core_mode";
 pub const DEFAULT_DNS_DOH_URL: &str = "https://1.1.1.1/dns-query";
 
 pub fn get_setting(connection: &Connection, key: &str) -> AppResult<Option<String>> {
@@ -78,6 +80,16 @@ pub fn get_routing_mode(connection: &Connection) -> AppResult<RoutingMode> {
 
 pub fn set_routing_mode(connection: &Connection, value: RoutingMode) -> AppResult<()> {
     set_setting(connection, ROUTING_MODE_KEY, value.as_str())
+}
+
+pub fn get_core_mode(connection: &Connection) -> AppResult<CoreMode> {
+    let value = get_setting(connection, CORE_MODE_KEY)?
+        .unwrap_or_else(|| CoreMode::Auto.as_str().to_string());
+    Ok(CoreMode::try_from(value.as_str()).unwrap_or(CoreMode::Auto))
+}
+
+pub fn set_core_mode(connection: &Connection, value: CoreMode) -> AppResult<()> {
+    set_setting(connection, CORE_MODE_KEY, value.as_str())
 }
 
 pub fn get_dns_doh_url(connection: &Connection) -> AppResult<String> {

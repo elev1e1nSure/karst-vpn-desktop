@@ -104,6 +104,7 @@ pub fn run() {
             commands::settings::set_auto_refresh_settings,
             commands::settings::set_routing_mode,
             commands::settings::set_dns_doh_url,
+            commands::settings::set_core_mode,
             commands::logs::list_logs,
             commands::logs::clear_logs,
             commands::connection::connect,
