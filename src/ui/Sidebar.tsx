@@ -50,7 +50,29 @@ const TABS: TabDef[] = [
         fill="none"
       >
         <path
-          d="M5 6H19M5 10H19M5 14H15M5 18H12"
+          className="sidebar-log-line"
+          d="M5 6H19"
+          stroke={color}
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          className="sidebar-log-line"
+          d="M5 10H19"
+          stroke={color}
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          className="sidebar-log-line"
+          d="M5 14H15"
+          stroke={color}
+          strokeWidth="1.9"
+          strokeLinecap="round"
+        />
+        <path
+          className="sidebar-log-line"
+          d="M5 18H12"
           stroke={color}
           strokeWidth="1.9"
           strokeLinecap="round"

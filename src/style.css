@@ -742,9 +742,45 @@ img {
   transform: scale(1.08);
 }
 
-/* Log lines: slide right a touch, like text scrolling into view. */
-.sidebar-item:hover .sidebar-icon-logs {
-  transform: translateX(1.5px);
+/* Log lines: each entry clears and writes itself back in a quick cascade. */
+.sidebar-log-line {
+  stroke-dasharray: 16;
+  stroke-dashoffset: 0;
+  transform-box: fill-box;
+  transform-origin: left center;
+}
+
+.sidebar-item:hover .sidebar-log-line {
+  animation: sidebarLogLineWrite 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebar-item:hover .sidebar-log-line:nth-child(2) {
+  animation-delay: 0.04s;
+}
+
+.sidebar-item:hover .sidebar-log-line:nth-child(3) {
+  animation-delay: 0.08s;
+}
+
+.sidebar-item:hover .sidebar-log-line:nth-child(4) {
+  animation-delay: 0.12s;
+}
+
+@keyframes sidebarLogLineWrite {
+  0% {
+    stroke-dashoffset: 0;
+    transform: translateX(0);
+  }
+
+  38% {
+    stroke-dashoffset: 16;
+    transform: translateX(-1px);
+  }
+
+  100% {
+    stroke-dashoffset: 0;
+    transform: translateX(0);
+  }
 }
 
 /* Gear: cranks a little to the right, then settles back on release. */
