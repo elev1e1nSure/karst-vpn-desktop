@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Pressable } from './Pressable';
-import { Tooltip } from './Tooltip';
 import type { Theme } from './theme';
 
 export type AppTab = 'connection' | 'logs' | 'settings';
@@ -137,51 +136,49 @@ export function Sidebar({
         gap: 7,
       }}
     >
-      <Tooltip label={collapsed ? 'Развернуть' : 'Свернуть'} theme={theme} placement="bottom">
-        <Pressable
-          onClick={onToggleCollapsed}
-          className="sidebar-toggle"
-          borderRadius={14}
-          style={{
-            width: ITEM_SIZE,
-            height: ITEM_SIZE,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            flexShrink: 0,
-            marginBottom: 6,
-          }}
+      <Pressable
+        onClick={onToggleCollapsed}
+        className="sidebar-toggle"
+        borderRadius={14}
+        style={{
+          width: ITEM_SIZE,
+          height: ITEM_SIZE,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexShrink: 0,
+          marginBottom: 6,
+        }}
+      >
+        <svg
+          className="sidebar-toggle-icon"
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
         >
-          <svg
-            className="sidebar-toggle-icon"
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <rect
-              x="3"
-              y="4.5"
-              width="18"
-              height="15"
-              rx="3"
+          <rect
+            x="3"
+            y="4.5"
+            width="18"
+            height="15"
+            rx="3"
+            stroke={theme.mutedInk}
+            strokeWidth="1.9"
+          />
+          <g className="sidebar-toggle-divider-motion">
+            <line
+              className="sidebar-toggle-divider"
+              x1="9.5"
+              y1="4.5"
+              x2="9.5"
+              y2="19.5"
               stroke={theme.mutedInk}
               strokeWidth="1.9"
             />
-            <g className="sidebar-toggle-divider-motion">
-              <line
-                className="sidebar-toggle-divider"
-                x1="9.5"
-                y1="4.5"
-                x2="9.5"
-                y2="19.5"
-                stroke={theme.mutedInk}
-                strokeWidth="1.9"
-              />
-            </g>
-          </svg>
-        </Pressable>
-      </Tooltip>
+          </g>
+        </svg>
+      </Pressable>
 
       {TABS.map((tab) => {
         const active = activeTab === tab.id;
