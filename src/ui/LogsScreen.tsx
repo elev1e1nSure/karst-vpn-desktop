@@ -98,7 +98,22 @@ export function LogsScreen({
             </div>
           </Pressable>
         )}
+        {available.length > 1 && (
+          <div style={{ display: 'flex', gap: 6 }}>
+            {(['all', ...available] as (LogGroup | 'all')[]).map((item) => (
+              <FilterChip
+                key={item}
+                theme={theme}
+                accent={accent}
+                label={item === 'all' ? 'Все' : GROUP_LABELS[item]}
+                selected={activeGroup === item}
+                onClick={() => setGroup(item)}
+              />
+            ))}
+          </div>
+        )}
         <div style={{ flex: 1 }} />
+        <div style={{ width: 12, flexShrink: 0 }} />
         <LogActionButton
           theme={theme}
           label="Копировать логи"
@@ -133,20 +148,6 @@ export function LogsScreen({
           }
         />
       </div>
-      {available.length > 1 && (
-        <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexShrink: 0 }}>
-          {(['all', ...available] as (LogGroup | 'all')[]).map((item) => (
-            <FilterChip
-              key={item}
-              theme={theme}
-              accent={accent}
-              label={item === 'all' ? 'Все' : GROUP_LABELS[item]}
-              selected={activeGroup === item}
-              onClick={() => setGroup(item)}
-            />
-          ))}
-        </div>
-      )}
       <div style={{ flex: 1, overflow: 'auto' }}>
         {logsLoading && logs.length === 0 ? (
           <span style={{ color: theme.mutedInk, font: "400 13.5px/1.5 'Inter', sans-serif" }}>
@@ -197,11 +198,11 @@ function FilterChip({
       <div
         className="log-header-btn"
         style={{
-          padding: '6px 12px',
+          padding: '10px 14px',
           borderRadius: 999,
-          font: "500 12.5px/1 'Inter', sans-serif",
+          font: "500 13.5px/1 'Inter', sans-serif",
           color: selected ? accent : theme.mutedInk,
-          border: `1px solid ${selected ? accent : 'transparent'}`,
+          background: selected ? `${accent}1A` : 'transparent',
           whiteSpace: 'nowrap',
         }}
       >
@@ -226,12 +227,13 @@ function LogActionButton({
 }) {
   return (
     <Tooltip label={label} theme={theme} placement="bottom" disabled={disabled}>
-      <Pressable onClick={disabled ? undefined : onClick} disabled={disabled} borderRadius={12}>
+      <Pressable onClick={disabled ? undefined : onClick} disabled={disabled} borderRadius={14}>
         <div
           className="log-header-btn"
           style={{
             width: 44,
             height: 44,
+            borderRadius: 14,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
