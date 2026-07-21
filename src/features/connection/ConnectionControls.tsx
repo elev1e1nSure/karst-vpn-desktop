@@ -167,17 +167,6 @@ export function LocationChip({
           >
             {server ? server.name : 'Добавить сервер'}
           </div>
-          <div
-            style={{
-              font: "400 13.5px/1.3 'Inter', sans-serif",
-              color: theme.mutedInk,
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-            }}
-          >
-            {server ? server.tag : 'VLESS-ссылка или URL подписки'}
-          </div>
         </div>
         <svg
           className="card-arrow-icon"
