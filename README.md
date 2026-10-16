@@ -35,7 +35,7 @@ pnpm install
 just dev
 ```
 
-Требуется Rust toolchain и Node.js. Архитектура — в [CLAUDE.md](./CLAUDE.md).
+Требуется Rust toolchain и Node.js. Архитектура — в [AGENTS.md](./AGENTS.md).
 
 Проверка:
 
